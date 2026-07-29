@@ -1,0 +1,6 @@
+# Python
+__pycache__/
+*.pyc
+
+# Generated test vectors (regenerate with scripts/generate_stage1_vectors.py)
+data/test_vectors/
