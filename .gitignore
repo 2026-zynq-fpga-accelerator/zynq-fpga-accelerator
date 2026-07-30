@@ -1,0 +1,54 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Python and test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Simulation products
+work/
+xsim.dir/
+*.wdb
+*.vcd
+*.fst
+*.log
+*.jou
+*.pb
+*.str
+
+# Vivado local state and generated project products
+.Xil/
+*.cache/
+*.gen/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.xpr
+*.dcp
+*.bit
+*.bin
+!vectors/**/*.bin
+*.ltx
+*.hwh
+*.xsa
+*.sysdef
+
+# Dedicated generated Vivado workspace
+vivado/*
+!vivado/.gitkeep
+
+# Generic generated outputs
+build/
+output/
+tmp/
+

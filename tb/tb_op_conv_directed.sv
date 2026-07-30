@@ -1,0 +1,393 @@
+`timescale 1ns/1ps
+
+module tb_op_conv_directed;
+  import accel_pkg::*;
+
+  localparam integer CLK_PERIOD_NS = 10;
+  localparam integer MAX_INPUT_BYTES = 64;
+  localparam integer MAX_WEIGHT_BYTES = 144;
+  localparam integer MAX_OUTPUT_BYTES = 64;
+
+  logic aclk, aresetn;
+  logic [6:0] s_axi_awaddr;
+  logic s_axi_awvalid, s_axi_awready;
+  logic [31:0] s_axi_wdata;
+  logic [3:0] s_axi_wstrb;
+  logic s_axi_wvalid, s_axi_wready;
+  logic [1:0] s_axi_bresp;
+  logic s_axi_bvalid, s_axi_bready;
+  logic [6:0] s_axi_araddr;
+  logic s_axi_arvalid, s_axi_arready;
+  logic [31:0] s_axi_rdata;
+  logic [1:0] s_axi_rresp;
+  logic s_axi_rvalid, s_axi_rready;
+  logic [31:0] s_axis_tdata;
+  logic [3:0] s_axis_tkeep;
+  logic s_axis_tlast, s_axis_tvalid, s_axis_tready;
+  logic [31:0] m_axis_tdata;
+  logic [3:0] m_axis_tkeep;
+  logic m_axis_tlast, m_axis_tvalid, m_axis_tready;
+
+  logic signed [7:0] input_data [0:MAX_INPUT_BYTES-1];
+  logic signed [7:0] weight_data [0:MAX_WEIGHT_BYTES-1];
+  logic signed [31:0] bias_data [0:3];
+  logic signed [7:0] expected_data [0:MAX_OUTPUT_BYTES-1];
+
+  integer cfg_h, cfg_w, cfg_ic, cfg_oc;
+  integer cfg_stride, cfg_padding, cfg_relu, cfg_multiplier, cfg_shift;
+  integer cfg_input_bytes, cfg_weight_bytes, cfg_bias_bytes, cfg_output_bytes;
+  integer output_byte_count, mismatch_count, tests_passed;
+  logic capture_enabled;
+
+  resnet_accel_top #(
+    .MAX_WEIGHT_WORDS(64), .MAX_BIAS_WORDS(8),
+    .MAX_INPUT_WORDS(32), .MAX_OUTPUT_WORDS(32)
+  ) dut (
+    .aclk(aclk), .aresetn(aresetn),
+    .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),
+    .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wvalid(s_axi_wvalid),
+    .s_axi_wready(s_axi_wready), .s_axi_bresp(s_axi_bresp), .s_axi_bvalid(s_axi_bvalid),
+    .s_axi_bready(s_axi_bready), .s_axi_araddr(s_axi_araddr), .s_axi_arvalid(s_axi_arvalid),
+    .s_axi_arready(s_axi_arready), .s_axi_rdata(s_axi_rdata), .s_axi_rresp(s_axi_rresp),
+    .s_axi_rvalid(s_axi_rvalid), .s_axi_rready(s_axi_rready),
+    .s_axis_tdata(s_axis_tdata), .s_axis_tkeep(s_axis_tkeep), .s_axis_tlast(s_axis_tlast),
+    .s_axis_tvalid(s_axis_tvalid), .s_axis_tready(s_axis_tready),
+    .m_axis_tdata(m_axis_tdata), .m_axis_tkeep(m_axis_tkeep), .m_axis_tlast(m_axis_tlast),
+    .m_axis_tvalid(m_axis_tvalid), .m_axis_tready(m_axis_tready)
+  );
+
+  always #(CLK_PERIOD_NS/2) aclk = ~aclk;
+
+  function automatic integer signed sat_add_ref(input longint signed a, input longint signed b);
+    longint signed wide;
+    begin
+      wide = a + b;
+      if (wide > 64'sd2147483647) sat_add_ref = 32'sh7fff_ffff;
+      else if (wide < -64'sd2147483648) sat_add_ref = 32'sh8000_0000;
+      else sat_add_ref = wide[31:0];
+    end
+  endfunction
+
+  function automatic longint signed requant_ref(
+    input integer signed accumulator,
+    input integer unsigned multiplier,
+    input integer unsigned shift
+  );
+    longint signed product, magnitude, rounded;
+    begin
+      product = accumulator;
+      product = product * multiplier;
+      magnitude = (product < 0) ? -product : product;
+      if (shift == 0) rounded = magnitude;
+      else rounded = (magnitude + (64'sd1 << (shift-1))) >>> shift;
+      requant_ref = (product < 0) ? -rounded : rounded;
+    end
+  endfunction
+
+  function automatic logic signed [7:0] postprocess_ref(input integer signed accumulator);
+    longint signed value;
+    begin
+      value = requant_ref(accumulator, cfg_multiplier, cfg_shift);
+      if ((cfg_relu != 0) && (value < 0)) value = 0;
+      if (value > 127) value = 127;
+      else if (value < -128) value = -128;
+      postprocess_ref = value[7:0];
+    end
+  endfunction
+
+  task automatic initialize_pattern(input integer pattern);
+    integer i;
+    begin
+      for (i = 0; i < MAX_INPUT_BYTES; i = i + 1)
+        input_data[i] = (pattern == 0) ? 8'sd1 : $signed((i % 9) - 4);
+      for (i = 0; i < MAX_WEIGHT_BYTES; i = i + 1)
+        weight_data[i] = (pattern == 0) ? 8'sd1 : $signed((i % 7) - 3);
+      bias_data[0] = (pattern == 0) ? 32'sd0 : -32'sd9;
+      bias_data[1] = (pattern == 0) ? 32'sd0 :  32'sd7;
+      bias_data[2] = (pattern == 0) ? 32'sd0 : -32'sd5;
+      bias_data[3] = (pattern == 0) ? 32'sd0 :  32'sd11;
+    end
+  endtask
+
+  task automatic set_shape(
+    input integer stride_value, input integer padding_value,
+    input integer relu_value, input integer multiplier_value,
+    input integer shift_value
+  );
+    integer out_h, out_w;
+    begin
+      cfg_h = 4; cfg_w = 4; cfg_ic = 4; cfg_oc = 4;
+      cfg_stride = stride_value; cfg_padding = padding_value;
+      cfg_relu = relu_value; cfg_multiplier = multiplier_value; cfg_shift = shift_value;
+      out_h = ((cfg_h + 2*cfg_padding - 3) / cfg_stride) + 1;
+      out_w = ((cfg_w + 2*cfg_padding - 3) / cfg_stride) + 1;
+      cfg_input_bytes = cfg_h * cfg_w * cfg_ic;
+      cfg_weight_bytes = 9 * cfg_ic * cfg_oc;
+      cfg_bias_bytes = 4 * cfg_oc;
+      cfg_output_bytes = out_h * out_w * cfg_oc;
+    end
+  endtask
+
+  task automatic build_reference;
+    integer index, out_h, out_w, oh, ow, oc, kh, kw, ic, iy, ix;
+    integer input_index, weight_index;
+    integer signed acc, input_value, weight_value;
+    begin
+      out_h = ((cfg_h + 2*cfg_padding - 3) / cfg_stride) + 1;
+      out_w = ((cfg_w + 2*cfg_padding - 3) / cfg_stride) + 1;
+      index = 0;
+      for (oh = 0; oh < out_h; oh = oh + 1)
+        for (ow = 0; ow < out_w; ow = ow + 1)
+          for (oc = 0; oc < cfg_oc; oc = oc + 1) begin
+            acc = 0;
+            for (kh = 0; kh < 3; kh = kh + 1)
+              for (kw = 0; kw < 3; kw = kw + 1)
+                for (ic = 0; ic < cfg_ic; ic = ic + 1) begin
+                  iy = oh * cfg_stride + kh - cfg_padding;
+                  ix = ow * cfg_stride + kw - cfg_padding;
+                  if ((iy < 0) || (iy >= cfg_h) || (ix < 0) || (ix >= cfg_w))
+                    input_value = 0;
+                  else begin
+                    input_index = ((iy * cfg_w) + ix) * cfg_ic + ic;
+                    input_value = $signed(input_data[input_index]);
+                  end
+                  weight_index = (((kh * 3) + kw) * cfg_ic + ic) * cfg_oc + oc;
+                  weight_value = $signed(weight_data[weight_index]);
+                  acc = sat_add_ref(acc, input_value * weight_value);
+                end
+            acc = sat_add_ref(acc, bias_data[oc]);
+            expected_data[index] = postprocess_ref(acc);
+            index = index + 1;
+          end
+    end
+  endtask
+
+  task automatic axi_write(input logic [6:0] address, input logic [31:0] data);
+    logic aw_done, w_done;
+    begin
+      aw_done = 0; w_done = 0;
+      @(negedge aclk);
+      s_axi_awaddr = address; s_axi_awvalid = 1;
+      s_axi_wdata = data; s_axi_wstrb = 4'b1111; s_axi_wvalid = 1;
+      while (!aw_done || !w_done) begin
+        @(posedge aclk);
+        if (s_axi_awvalid && s_axi_awready) aw_done = 1;
+        if (s_axi_wvalid && s_axi_wready) w_done = 1;
+        @(negedge aclk);
+        if (aw_done) s_axi_awvalid = 0;
+        if (w_done) s_axi_wvalid = 0;
+      end
+      wait (s_axi_bvalid === 1'b1);
+      if (s_axi_bresp != 2'b00) $fatal(1, "AXI write error at %02x", address);
+      @(posedge aclk);
+    end
+  endtask
+
+  task automatic axi_read(input logic [6:0] address, output logic [31:0] data);
+    begin
+      @(negedge aclk);
+      s_axi_araddr = address; s_axi_arvalid = 1;
+      do @(posedge aclk); while (!s_axi_arready);
+      @(negedge aclk); s_axi_arvalid = 0;
+      wait (s_axi_rvalid === 1'b1);
+      data = s_axi_rdata;
+      if (s_axi_rresp != 2'b00) $fatal(1, "AXI read error at %02x", address);
+      @(posedge aclk);
+    end
+  endtask
+
+  task automatic send_word(input logic [31:0] data, input logic [3:0] keep, input logic last);
+    begin
+      @(negedge aclk);
+      s_axis_tdata = data; s_axis_tkeep = keep; s_axis_tlast = last; s_axis_tvalid = 1;
+      do @(posedge aclk); while (!s_axis_tready);
+      @(negedge aclk);
+      s_axis_tvalid = 0; s_axis_tlast = 0; s_axis_tkeep = 4'b1111;
+    end
+  endtask
+
+  task automatic send_normal_packets;
+    integer word_index;
+    logic [31:0] packed_word;
+    begin
+      for (word_index = 0; word_index < cfg_weight_bytes/4; word_index = word_index + 1) begin
+        packed_word = {weight_data[word_index*4+3], weight_data[word_index*4+2],
+                  weight_data[word_index*4+1], weight_data[word_index*4]};
+        send_word(packed_word, 4'b1111, word_index == cfg_weight_bytes/4-1);
+      end
+      for (word_index = 0; word_index < cfg_bias_bytes/4; word_index = word_index + 1)
+        send_word(bias_data[word_index], 4'b1111, word_index == cfg_bias_bytes/4-1);
+      for (word_index = 0; word_index < cfg_input_bytes/4; word_index = word_index + 1) begin
+        packed_word = {input_data[word_index*4+3], input_data[word_index*4+2],
+                  input_data[word_index*4+1], input_data[word_index*4]};
+        send_word(packed_word, 4'b1111, word_index == cfg_input_bytes/4-1);
+      end
+    end
+  endtask
+
+  task automatic program_config;
+    logic [31:0] conv_config, output_scale;
+    begin
+      conv_config = {7'd0, cfg_relu[0], cfg_padding[7:0], cfg_stride[7:0], 8'd3};
+      output_scale = {cfg_shift[15:0], cfg_multiplier[15:0]};
+      axi_write(REG_OPERATION, 0); axi_write(REG_INPUT_HEIGHT, cfg_h);
+      axi_write(REG_INPUT_WIDTH, cfg_w); axi_write(REG_IN_CHANNELS, cfg_ic);
+      axi_write(REG_OUT_CHANNELS, cfg_oc); axi_write(REG_CONV_CONFIG, conv_config);
+      axi_write(REG_OUTPUT_SCALE, output_scale); axi_write(REG_INPUT_BYTES, cfg_input_bytes);
+      axi_write(REG_WEIGHT_BYTES, cfg_weight_bytes); axi_write(REG_BIAS_BYTES, cfg_bias_bytes);
+      axi_write(REG_SKIP_BYTES, 0); axi_write(REG_OUTPUT_BYTES, cfg_output_bytes);
+    end
+  endtask
+
+  task automatic clear_status;
+    begin axi_write(REG_STATUS, 32'h0000_000c); end
+  endtask
+
+  task automatic check_status(
+    input logic expected_busy, input logic expected_done, input logic expected_error,
+    input logic [31:0] expected_code, input string name
+  );
+    logic [31:0] status, code, state;
+    begin
+      axi_read(REG_STATUS, status); axi_read(REG_ERROR_CODE, code); axi_read(REG_DEBUG_STATE, state);
+      if ((status[1] !== expected_busy) || (status[2] !== expected_done)
+          || (status[3] !== expected_error) || (code !== expected_code))
+        $fatal(1, "%s status mismatch STATUS=%08x CODE=%0d STATE=%0d", name, status, code, state);
+      if (!expected_busy && (state[3:0] != DBG_IDLE))
+        $fatal(1, "%s did not return IDLE: STATE=%0d", name, state);
+    end
+  endtask
+
+  task automatic begin_capture;
+    begin output_byte_count = 0; mismatch_count = 0; capture_enabled = 1; end
+  endtask
+
+  task automatic finish_normal(input string name, input logic expect_error, input logic [31:0] code);
+    begin
+      wait (output_byte_count == cfg_output_bytes);
+      capture_enabled = 0;
+      repeat (6) @(posedge aclk);
+      check_status(0, 1, expect_error, code, name);
+      if (mismatch_count != 0) $fatal(1, "%s had %0d mismatches", name, mismatch_count);
+      tests_passed = tests_passed + 1;
+      $display("TEST %-32s PASS (%0d bytes)", name, output_byte_count);
+      clear_status();
+    end
+  endtask
+
+  task automatic run_normal(input string name);
+    begin
+      build_reference(); clear_status(); program_config(); begin_capture();
+      axi_write(REG_CONTROL, 1); send_normal_packets(); finish_normal(name, 0, ERR_NONE);
+    end
+  endtask
+
+  task automatic expect_invalid_config(input string name);
+    begin
+      clear_status(); axi_write(REG_CONTROL, 1); repeat (5) @(posedge aclk);
+      check_status(0, 0, 1, ERR_INVALID_CONFIG, name);
+      tests_passed = tests_passed + 1; $display("TEST %-32s PASS", name); clear_status();
+    end
+  endtask
+
+  task automatic recover_with_normal(input string name);
+    begin set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal(name); end
+  endtask
+
+  always @(posedge aclk) begin : output_capture
+    integer lane, beat_mismatches, expected_index;
+    integer signed observed;
+    if (aresetn && capture_enabled && m_axis_tvalid && m_axis_tready) begin
+      beat_mismatches = 0;
+      if (m_axis_tkeep !== 4'b1111) beat_mismatches = beat_mismatches + 1;
+      for (lane = 0; lane < 4; lane = lane + 1) begin
+        expected_index = output_byte_count + lane;
+        observed = $signed(m_axis_tdata[lane*8 +: 8]);
+        if (observed != $signed(expected_data[expected_index])) begin
+          beat_mismatches = beat_mismatches + 1;
+          if ((mismatch_count + beat_mismatches) <= 10)
+            $display("MISMATCH byte=%0d expected=%0d actual=%0d",
+                     expected_index, $signed(expected_data[expected_index]), observed);
+        end
+      end
+      if (m_axis_tlast !== ((output_byte_count + 4) == cfg_output_bytes))
+        beat_mismatches = beat_mismatches + 1;
+      mismatch_count = mismatch_count + beat_mismatches;
+      output_byte_count = output_byte_count + 4;
+    end
+  end
+
+  initial begin : test_sequence
+    logic [31:0] status, code, original_height;
+    integer word_index;
+    logic [31:0] packed_word;
+
+    aclk = 0; aresetn = 0;
+    s_axi_awaddr = 0; s_axi_awvalid = 0; s_axi_wdata = 0; s_axi_wstrb = 4'b1111;
+    s_axi_wvalid = 0; s_axi_bready = 1; s_axi_araddr = 0; s_axi_arvalid = 0;
+    s_axi_rready = 1; s_axis_tdata = 0; s_axis_tkeep = 4'b1111;
+    s_axis_tlast = 0; s_axis_tvalid = 0; m_axis_tready = 1;
+    output_byte_count = 0; mismatch_count = 0; capture_enabled = 0; tests_passed = 0;
+    repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
+
+    set_shape(1, 1, 0, 3, 2); initialize_pattern(1); run_normal("signed_bias_relu_off_requant");
+    set_shape(2, 1, 1, 1, 0); initialize_pattern(1); run_normal("stride2");
+    set_shape(1, 0, 1, 1, 0); initialize_pattern(1); run_normal("padding0");
+    set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal("consecutive_operation_1");
+    initialize_pattern(1); run_normal("consecutive_operation_2");
+
+    build_reference(); clear_status(); program_config(); begin_capture();
+    axi_write(REG_CONTROL, 1); axi_write(REG_CONTROL, 1); send_normal_packets();
+    finish_normal("start_while_busy_nonfatal", 1, ERR_START_WHILE_BUSY);
+
+    build_reference(); clear_status(); program_config(); original_height = cfg_h; begin_capture();
+    axi_write(REG_CONTROL, 1); axi_write(REG_INPUT_HEIGHT, 99); axi_read(REG_INPUT_HEIGHT, status);
+    if (status != original_height) $fatal(1, "BUSY config write changed register: %0d", status);
+    send_normal_packets(); finish_normal("config_write_busy_nonfatal", 1, ERR_CONFIG_WRITE_BUSY);
+
+    program_config(); axi_write(REG_OUTPUT_BYTES, 132); expect_invalid_config("buffer_capacity_invalid");
+    program_config(); axi_write(REG_INPUT_BYTES, cfg_input_bytes + 4);
+    expect_invalid_config("register_byte_mismatch");
+
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1);
+    packed_word = {weight_data[3], weight_data[2], weight_data[1], weight_data[0]};
+    send_word(packed_word, 4'b1111, 1); repeat (5) @(posedge aclk);
+    check_status(0, 0, 1, ERR_TLAST_POSITION, "early_tlast");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "early_tlast");
+    recover_with_normal("recovery_after_early_tlast");
+
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1);
+    for (word_index = 0; word_index < cfg_weight_bytes/4; word_index = word_index + 1) begin
+      packed_word = {weight_data[word_index*4+3], weight_data[word_index*4+2],
+                weight_data[word_index*4+1], weight_data[word_index*4]};
+      send_word(packed_word, 4'b1111, 0);
+    end
+    repeat (5) @(posedge aclk);
+    check_status(0, 0, 1, ERR_TLAST_POSITION, "missing_tlast");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "missing_tlast");
+    recover_with_normal("recovery_after_missing_tlast");
+
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1);
+    send_word(32'h0101_0101, 4'b0011, 0); repeat (5) @(posedge aclk);
+    check_status(0, 0, 1, ERR_PACKET_LENGTH, "invalid_tkeep");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "invalid_tkeep");
+    recover_with_normal("recovery_after_invalid_tkeep");
+
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1);
+    send_word(32'h0101_0101, 4'b1111, 0); axi_write(REG_CONTROL, 2);
+    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "abort");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "abort");
+    recover_with_normal("recovery_after_abort");
+
+    axi_read(REG_STATUS, status); axi_read(REG_ERROR_CODE, code);
+    if (status[3] || (code != ERR_NONE))
+      $fatal(1, "Final recovery left error STATUS=%08x CODE=%0d", status, code);
+    $display("DIRECTED PASS: %0d integration/error checks", tests_passed);
+    $finish;
+  end
+
+  initial begin
+    repeat (1500000) @(posedge aclk);
+    $fatal(1, "Directed simulation timeout");
+  end
+endmodule

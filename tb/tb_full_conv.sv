@@ -1,0 +1,225 @@
+`timescale 1ns/1ps
+
+module tb_full_conv;
+  import accel_pkg::*;
+
+  localparam integer CLK_PERIOD_NS = 10;
+  localparam integer INPUT_BYTES = 3072;
+  localparam integer WEIGHT_BYTES = 432;
+  localparam integer BIAS_BYTES = 64;
+  localparam integer OUTPUT_BYTES = 16384;
+
+  logic aclk, aresetn;
+  logic [6:0] s_axi_awaddr;
+  logic s_axi_awvalid, s_axi_awready;
+  logic [31:0] s_axi_wdata;
+  logic [3:0] s_axi_wstrb;
+  logic s_axi_wvalid, s_axi_wready;
+  logic [1:0] s_axi_bresp;
+  logic s_axi_bvalid, s_axi_bready;
+  logic [6:0] s_axi_araddr;
+  logic s_axi_arvalid, s_axi_arready;
+  logic [31:0] s_axi_rdata;
+  logic [1:0] s_axi_rresp;
+  logic s_axi_rvalid, s_axi_rready;
+  logic [31:0] s_axis_tdata;
+  logic [3:0] s_axis_tkeep;
+  logic s_axis_tlast, s_axis_tvalid, s_axis_tready;
+  logic [31:0] m_axis_tdata;
+  logic [3:0] m_axis_tkeep;
+  logic m_axis_tlast, m_axis_tvalid, m_axis_tready;
+
+  logic [7:0] input_data [0:INPUT_BYTES-1];
+  logic [7:0] weight_data [0:WEIGHT_BYTES-1];
+  logic [31:0] bias_data [0:15];
+  logic [7:0] expected_data [0:OUTPUT_BYTES-1];
+  logic [31:0] mac_trace [0:OUTPUT_BYTES-1];
+  logic [31:0] biased_trace [0:OUTPUT_BYTES-1];
+  logic [63:0] requant_trace [0:OUTPUT_BYTES-1];
+
+  integer output_byte_count;
+  integer mismatch_count;
+  integer detail_count;
+
+  resnet_accel_top dut (
+    .aclk(aclk), .aresetn(aresetn),
+    .s_axi_awaddr(s_axi_awaddr), .s_axi_awvalid(s_axi_awvalid), .s_axi_awready(s_axi_awready),
+    .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wvalid(s_axi_wvalid),
+    .s_axi_wready(s_axi_wready), .s_axi_bresp(s_axi_bresp), .s_axi_bvalid(s_axi_bvalid),
+    .s_axi_bready(s_axi_bready), .s_axi_araddr(s_axi_araddr), .s_axi_arvalid(s_axi_arvalid),
+    .s_axi_arready(s_axi_arready), .s_axi_rdata(s_axi_rdata), .s_axi_rresp(s_axi_rresp),
+    .s_axi_rvalid(s_axi_rvalid), .s_axi_rready(s_axi_rready),
+    .s_axis_tdata(s_axis_tdata), .s_axis_tkeep(s_axis_tkeep), .s_axis_tlast(s_axis_tlast),
+    .s_axis_tvalid(s_axis_tvalid), .s_axis_tready(s_axis_tready),
+    .m_axis_tdata(m_axis_tdata), .m_axis_tkeep(m_axis_tkeep), .m_axis_tlast(m_axis_tlast),
+    .m_axis_tvalid(m_axis_tvalid), .m_axis_tready(m_axis_tready)
+  );
+
+  always #(CLK_PERIOD_NS/2) aclk = ~aclk;
+
+  task automatic axi_write(input logic [6:0] address, input logic [31:0] data);
+    logic aw_done, w_done;
+    begin
+      aw_done = 0; w_done = 0;
+      @(negedge aclk);
+      s_axi_awaddr = address; s_axi_awvalid = 1;
+      s_axi_wdata = data; s_axi_wstrb = 4'b1111; s_axi_wvalid = 1;
+      while (!aw_done || !w_done) begin
+        @(posedge aclk);
+        if (s_axi_awvalid && s_axi_awready) aw_done = 1;
+        if (s_axi_wvalid && s_axi_wready) w_done = 1;
+        @(negedge aclk);
+        if (aw_done) s_axi_awvalid = 0;
+        if (w_done) s_axi_wvalid = 0;
+      end
+      wait (s_axi_bvalid === 1'b1);
+      if (s_axi_bresp != 2'b00) $fatal(1, "AXI write error at %02x", address);
+      @(posedge aclk);
+    end
+  endtask
+
+  task automatic axi_read(input logic [6:0] address, output logic [31:0] data);
+    begin
+      @(negedge aclk);
+      s_axi_araddr = address; s_axi_arvalid = 1;
+      do @(posedge aclk); while (!s_axi_arready);
+      @(negedge aclk); s_axi_arvalid = 0;
+      wait (s_axi_rvalid === 1'b1);
+      data = s_axi_rdata;
+      if (s_axi_rresp != 2'b00) $fatal(1, "AXI read error at %02x", address);
+      @(posedge aclk);
+    end
+  endtask
+
+  task automatic send_word(input logic [31:0] data, input logic last);
+    begin
+      @(negedge aclk);
+      s_axis_tdata = data; s_axis_tkeep = 4'b1111; s_axis_tlast = last; s_axis_tvalid = 1;
+      do @(posedge aclk); while (!s_axis_tready);
+      @(negedge aclk); s_axis_tvalid = 0; s_axis_tlast = 0;
+    end
+  endtask
+
+  task automatic send_packets;
+    integer word_index;
+    logic [31:0] packed_word;
+    begin
+      for (word_index = 0; word_index < WEIGHT_BYTES/4; word_index = word_index + 1) begin
+        packed_word = {weight_data[word_index*4+3], weight_data[word_index*4+2],
+                       weight_data[word_index*4+1], weight_data[word_index*4]};
+        send_word(packed_word, word_index == WEIGHT_BYTES/4-1);
+      end
+      for (word_index = 0; word_index < BIAS_BYTES/4; word_index = word_index + 1)
+        send_word(bias_data[word_index], word_index == BIAS_BYTES/4-1);
+      for (word_index = 0; word_index < INPUT_BYTES/4; word_index = word_index + 1) begin
+        packed_word = {input_data[word_index*4+3], input_data[word_index*4+2],
+                       input_data[word_index*4+1], input_data[word_index*4]};
+        send_word(packed_word, word_index == INPUT_BYTES/4-1);
+      end
+    end
+  endtask
+
+  always @(posedge aclk) begin : output_capture
+    integer lane, byte_index, beat_mismatches;
+    integer oh, ow, oc;
+    integer signed actual_value, expected_value;
+    if (aresetn && m_axis_tvalid && m_axis_tready) begin
+      beat_mismatches = 0;
+      if (m_axis_tkeep !== 4'b1111) begin
+        beat_mismatches = beat_mismatches + 1;
+        if (detail_count < 10) begin
+          $display("MISMATCH TKEEP byte=%0d expected=1111 actual=%b",
+                   output_byte_count, m_axis_tkeep);
+          detail_count = detail_count + 1;
+        end
+      end
+      for (lane = 0; lane < 4; lane = lane + 1) begin
+        byte_index = output_byte_count + lane;
+        actual_value = $signed(m_axis_tdata[lane*8 +: 8]);
+        expected_value = $signed(expected_data[byte_index]);
+        if (actual_value != expected_value) begin
+          beat_mismatches = beat_mismatches + 1;
+          if (detail_count < 10) begin
+            oh = byte_index / (32 * 16);
+            ow = (byte_index / 16) % 32;
+            oc = byte_index % 16;
+            $display("MISMATCH #%0d h=%0d w=%0d c=%0d expected=%0d actual=%0d",
+                     mismatch_count + beat_mismatches, oh, ow, oc, expected_value, actual_value);
+            $display("TRACE mac_acc=%0d biased=%0d requant=%0d clamp=%0d",
+                     $signed(mac_trace[byte_index]), $signed(biased_trace[byte_index]),
+                     $signed(requant_trace[byte_index]), expected_value);
+            detail_count = detail_count + 1;
+          end
+        end
+      end
+      if (m_axis_tlast !== ((output_byte_count + 4) == OUTPUT_BYTES)) begin
+        beat_mismatches = beat_mismatches + 1;
+        if (detail_count < 10) begin
+          $display("MISMATCH TLAST byte=%0d expected=%0b actual=%0b",
+                   output_byte_count, ((output_byte_count + 4) == OUTPUT_BYTES), m_axis_tlast);
+          detail_count = detail_count + 1;
+        end
+      end
+      mismatch_count = mismatch_count + beat_mismatches;
+      output_byte_count = output_byte_count + 4;
+    end
+  end
+
+  initial begin
+    logic [31:0] status, code, cycles, state;
+    aclk = 0; aresetn = 0;
+    s_axi_awaddr = 0; s_axi_awvalid = 0; s_axi_wdata = 0; s_axi_wstrb = 4'b1111;
+    s_axi_wvalid = 0; s_axi_bready = 1; s_axi_araddr = 0; s_axi_arvalid = 0;
+    s_axi_rready = 1; s_axis_tdata = 0; s_axis_tkeep = 4'b1111;
+    s_axis_tlast = 0; s_axis_tvalid = 0; m_axis_tready = 1;
+    output_byte_count = 0; mismatch_count = 0; detail_count = 0;
+
+    $readmemh("vectors/full_conv_32x32x3x16/input.hex", input_data);
+    $readmemh("vectors/full_conv_32x32x3x16/weight.hex", weight_data);
+    $readmemh("vectors/full_conv_32x32x3x16/bias.hex", bias_data);
+    $readmemh("vectors/full_conv_32x32x3x16/expected_output.hex", expected_data);
+    $readmemh("vectors/full_conv_32x32x3x16/mac_accumulator.hex", mac_trace);
+    $readmemh("vectors/full_conv_32x32x3x16/biased_accumulator.hex", biased_trace);
+    $readmemh("vectors/full_conv_32x32x3x16/requantized.hex", requant_trace);
+
+    repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
+    axi_write(REG_STATUS, 32'h0000_000c);
+    axi_write(REG_OPERATION, 0);
+    axi_write(REG_INPUT_HEIGHT, 32);
+    axi_write(REG_INPUT_WIDTH, 32);
+    axi_write(REG_IN_CHANNELS, 3);
+    axi_write(REG_OUT_CHANNELS, 16);
+    axi_write(REG_CONV_CONFIG, 32'h0101_0103);
+    axi_write(REG_OUTPUT_SCALE, 32'h0002_0003);
+    axi_write(REG_INPUT_BYTES, INPUT_BYTES);
+    axi_write(REG_WEIGHT_BYTES, WEIGHT_BYTES);
+    axi_write(REG_BIAS_BYTES, BIAS_BYTES);
+    axi_write(REG_SKIP_BYTES, 0);
+    axi_write(REG_OUTPUT_BYTES, OUTPUT_BYTES);
+    axi_write(REG_CONTROL, 1);
+    send_packets();
+
+    wait (output_byte_count == OUTPUT_BYTES);
+    repeat (8) @(posedge aclk);
+    axi_read(REG_STATUS, status);
+    axi_read(REG_ERROR_CODE, code);
+    axi_read(REG_CYCLE_COUNT, cycles);
+    axi_read(REG_DEBUG_STATE, state);
+    if (status[1] || !status[2] || status[3])
+      $fatal(1, "Full conv status failure STATUS=%08x CODE=%0d", status, code);
+    if (code != ERR_NONE) $fatal(1, "Full conv ERROR_CODE=%0d", code);
+    if (cycles == 0) $fatal(1, "Full conv cycle count was zero");
+    if (state[3:0] != DBG_IDLE) $fatal(1, "Full conv debug state=%0d, expected IDLE", state);
+    if (mismatch_count != 0)
+      $fatal(1, "FULL CONV FAIL: %0d mismatches across %0d output bytes",
+             mismatch_count, output_byte_count);
+    $display("FULL CONV PASS: %0d output bytes, mismatch=0 cycles=%0d",
+             output_byte_count, cycles);
+    $finish;
+  end
+
+  initial begin
+    repeat (3000000) @(posedge aclk);
+    $fatal(1, "Full convolution simulation timeout");
+  end
+endmodule
