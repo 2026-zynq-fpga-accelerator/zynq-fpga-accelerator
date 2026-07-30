@@ -6,7 +6,7 @@ module tb_op_conv_directed;
   localparam integer CLK_PERIOD_NS = 10;
   localparam integer MAX_INPUT_BYTES = 64;
   localparam integer MAX_WEIGHT_BYTES = 144;
-  localparam integer MAX_OUTPUT_BYTES = 64;
+  localparam integer MAX_OUTPUT_BYTES = 128;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;
@@ -30,7 +30,7 @@ module tb_op_conv_directed;
 
   logic signed [7:0] input_data [0:MAX_INPUT_BYTES-1];
   logic signed [7:0] weight_data [0:MAX_WEIGHT_BYTES-1];
-  logic signed [31:0] bias_data [0:3];
+  logic signed [31:0] bias_data [0:7];
   logic signed [7:0] expected_data [0:MAX_OUTPUT_BYTES-1];
 
   integer cfg_h, cfg_w, cfg_ic, cfg_oc;
@@ -106,6 +106,8 @@ module tb_op_conv_directed;
       bias_data[1] = (pattern == 0) ? 32'sd0 :  32'sd7;
       bias_data[2] = (pattern == 0) ? 32'sd0 : -32'sd5;
       bias_data[3] = (pattern == 0) ? 32'sd0 :  32'sd11;
+      for (i = 4; i < 8; i = i + 1)
+        bias_data[i] = 32'sd0;
     end
   endtask
 
@@ -282,10 +284,72 @@ module tb_op_conv_directed;
     end
   endtask
 
-  task automatic expect_invalid_config(input string name);
+  task automatic run_validator_admission(input string name);
+    integer wait_cycles;
+    logic [31:0] count_before;
     begin
-      clear_status(); axi_write(REG_CONTROL, 1); repeat (5) @(posedge aclk);
+      build_reference(); clear_status(); program_config(); begin_capture();
+      count_before = dut.cycle_count;
+      axi_write(REG_CONTROL, 1);
+      wait_cycles = 0;
+      while (!dut.busy) begin
+        @(negedge aclk);
+        if (!dut.busy && (dut.debug_state != DBG_IDLE))
+          $fatal(1, "%s DEBUG_STATE changed during admission: %0d", name, dut.debug_state);
+        if (!dut.busy && (dut.cycle_count != count_before))
+          $fatal(1, "%s cycle counter changed during admission", name);
+        if (dut.error)
+          $fatal(1, "%s asserted ERROR during valid admission", name);
+        wait_cycles = wait_cycles + 1;
+        if (wait_cycles > 256)
+          $fatal(1, "%s timed out waiting for BUSY", name);
+      end
+      if (wait_cycles == 0)
+        $fatal(1, "%s did not expose a multi-cycle admission interval", name);
+      $display("VALIDATOR LATENCY: %0d cycles (%s)", wait_cycles, name);
+      send_normal_packets();
+      finish_normal(name, 0, ERR_NONE);
+    end
+  endtask
+
+  task automatic expect_invalid_config(input string name);
+    integer wait_cycles;
+    begin
+      clear_status();
+      axi_write(REG_CONTROL, 1);
+      wait_cycles = 0;
+      while (!dut.error) begin
+        @(negedge aclk);
+        if (dut.busy)
+          $fatal(1, "%s entered BUSY during invalid validation", name);
+        if (dut.debug_state != DBG_IDLE)
+          $fatal(1, "%s changed DEBUG_STATE during invalid validation: %0d", name, dut.debug_state);
+        wait_cycles = wait_cycles + 1;
+        if (wait_cycles > 256)
+          $fatal(1, "%s timed out waiting for ERR_INVALID_CONFIG", name);
+      end
       check_status(0, 0, 1, ERR_INVALID_CONFIG, name);
+      tests_passed = tests_passed + 1; $display("TEST %-32s PASS", name); clear_status();
+    end
+  endtask
+
+  task automatic expect_invalid_operation(input string name);
+    integer wait_cycles;
+    begin
+      clear_status();
+      axi_write(REG_CONTROL, 1);
+      wait_cycles = 0;
+      while (!dut.error) begin
+        @(negedge aclk);
+        if (dut.busy)
+          $fatal(1, "%s entered BUSY during invalid operation validation", name);
+        if (dut.debug_state != DBG_IDLE)
+          $fatal(1, "%s changed DEBUG_STATE during invalid operation validation", name);
+        wait_cycles = wait_cycles + 1;
+        if (wait_cycles > 256)
+          $fatal(1, "%s timed out waiting for ERR_INVALID_OPERATION", name);
+      end
+      check_status(0, 0, 1, ERR_INVALID_OPERATION, name);
       tests_passed = tests_passed + 1; $display("TEST %-32s PASS", name); clear_status();
     end
   endtask
@@ -336,19 +400,51 @@ module tb_op_conv_directed;
     set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal("consecutive_operation_1");
     initialize_pattern(1); run_normal("consecutive_operation_2");
 
+    set_shape(1, 1, 1, 1, 0); initialize_pattern(0);
+    run_validator_admission("validator_valid_admission");
+
+    cfg_h = 4; cfg_w = 4; cfg_ic = 2; cfg_oc = 8;
+    cfg_stride = 1; cfg_padding = 1; cfg_relu = 1; cfg_multiplier = 1; cfg_shift = 0;
+    cfg_input_bytes = 32; cfg_weight_bytes = 144; cfg_bias_bytes = 32; cfg_output_bytes = 128;
+    initialize_pattern(1); run_normal("capacity_boundary_accept");
+
+    set_shape(1, 1, 1, 1, 0); initialize_pattern(0);
     build_reference(); clear_status(); program_config(); begin_capture();
-    axi_write(REG_CONTROL, 1); axi_write(REG_CONTROL, 1); send_normal_packets();
+    axi_write(REG_CONTROL, 1);
+    @(negedge aclk);
+    if (!dut.admission_active || dut.busy)
+      $fatal(1, "second START was not issued during admission: admission=%0b busy=%0b val_state=%0d", dut.admission_active, dut.busy, dut.u_controller.validator_state_q);
+    axi_write(REG_CONTROL, 1); send_normal_packets();
     finish_normal("start_while_busy_nonfatal", 1, ERR_START_WHILE_BUSY);
 
     build_reference(); clear_status(); program_config(); original_height = cfg_h; begin_capture();
-    axi_write(REG_CONTROL, 1); axi_write(REG_INPUT_HEIGHT, 99); axi_read(REG_INPUT_HEIGHT, status);
+    axi_write(REG_CONTROL, 1);
+    @(negedge aclk);
+    if (!dut.admission_active || dut.busy)
+      $fatal(1, "config write was not issued during admission");
+    axi_write(REG_INPUT_HEIGHT, 99); axi_read(REG_INPUT_HEIGHT, status);
     if (status != original_height) $fatal(1, "BUSY config write changed register: %0d", status);
     send_normal_packets(); finish_normal("config_write_busy_nonfatal", 1, ERR_CONFIG_WRITE_BUSY);
 
+    program_config(); axi_write(REG_OPERATION, 1); expect_invalid_operation("invalid_operation_reject");
     program_config(); axi_write(REG_OUTPUT_BYTES, 132); expect_invalid_config("buffer_capacity_invalid");
     program_config(); axi_write(REG_INPUT_BYTES, cfg_input_bytes + 4);
     expect_invalid_config("register_byte_mismatch");
 
+    cfg_h = 2; cfg_w = 11; cfg_ic = 2; cfg_oc = 6;
+    cfg_stride = 1; cfg_padding = 1; cfg_relu = 1; cfg_multiplier = 1; cfg_shift = 0;
+    cfg_input_bytes = 44; cfg_weight_bytes = 108; cfg_bias_bytes = 24; cfg_output_bytes = 132;
+    program_config(); expect_invalid_config("calculated_capacity_plus4");
+
+    set_shape(1, 1, 1, 1, 0);
+    program_config(); axi_write(REG_INPUT_HEIGHT, 32'hffff_ffff); expect_invalid_config("raw_height_max_reject");
+    program_config(); axi_write(REG_INPUT_WIDTH,  32'hffff_ffff); expect_invalid_config("raw_width_max_reject");
+    program_config(); axi_write(REG_IN_CHANNELS,  32'hffff_ffff); expect_invalid_config("raw_in_channels_max_reject");
+    program_config(); axi_write(REG_OUT_CHANNELS, 32'hffff_ffff); expect_invalid_config("raw_out_channels_max_reject");
+    program_config(); axi_write(REG_INPUT_HEIGHT, 1); axi_write(REG_CONV_CONFIG, 32'h0100_0103);
+    expect_invalid_config("padded_dimension_short_reject");
+
+    set_shape(1, 1, 1, 1, 0); initialize_pattern(0);
     program_config(); clear_status(); axi_write(REG_CONTROL, 1);
     packed_word = {weight_data[3], weight_data[2], weight_data[1], weight_data[0]};
     send_word(packed_word, 4'b1111, 1); repeat (5) @(posedge aclk);
@@ -372,6 +468,15 @@ module tb_op_conv_directed;
     check_status(0, 0, 1, ERR_PACKET_LENGTH, "invalid_tkeep");
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "invalid_tkeep");
     recover_with_normal("recovery_after_invalid_tkeep");
+
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1);
+    @(negedge aclk);
+    if (!dut.admission_active || dut.busy)
+      $fatal(1, "ABORT was not issued during admission");
+    axi_write(REG_CONTROL, 2);
+    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "validation_abort");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "validation_abort");
+    recover_with_normal("recovery_after_validation_abort");
 
     program_config(); clear_status(); axi_write(REG_CONTROL, 1);
     send_word(32'h0101_0101, 4'b1111, 0); axi_write(REG_CONTROL, 2);
