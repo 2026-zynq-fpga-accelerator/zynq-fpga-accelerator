@@ -8,6 +8,7 @@ module tb_full_conv;
   localparam integer WEIGHT_BYTES = 432;
   localparam integer BIAS_BYTES = 64;
   localparam integer OUTPUT_BYTES = 16384;
+  localparam logic [31:0] EXPECTED_CYCLES = 32'd960254;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;
@@ -221,7 +222,8 @@ module tb_full_conv;
     if (status[1] || !status[2] || status[3])
       $fatal(1, "Full conv status failure STATUS=%08x CODE=%0d", status, code);
     if (code != ERR_NONE) $fatal(1, "Full conv ERROR_CODE=%0d", code);
-    if (cycles == 0) $fatal(1, "Full conv cycle count was zero");
+    if (cycles != EXPECTED_CYCLES)
+      $fatal(1, "Full conv cycle count=%0d expected=%0d", cycles, EXPECTED_CYCLES);
     if (state[3:0] != DBG_IDLE) $fatal(1, "Full conv debug state=%0d, expected IDLE", state);
     if (mismatch_count != 0)
       $fatal(1, "FULL CONV FAIL: %0d mismatches across %0d output bytes",

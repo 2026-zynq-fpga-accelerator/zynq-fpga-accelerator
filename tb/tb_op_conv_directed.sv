@@ -37,7 +37,12 @@ module tb_op_conv_directed;
   integer cfg_stride, cfg_padding, cfg_relu, cfg_multiplier, cfg_shift;
   integer cfg_input_bytes, cfg_weight_bytes, cfg_bias_bytes, cfg_output_bytes;
   integer output_byte_count, mismatch_count, tests_passed;
+  integer expected_write_element;
   logic capture_enabled;
+  logic postprocess_monitor_enabled;
+  logic previous_output_we;
+  logic last_write_pending;
+  logic last_output_write_seen;
 
   resnet_accel_top #(
     .MAX_WEIGHT_WORDS(64), .MAX_BIAS_WORDS(8),
@@ -261,7 +266,16 @@ module tb_op_conv_directed;
   endtask
 
   task automatic begin_capture;
-    begin output_byte_count = 0; mismatch_count = 0; capture_enabled = 1; end
+    begin
+      output_byte_count = 0;
+      mismatch_count = 0;
+      capture_enabled = 1;
+      expected_write_element = 0;
+      postprocess_monitor_enabled = 1'b1;
+      previous_output_we = 1'b0;
+      last_write_pending = 1'b0;
+      last_output_write_seen = 1'b0;
+    end
   endtask
 
   task automatic finish_normal(input string name, input logic expect_error, input logic [31:0] code);
@@ -269,6 +283,12 @@ module tb_op_conv_directed;
       wait (output_byte_count == cfg_output_bytes);
       capture_enabled = 0;
       repeat (6) @(posedge aclk);
+      if (expected_write_element != cfg_output_bytes)
+        $fatal(1, "%s output write count=%0d expected=%0d",
+               name, expected_write_element, cfg_output_bytes);
+      if (!last_output_write_seen)
+        $fatal(1, "%s did not align final BRAM write with conv_done", name);
+      postprocess_monitor_enabled = 1'b0;
       check_status(0, 1, expect_error, code, name);
       if (mismatch_count != 0) $fatal(1, "%s had %0d mismatches", name, mismatch_count);
       tests_passed = tests_passed + 1;
@@ -358,6 +378,42 @@ module tb_op_conv_directed;
     begin set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal(name); end
   endtask
 
+  always @(posedge aclk) begin : postprocess_write_monitor
+    if (!aresetn) begin
+      previous_output_we = 1'b0;
+      last_write_pending = 1'b0;
+    end else if (postprocess_monitor_enabled) begin
+      if (dut.output_we) begin
+        if (previous_output_we)
+          $fatal(1, "output_we remained asserted for multiple cycles");
+        if (expected_write_element >= cfg_output_bytes)
+          $fatal(1, "unexpected extra output write at element %0d", expected_write_element);
+        if (dut.output_waddr !== (expected_write_element >> 2))
+          $fatal(1, "output address mismatch element=%0d got=%0d expected=%0d",
+                 expected_write_element, dut.output_waddr, expected_write_element >> 2);
+        if (dut.output_wbyte_sel !== (expected_write_element & 3))
+          $fatal(1, "output lane mismatch element=%0d got=%0d expected=%0d",
+                 expected_write_element, dut.output_wbyte_sel, expected_write_element & 3);
+        if ($signed(dut.output_wdata) !== $signed(expected_data[expected_write_element]))
+          $fatal(1, "output write data mismatch element=%0d got=%0d expected=%0d",
+                 expected_write_element, $signed(dut.output_wdata),
+                 $signed(expected_data[expected_write_element]));
+        last_write_pending = (expected_write_element == (cfg_output_bytes - 1));
+        expected_write_element = expected_write_element + 1;
+      end
+      previous_output_we = dut.output_we;
+    end
+  end
+
+  always @(negedge aclk) begin : final_write_done_monitor
+    if (postprocess_monitor_enabled && last_write_pending) begin
+      if (!dut.conv_done)
+        $fatal(1, "final BRAM write was not aligned with conv_done");
+      last_output_write_seen = 1'b1;
+      last_write_pending = 1'b0;
+    end
+  end
+
   always @(posedge aclk) begin : output_capture
     integer lane, beat_mismatches, expected_index;
     integer signed observed;
@@ -392,9 +448,34 @@ module tb_op_conv_directed;
     s_axi_rready = 1; s_axis_tdata = 0; s_axis_tkeep = 4'b1111;
     s_axis_tlast = 0; s_axis_tvalid = 0; m_axis_tready = 1;
     output_byte_count = 0; mismatch_count = 0; capture_enabled = 0; tests_passed = 0;
+    expected_write_element = 0; postprocess_monitor_enabled = 0;
+    previous_output_we = 0; last_write_pending = 0; last_output_write_seen = 0;
     repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
 
     set_shape(1, 1, 0, 3, 2); initialize_pattern(1); run_normal("signed_bias_relu_off_requant");
+
+    set_shape(1, 1, 0, 0, 7); initialize_pattern(1); run_normal("postprocess_m_zero");
+
+    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
+    for (word_index = 0; word_index < MAX_INPUT_BYTES; word_index = word_index + 1)
+      input_data[word_index] = 8'sd0;
+    for (word_index = 0; word_index < MAX_WEIGHT_BYTES; word_index = word_index + 1)
+      weight_data[word_index] = 8'sd0;
+    bias_data[0] = 32'sd127; bias_data[1] = 32'sd128;
+    bias_data[2] = -32'sd128; bias_data[3] = -32'sd129;
+    run_normal("postprocess_clamp_lanes");
+
+    set_shape(1, 1, 0, 1, 1); initialize_pattern(0);
+    for (word_index = 0; word_index < MAX_INPUT_BYTES; word_index = word_index + 1)
+      input_data[word_index] = 8'sd0;
+    for (word_index = 0; word_index < MAX_WEIGHT_BYTES; word_index = word_index + 1)
+      weight_data[word_index] = 8'sd0;
+    bias_data[0] = 32'sd1; bias_data[1] = -32'sd1;
+    bias_data[2] = 32'sd3; bias_data[3] = -32'sd3;
+    run_normal("postprocess_signed_ties");
+
+    set_shape(1, 1, 1, 65535, 0); initialize_pattern(1); run_normal("postprocess_m_65535_relu");
+
     set_shape(2, 1, 1, 1, 0); initialize_pattern(1); run_normal("stride2");
     set_shape(1, 0, 1, 1, 0); initialize_pattern(1); run_normal("padding0");
     set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal("consecutive_operation_1");
@@ -477,6 +558,22 @@ module tb_op_conv_directed;
     repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "validation_abort");
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "validation_abort");
     recover_with_normal("recovery_after_validation_abort");
+
+    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
+    build_reference(); program_config(); clear_status(); begin_capture();
+    axi_write(REG_CONTROL, 1); send_normal_packets();
+    wait (dut.u_conv_engine.state_q == 3'd4);
+    @(negedge aclk);
+    force dut.engine_abort = 1'b1;
+    @(posedge aclk); #1;
+    release dut.engine_abort;
+    if (expected_write_element != 0 || dut.output_we)
+      $fatal(1, "postprocess abort allowed an incomplete output write");
+    postprocess_monitor_enabled = 1'b0; capture_enabled = 1'b0;
+    axi_write(REG_CONTROL, 2);
+    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "postprocess_abort");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "postprocess_abort");
+    recover_with_normal("recovery_after_postprocess_abort");
 
     program_config(); clear_status(); axi_write(REG_CONTROL, 1);
     send_word(32'h0101_0101, 4'b1111, 0); axi_write(REG_CONTROL, 2);

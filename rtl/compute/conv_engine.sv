@@ -51,7 +51,9 @@ module conv_engine #(
     ENG_READ_TAP,
     ENG_ACCUMULATE,
     ENG_ADD_BIAS,
-    ENG_POSTPROCESS
+    ENG_REQUANT_MUL,
+    ENG_REQUANT_ROUND,
+    ENG_WRITE_OUTPUT
   } engine_state_t;
 
   engine_state_t state_q;
@@ -80,8 +82,18 @@ module conv_engine #(
   logic               bias_saturated;
   logic signed [49:0] requantized;
   logic signed  [7:0] clamped_output;
+  logic               requant_product_valid;
+  logic               requantized_valid;
+  logic               requant_clear;
+  logic               requant_mul_enable;
+  logic               requant_round_enable;
   logic               last_tap;
   logic               last_output;
+  logic [$clog2(MAX_OUTPUT_WORDS)-1:0] output_waddr_q;
+  logic [1:0]                                output_wbyte_sel_q;
+  logic                                      last_output_q;
+  logic                                      relu_enable_q;
+  logic                                      postprocess_valid_q;
 
   sat_add_int32 u_mac_add (
     .a_i(accumulator_q),
@@ -98,15 +110,22 @@ module conv_engine #(
   );
 
   requantizer u_requantizer (
+    .clk_i(clk_i),
+    .aresetn_i(aresetn_i),
+    .clear_i(requant_clear),
+    .mul_enable_i(requant_mul_enable),
+    .round_enable_i(requant_round_enable),
     .accumulator_i(accumulator_q),
     .multiplier_i(multiplier_i),
     .shift_i(shift_i),
-    .requantized_o(requantized)
+    .requantized_o(requantized),
+    .product_valid_o(requant_product_valid),
+    .requantized_valid_o(requantized_valid)
   );
 
   relu_clamp u_relu_clamp (
     .value_i(requantized),
-    .relu_enable_i(relu_enable_i),
+    .relu_enable_i(relu_enable_q),
     .value_o(clamped_output)
   );
 
@@ -155,9 +174,19 @@ module conv_engine #(
     bias_rd_en_o = (state_q == ENG_ACCUMULATE) && last_tap;
     bias_rd_addr_o = out_c_q[$clog2(MAX_BIAS_WORDS)-1:0];
 
-    output_we_o        = (state_q == ENG_POSTPROCESS);
-    output_waddr_o     = output_element_index[$clog2(MAX_OUTPUT_WORDS)+1:2];
-    output_wbyte_sel_o = output_element_index[1:0];
+    requant_clear        = abort_i
+                         || ((state_q == ENG_WRITE_OUTPUT)
+                             && postprocess_valid_q && requantized_valid);
+    requant_mul_enable   = (state_q == ENG_REQUANT_MUL) && !abort_i;
+    requant_round_enable = (state_q == ENG_REQUANT_ROUND)
+                         && requant_product_valid && !abort_i;
+
+    output_we_o        = (state_q == ENG_WRITE_OUTPUT)
+                      && postprocess_valid_q
+                      && requantized_valid
+                      && !abort_i;
+    output_waddr_o     = output_waddr_q;
+    output_wbyte_sel_o = output_wbyte_sel_q;
     output_wdata_o     = clamped_output;
 
     last_output = (out_h_q == (output_height_i - 32'd1))
@@ -182,8 +211,13 @@ module conv_engine #(
       kernel_h_q       <= 32'd0;
       kernel_w_q       <= 32'd0;
       in_c_q           <= 32'd0;
-      accumulator_q    <= 32'sd0;
+      accumulator_q     <= 32'sd0;
       padding_pending_q <= 1'b0;
+      output_waddr_q     <= '0;
+      output_wbyte_sel_q <= 2'd0;
+      last_output_q      <= 1'b0;
+      relu_enable_q      <= 1'b0;
+      postprocess_valid_q <= 1'b0;
       done_o           <= 1'b0;
       overflow_event_o <= 1'b0;
     end else if (abort_i) begin
@@ -196,6 +230,11 @@ module conv_engine #(
       in_c_q            <= 32'd0;
       accumulator_q     <= 32'sd0;
       padding_pending_q <= 1'b0;
+      output_waddr_q     <= '0;
+      output_wbyte_sel_q <= 2'd0;
+      last_output_q      <= 1'b0;
+      relu_enable_q      <= 1'b0;
+      postprocess_valid_q <= 1'b0;
       done_o            <= 1'b0;
       overflow_event_o  <= 1'b0;
     end else begin
@@ -211,9 +250,10 @@ module conv_engine #(
             kernel_h_q        <= 32'd0;
             kernel_w_q        <= 32'd0;
             in_c_q            <= 32'd0;
-            accumulator_q     <= 32'sd0;
-            padding_pending_q <= 1'b0;
-            state_q           <= ENG_READ_TAP;
+            accumulator_q      <= 32'sd0;
+            padding_pending_q  <= 1'b0;
+            postprocess_valid_q <= 1'b0;
+            state_q            <= ENG_READ_TAP;
           end
         end
 
@@ -246,33 +286,50 @@ module conv_engine #(
         end
 
         ENG_ADD_BIAS: begin
-          accumulator_q <= bias_sum;
+          accumulator_q       <= bias_sum;
+          output_waddr_q      <= output_element_index[$clog2(MAX_OUTPUT_WORDS)+1:2];
+          output_wbyte_sel_q  <= output_element_index[1:0];
+          last_output_q       <= last_output;
+          relu_enable_q       <= relu_enable_i;
+          postprocess_valid_q <= 1'b1;
           if (bias_saturated)
             overflow_event_o <= 1'b1;
-          state_q <= ENG_POSTPROCESS;
+          state_q <= ENG_REQUANT_MUL;
         end
 
-        ENG_POSTPROCESS: begin
-          if (last_output) begin
-            done_o  <= 1'b1;
-            state_q <= ENG_IDLE;
-          end else begin
-            if (out_c_q + 32'd1 < out_channels_i) begin
-              out_c_q <= out_c_q + 32'd1;
+        ENG_REQUANT_MUL: begin
+          state_q <= ENG_REQUANT_ROUND;
+        end
+
+        ENG_REQUANT_ROUND: begin
+          if (requant_product_valid)
+            state_q <= ENG_WRITE_OUTPUT;
+        end
+
+        ENG_WRITE_OUTPUT: begin
+          if (postprocess_valid_q && requantized_valid) begin
+            postprocess_valid_q <= 1'b0;
+            if (last_output_q) begin
+              done_o  <= 1'b1;
+              state_q <= ENG_IDLE;
             end else begin
-              out_c_q <= 32'd0;
-              if (out_w_q + 32'd1 < output_width_i)
-                out_w_q <= out_w_q + 32'd1;
-              else begin
-                out_w_q <= 32'd0;
-                out_h_q <= out_h_q + 32'd1;
+              if (out_c_q + 32'd1 < out_channels_i) begin
+                out_c_q <= out_c_q + 32'd1;
+              end else begin
+                out_c_q <= 32'd0;
+                if (out_w_q + 32'd1 < output_width_i)
+                  out_w_q <= out_w_q + 32'd1;
+                else begin
+                  out_w_q <= 32'd0;
+                  out_h_q <= out_h_q + 32'd1;
+                end
               end
+              kernel_h_q    <= 32'd0;
+              kernel_w_q    <= 32'd0;
+              in_c_q        <= 32'd0;
+              accumulator_q <= 32'sd0;
+              state_q       <= ENG_READ_TAP;
             end
-            kernel_h_q    <= 32'd0;
-            kernel_w_q    <= 32'd0;
-            in_c_q        <= 32'd0;
-            accumulator_q <= 32'sd0;
-            state_q       <= ENG_READ_TAP;
           end
         end
 
