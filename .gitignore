@@ -4,3 +4,10 @@ __pycache__/
 
 # Generated test vectors (regenerate with scripts/generate_stage1_vectors.py)
 data/test_vectors/
+
+# Generated C header from the above (regenerate with scripts/generate_stage1_c_header.py)
+firmware/test/generated/
+
+# cocotb simulation build artifacts
+verification/cocotb/sim_build/
+verification/cocotb/results.xml
