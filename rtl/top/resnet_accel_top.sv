@@ -42,6 +42,8 @@ module resnet_accel_top #(
 );
   logic idle;
   logic busy;
+  logic admission_active;
+  logic command_lock;
   logic done;
   logic error;
   logic [31:0] cycle_count;
@@ -140,6 +142,7 @@ module resnet_accel_top #(
   logic output_stream_done;
   logic engine_abort;
 
+  assign command_lock = busy | admission_active;
   assign engine_abort = cancel_pulse | (abort_pulse & busy);
 
   axi_lite_regs #(
@@ -166,6 +169,7 @@ module resnet_accel_top #(
     .s_axi_rready_i(s_axi_rready),
     .idle_i(idle),
     .busy_i(busy),
+    .command_lock_i(command_lock),
     .done_i(done),
     .error_i(error),
     .cycle_count_i(cycle_count),
@@ -222,6 +226,7 @@ module resnet_accel_top #(
     .output_done_i(output_stream_done),
     .idle_o(idle),
     .busy_o(busy),
+    .admission_active_o(admission_active),
     .debug_state_o(debug_state),
     .operation_accept_o(operation_accept),
     .operation_done_o(operation_done),

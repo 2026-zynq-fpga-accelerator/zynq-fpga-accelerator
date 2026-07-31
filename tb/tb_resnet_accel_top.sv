@@ -381,6 +381,7 @@ module tb_resnet_accel_top;
   initial begin
     logic [31:0] status;
     logic [31:0] code;
+    integer validation_wait_cycles;
 
     aclk          = 1'b0;
     aresetn       = 1'b0;
@@ -420,10 +421,20 @@ module tb_resnet_accel_top;
     axi_write(REG_OUTPUT_BYTES, OUTPUT_BYTES);
 
     axi_write(REG_CONTROL, 32'h0000_0001);
-    repeat (2) @(posedge aclk);
+    validation_wait_cycles = 0;
+    while (dut.busy !== 1'b1) begin
+      @(negedge aclk);
+      if ((dut.busy !== 1'b1) && (dut.debug_state !== 4'd1))
+        $fatal(1, "DEBUG_STATE changed during validation: %0d", dut.debug_state);
+      if (dut.error)
+        $fatal(1, "ERROR asserted while waiting for valid configuration acceptance");
+      validation_wait_cycles = validation_wait_cycles + 1;
+      if (validation_wait_cycles > 256)
+        $fatal(1, "Timed out waiting for BUSY after START");
+    end
     axi_read(REG_STATUS, status);
     if (!status[1])
-      $fatal(1, "BUSY did not assert after START, STATUS=0x%08x", status);
+      $fatal(1, "BUSY did not assert after validation, STATUS=0x%08x", status);
 
     send_weight_packet();
     repeat (3) @(posedge aclk);

@@ -8,6 +8,7 @@ module tb_full_conv;
   localparam integer WEIGHT_BYTES = 432;
   localparam integer BIAS_BYTES = 64;
   localparam integer OUTPUT_BYTES = 16384;
+  localparam logic [31:0] EXPECTED_CYCLES = 32'd1435391;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;
@@ -167,6 +168,7 @@ module tb_full_conv;
 
   initial begin
     logic [31:0] status, code, cycles, state;
+    integer validation_cycles;
     aclk = 0; aresetn = 0;
     s_axi_awaddr = 0; s_axi_awvalid = 0; s_axi_wdata = 0; s_axi_wstrb = 4'b1111;
     s_axi_wvalid = 0; s_axi_bready = 1; s_axi_araddr = 0; s_axi_arvalid = 0;
@@ -197,6 +199,18 @@ module tb_full_conv;
     axi_write(REG_SKIP_BYTES, 0);
     axi_write(REG_OUTPUT_BYTES, OUTPUT_BYTES);
     axi_write(REG_CONTROL, 1);
+    validation_cycles = 0;
+    while (!dut.busy) begin
+      @(negedge aclk);
+      if (!dut.busy && (dut.debug_state != DBG_IDLE))
+        $fatal(1, "Full conv DEBUG_STATE changed during validation: %0d", dut.debug_state);
+      if (dut.error)
+        $fatal(1, "Full conv ERROR during valid admission");
+      validation_cycles = validation_cycles + 1;
+      if (validation_cycles > 256)
+        $fatal(1, "Full conv timed out waiting for validation");
+    end
+    $display("FULL CONV VALIDATOR LATENCY: %0d cycles", validation_cycles);
     send_packets();
 
     wait (output_byte_count == OUTPUT_BYTES);
@@ -208,7 +222,8 @@ module tb_full_conv;
     if (status[1] || !status[2] || status[3])
       $fatal(1, "Full conv status failure STATUS=%08x CODE=%0d", status, code);
     if (code != ERR_NONE) $fatal(1, "Full conv ERROR_CODE=%0d", code);
-    if (cycles == 0) $fatal(1, "Full conv cycle count was zero");
+    if (cycles != EXPECTED_CYCLES)
+      $fatal(1, "Full conv cycle count=%0d expected=%0d", cycles, EXPECTED_CYCLES);
     if (state[3:0] != DBG_IDLE) $fatal(1, "Full conv debug state=%0d, expected IDLE", state);
     if (mismatch_count != 0)
       $fatal(1, "FULL CONV FAIL: %0d mismatches across %0d output bytes",

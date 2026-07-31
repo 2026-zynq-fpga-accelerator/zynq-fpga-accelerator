@@ -53,7 +53,11 @@ synth_design -top resnet_accel_top -part $fpga_part -mode out_of_context
 create_clock -name aclk -period $clock_period_ns [get_ports aclk]
 
 write_checkpoint -force [file join $output_dir resnet_accel_top_synth.dcp]
+report_utilization -file [file join $output_dir utilization.rpt]
 report_utilization -hierarchical -file [file join $output_dir utilization_hierarchical.rpt]
+report_timing -delay_type max -max_paths 10 -nworst 1 -input_pins -file [file join $output_dir critical_paths.rpt]
+check_timing -verbose -file [file join $output_dir check_timing.rpt]
+report_clock_utilization -file [file join $output_dir clock_utilization.rpt]
 report_timing_summary -delay_type min_max -report_unconstrained \
   -file [file join $output_dir timing_summary.rpt]
 report_methodology -file [file join $output_dir methodology.rpt]

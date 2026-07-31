@@ -27,6 +27,7 @@ module axi_lite_regs #(
 
   input  logic                      idle_i,
   input  logic                      busy_i,
+  input  logic                      command_lock_i,
   input  logic                      done_i,
   input  logic                      error_i,
   input  logic [31:0]               cycle_count_i,
@@ -173,10 +174,10 @@ module axi_lite_regs #(
             if (wstrb_hold_q[0]) begin
               if (wdata_hold_q[1]) begin
                 abort_pulse_o <= 1'b1;
-                if (busy_i || wdata_hold_q[0])
+                if (command_lock_i || wdata_hold_q[0])
                   abort_error_event_o <= 1'b1;
               end else if (wdata_hold_q[0]) begin
-                if (busy_i)
+                if (command_lock_i)
                   start_while_busy_event_o <= 1'b1;
                 else
                   start_pulse_o <= 1'b1;
@@ -194,84 +195,84 @@ module axi_lite_regs #(
           end
 
           REG_OPERATION: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               operation_o <= apply_wstrb(operation_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_INPUT_HEIGHT: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               input_height_o <= apply_wstrb(input_height_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_INPUT_WIDTH: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               input_width_o <= apply_wstrb(input_width_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_IN_CHANNELS: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               in_channels_o <= apply_wstrb(in_channels_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_OUT_CHANNELS: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               out_channels_o <= apply_wstrb(out_channels_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_CONV_CONFIG: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               conv_config_o <= apply_wstrb(conv_config_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_OUTPUT_SCALE: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               output_scale_o <= apply_wstrb(output_scale_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_INPUT_BYTES: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               input_bytes_o <= apply_wstrb(input_bytes_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_WEIGHT_BYTES: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               weight_bytes_o <= apply_wstrb(weight_bytes_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_BIAS_BYTES: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               bias_bytes_o <= apply_wstrb(bias_bytes_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_SKIP_BYTES: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               skip_bytes_o <= apply_wstrb(skip_bytes_o, wdata_hold_q, wstrb_hold_q);
           end
 
           REG_OUTPUT_BYTES: begin
-            if (busy_i)
+            if (command_lock_i)
               config_write_busy_event_o <= 1'b1;
             else
               output_bytes_o <= apply_wstrb(output_bytes_o, wdata_hold_q, wstrb_hold_q);
