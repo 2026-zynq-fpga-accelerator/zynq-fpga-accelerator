@@ -1,7 +1,7 @@
 # Zybo Z7-20 Single OP_CONV Integration Plan
 
-Status: RTL/OOC and Phase 3B-1 wrapper/IP packaging complete. Phase 3C Block
-Design has not started.
+Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, and Phase 3C Block Design
+validation/output products are complete. Phase 3D synthesis has not started.
 
 ## 1. Confirmed baseline
 
@@ -12,111 +12,162 @@ Design has not started.
 - Clock: one 100 MHz PL domain
 - Core: `resnet_accel_top`
 - Packaged IP: `jmhwang.local:npu:resnet_accel:1.0`
+- BD: `zybo_resnet_system`
 
-The verified baseline is a single 3x3 `OP_CONV`, not complete ResNet-20
-inference. Residual add, GAP, FC, CPU fallback, and full-network scheduling are
-outside the current milestone.
+This is a single 3x3 `OP_CONV`, not complete ResNet-20 inference. Residual add,
+GAP, FC, CPU fallback, and full-network scheduling remain outside the current
+milestone.
 
 ## 2. Verification evidence
 
-- Official regression: 10 PASS, 0 FAIL
-- Full vector: 32x32x3 to 32x32x16, 16,384 bytes, mismatch 0
-- Validator latency: 34 cycles for the full vector
-- Operation cycle count: 1,435,391
-- OOC timing at 100 MHz: WNS +0.691 ns, TNS 0 ns, 0 failing endpoints
-- Wrapper smoke: 64 bytes, mismatch 0
-- Wrapper full vector: 16,384 bytes, mismatch 0, 1,435,391 cycles
-- Packaged-IP integrity and explicit interface checks: PASS
+- Official core regression: 10 PASS, 0 FAIL
+- Full vector: 16,384 bytes, mismatch 0, 1,435,391 cycles
+- OOC timing at 100 MHz: WNS +0.691 ns, TNS 0, 0 failing endpoints
+- Wrapper smoke/full vector and packaged-IP integrity: PASS
+- Phase 3C full Tcl recreation: PASS
+- `validate_bd_design`: PASS
+- `generate_target all`: PASS
+- HDL wrapper and compile-order update: PASS
+- Synthesis run started: no
 
-OOC timing is not full-design implemented timing, and simulation is not FPGA
+OOC timing is not full-design implemented timing, and BD validation is not FPGA
 execution.
 
 ## 3. Stable interface and packet contract
 
-The wrapper adds standard AXI names and `AWPROT`/`ARPROT`; protection inputs are
-ignored by the unchanged core. It adds no register, latency, CDC, or reset logic.
-
 - `S_AXI_CTRL`: AXI4-Lite slave, address/data widths 7/32
-- `S_AXIS_INPUT`: AXIS slave, 32-bit TDATA, TKEEP/TLAST/TVALID/TREADY
-- `M_AXIS_OUTPUT`: AXIS master, 32-bit TDATA, TKEEP/TLAST/TVALID/TREADY
+- `S_AXIS_INPUT`: AXIS slave, 32-bit TDATA with TKEEP/TLAST/TVALID/TREADY
+- `M_AXIS_OUTPUT`: AXIS master, 32-bit TDATA with TKEEP/TLAST/TVALID/TREADY
 - `aclk`: 100 MHz and associated with all three buses
-- `aresetn`: active-low and associated with `aclk`
+- `aresetn`: active-low
 
-Input is three separate DMA MM2S transfers in this order:
+The wrapper and core register/packet protocols are unchanged.
+
+Input is three separate DMA MM2S transfers:
 
 1. Weight: 432 bytes
 2. Bias: 64 bytes
 3. Input: 3,072 bytes
 
-Output is one 16,384-byte S2MM transfer prepared before START. Do not combine
-the three input packets. DRE is disabled, so addresses and lengths are at least
-4-byte aligned. Firmware must flush MM2S source ranges and invalidate the S2MM
-output range.
+Output is one 16,384-byte S2MM transfer prepared before START. DRE is disabled,
+so addresses and lengths must be at least 4-byte aligned. Firmware must flush
+MM2S sources and invalidate the S2MM destination.
 
-## 4. Planned Block Design (Phase 3C)
+## 4. Validated Block Design (Phase 3C)
+
+Project:
+
+```text
+build/vivado_zybo/resnet_accel_zybo/resnet_accel_zybo.xpr
+```
+
+Control topology:
 
 ```text
 PS7 M_AXI_GP0
-  -> AXI interconnect/SmartConnect
-     -> Accelerator S_AXI_CTRL
-     -> AXI DMA S_AXI_LITE
-
-AXI DMA M_AXI_MM2S + M_AXI_S2MM
-  -> AXI interconnect/SmartConnect
-     -> PS7 S_AXI_HP0
-
-AXI DMA M_AXIS_MM2S -> Accelerator S_AXIS_INPUT
-Accelerator M_AXIS_OUTPUT -> AXI DMA S_AXIS_S2MM
+  -> control_smartconnect (1 SI / 2 MI)
+     -> resnet_accel_0/S_AXI_CTRL
+     -> axi_dma_0/S_AXI_LITE
 ```
 
-Configure AXI DMA in Simple mode with Scatter-Gather, DRE, and interrupts
-disabled. MM2S and S2MM stream widths are 32 bits. Use PS7 FCLK_CLK0 at 100 MHz
-for accelerator, DMA, interconnect, and Processor System Reset.
-
-Reset intent:
+DDR topology:
 
 ```text
-PS7 FCLK_CLK0 -> proc_sys_reset/slowest_sync_clk
-PS7 FCLK_RESET0_N -> proc_sys_reset/ext_reset_in (ACTIVE_LOW)
-proc_sys_reset/peripheral_aresetn -> accelerator/DMA/interconnect
+axi_dma_0/M_AXI_MM2S -> memory_smartconnect/S00_AXI
+axi_dma_0/M_AXI_S2MM -> memory_smartconnect/S01_AXI
+memory_smartconnect/M00_AXI -> PS7 S_AXI_HP0
 ```
 
-Do not insert a reset inverter when `ext_reset_in` is configured active-low.
+Direct streams:
 
-## 5. Remaining phases
+```text
+axi_dma_0/M_AXIS_MM2S -> resnet_accel_0/S_AXIS_INPUT
+resnet_accel_0/M_AXIS_OUTPUT -> axi_dma_0/S_AXIS_S2MM
+```
 
-### Phase 3C - Block Design
+No FIFO, width converter, register slice, clock converter, or CDC was added.
 
-Create the PS7/DMA/interconnect/reset design by Tcl, assign addresses, and run
-Validate Design. Stop on any validation error.
+AXI DMA is Simple mode with SG and DRE disabled, MM2S/S2MM enabled, and 32-bit
+stream and memory masters. SmartConnect adapts the 32-bit memory masters to HP0.
+The generated DMA interrupt outputs remain unconnected for polling.
 
-### Phase 3D - Hardware build
+## 5. Clock, reset, and board preset
 
-Generate output products and HDL wrapper, synthesize, implement, review timing,
-then generate bitstream and an XSA that includes it. Do not infer implementation
-success from the existing OOC result.
+The Zybo Z7-20 board preset creates DDR/FIXED_IO and retains UART1 and SD0.
+M_AXI_GP0, S_AXI_HP0, FCLK_CLK0, and FCLK_RESET0_N are enabled.
+
+FCLK_CLK0 at 100 MHz is the only PL clock and drives every control, memory,
+stream-related DMA clock, accelerator clock, SmartConnect clock, GP0/HP0 ACLK,
+and reset synchronizer clock.
+
+```text
+FCLK_RESET0_N -> proc_sys_reset_0/ext_reset_in (active-low)
+proc_sys_reset_0/peripheral_aresetn
+  -> accelerator aresetn
+  -> DMA axi_resetn
+  -> both SmartConnect aresetn pins
+```
+
+No inverter is present. `interconnect_aresetn` is unused.
+
+## 6. Address map
+
+```text
+AXI DMA control:      0x40400000 - 0x4040FFFF
+Accelerator control:  0x43C00000 - 0x43C0FFFF
+DMA MM2S DDR/Low-OCM: 0x00000000 - 0x3FFFFFFF
+DMA S2MM DDR/Low-OCM: 0x00000000 - 0x3FFFFFFF
+```
+
+No address overlap was reported.
+
+## 7. Reproduction and reports
+
+```bash
+source /home/jmhwang/tools/Xilinxe/Vivado/2022.2/settings64.sh
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/create_zybo_system.tcl
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/validate_zybo_system.tcl
+```
+
+Reports are regenerated under `build/vivado_zybo/reports/`:
+
+- `board_design_summary.txt`
+- `address_map.txt`
+- `ip_configuration.txt`
+- `interface_connections.txt`
+
+Known warnings are the local/installed board counterpart, four board-preset DDR
+DQS delay warnings, control SmartConnect low-area WRAP guidance, and generated
+SmartConnect internal AXI metadata payload adaptation. External 32-bit AXIS
+validation passes and no BD validation error occurred.
+
+## 8. Remaining phases
+
+### Phase 3D - Full hardware build
+
+Generate/review full synthesis and implementation reports, verify setup/hold and
+reset/CDC behavior, then generate bitstream and bitstream-included XSA only after
+review. None of these actions has started.
 
 ### Phase 3E - Firmware and boot image
 
-Create the Vitis platform/BSP, replace accelerator and DMA placeholders from
-`xparameters.h`, build the application and FSBL, and generate BOOT.BIN.
-BOOT.BIN generation does not prove physical-board execution.
+Create the Vitis platform/BSP, replace hardware identifiers from
+`xparameters.h`, build the firmware ELF and FSBL, and generate BOOT.BIN.
+BOOT.BIN generation will not prove physical-board execution.
 
 ### Physical-board acceptance
 
 Boot from SD, capture UART, initialize DMA, read accelerator VERSION, execute the
 three MM2S transfers and one S2MM transfer, poll BUSY/ERROR correctly, and compare
-all 16,384 output bytes. The target success line is:
+all 16,384 output bytes.
 
-```text
-STAGE1 OP_CONV FPGA PASS: 16384 bytes, mismatch=0
-```
+## 9. Stop conditions
 
-## 6. Stop conditions
+Stop before changing core/package interfaces or DMA/reset topology. Also stop on
+regression failure, IP integrity failure, BD validation error, address conflict,
+external stream-width mismatch, CDC requirement, required interrupt connection,
+or any need for an unplanned IP.
 
-Stop and report before changing the verified core if any phase requires a
-register-map, packet, reset-polarity, datapath-cycle, stream-width, clock-domain,
-CDC, controller, or AXI DMA contract change. Also stop on regression failure,
-IP integrity failure, Block Design validation errors, or board/part conflicts.
-
-See `docs/ZYBO_INTEGRATION.md` for Phase 3B-1 commands and package metadata.
+The next separately approved step is Phase 3D synthesis/implementation.
