@@ -55,7 +55,8 @@ module conv_engine #(
     ENG_ACCUMULATE,
     ENG_ADD_BIAS,
     ENG_REQUANT_MUL,
-    ENG_REQUANT_ROUND,
+    ENG_REQUANT_ROUND_ADD,
+    ENG_REQUANT_SHIFT,
     ENG_WRITE_OUTPUT
   } engine_state_t;
 
@@ -108,10 +109,12 @@ module conv_engine #(
   logic signed [49:0] requantized;
   logic signed  [7:0] clamped_output;
   logic               requant_product_valid;
+  logic               requant_round_add_valid;
   logic               requantized_valid;
   logic               requant_clear;
   logic               requant_mul_enable;
-  logic               requant_round_enable;
+  logic               requant_round_add_enable;
+  logic               requant_shift_enable;
   logic               last_tap;
   logic               last_output;
   logic [$clog2(MAX_OUTPUT_WORDS)-1:0] output_waddr_q;
@@ -154,12 +157,14 @@ module conv_engine #(
     .aresetn_i(aresetn_i),
     .clear_i(requant_clear),
     .mul_enable_i(requant_mul_enable),
-    .round_enable_i(requant_round_enable),
+    .round_add_enable_i(requant_round_add_enable),
+    .shift_enable_i(requant_shift_enable),
     .accumulator_i(requant_accumulator_q),
     .multiplier_i(multiplier_i),
     .shift_i(shift_i),
     .requantized_o(requantized),
     .product_valid_o(requant_product_valid),
+    .round_add_valid_o(requant_round_add_valid),
     .requantized_valid_o(requantized_valid)
   );
 
@@ -209,9 +214,11 @@ module conv_engine #(
     requant_clear        = abort_i
                          || ((state_q == ENG_WRITE_OUTPUT)
                              && postprocess_valid_q && requantized_valid);
-    requant_mul_enable   = (state_q == ENG_REQUANT_MUL) && !abort_i;
-    requant_round_enable = (state_q == ENG_REQUANT_ROUND)
-                         && requant_product_valid && !abort_i;
+    requant_mul_enable       = (state_q == ENG_REQUANT_MUL) && !abort_i;
+    requant_round_add_enable = (state_q == ENG_REQUANT_ROUND_ADD)
+                             && requant_product_valid && !abort_i;
+    requant_shift_enable     = (state_q == ENG_REQUANT_SHIFT)
+                             && requant_round_add_valid && !abort_i;
 
     output_we_o        = (state_q == ENG_WRITE_OUTPUT)
                       && postprocess_valid_q
@@ -437,11 +444,16 @@ module conv_engine #(
         end
 
         ENG_REQUANT_MUL: begin
-          state_q <= ENG_REQUANT_ROUND;
+          state_q <= ENG_REQUANT_ROUND_ADD;
         end
 
-        ENG_REQUANT_ROUND: begin
+        ENG_REQUANT_ROUND_ADD: begin
           if (requant_product_valid)
+            state_q <= ENG_REQUANT_SHIFT;
+        end
+
+        ENG_REQUANT_SHIFT: begin
+          if (requant_round_add_valid)
             state_q <= ENG_WRITE_OUTPUT;
         end
 

@@ -57,6 +57,7 @@ module tb_op_conv_directed;
   logic mac_product_pos16129_seen, mac_padding_zero_seen;
   logic mac_product_valid_seen, mac_product_alignment_seen;
   logic mac_last_tap_seen, mac_bias_alignment_seen, requant_handoff_seen;
+  logic requant_round_add_seen, requant_shift_seen, requant_write_seen;
   logic signed [31:0] boundary_a, boundary_b, boundary_sum;
   logic boundary_saturated;
 
@@ -399,6 +400,39 @@ module tb_op_conv_directed;
     begin set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal(name); end
   endtask
 
+  task automatic abort_during_engine_state(
+    input logic [3:0] target_state,
+    input string      name,
+    input string      recovery_name
+  );
+    begin
+      set_shape(1, 1, 0, 1, 0);
+      initialize_pattern(0);
+      program_config();
+      clear_status();
+      axi_write(REG_CONTROL, 1);
+      send_normal_packets();
+      while (dut.u_conv_engine.state_q != target_state)
+        @(negedge aclk);
+      @(negedge aclk);
+      force dut.u_conv_engine.abort_i = 1'b1;
+      @(posedge aclk); #1;
+      if ((dut.u_conv_engine.state_q != 4'd0) || dut.output_we
+          || dut.u_conv_engine.requant_product_valid
+          || dut.u_conv_engine.requant_round_add_valid
+          || dut.u_conv_engine.requantized_valid
+          || dut.u_conv_engine.postprocess_valid_q)
+        $fatal(1, "%s left stale requant/output state", name);
+      release dut.u_conv_engine.abort_i;
+      axi_write(REG_CONTROL, 2);
+      repeat (5) @(posedge aclk);
+      check_status(0, 0, 1, ERR_ABORTED, name);
+      tests_passed = tests_passed + 1;
+      $display("TEST %-32s PASS", name);
+      recover_with_normal(recovery_name);
+    end
+  endtask
+
   task automatic check_mac_pipeline_boundaries;
     begin
       force dut.u_conv_engine.accumulator_q = 32'sh7fff_ffff;
@@ -622,7 +656,29 @@ module tb_op_conv_directed;
         requant_handoff_seen = 1'b1;
       end
 
-      if ((dut.u_conv_engine.state_q == 4'd9) && dut.output_we
+      if (dut.u_conv_engine.state_q == 4'd8) begin
+        if (!dut.u_conv_engine.requant_product_valid
+            || dut.u_conv_engine.requant_round_add_valid
+            || dut.u_conv_engine.requantized_valid)
+          $fatal(1, "ROUND_ADD input valid alignment failed");
+        requant_round_add_seen = 1'b1;
+      end
+
+      if (dut.u_conv_engine.state_q == 4'd9) begin
+        if (dut.u_conv_engine.requant_product_valid
+            || !dut.u_conv_engine.requant_round_add_valid
+            || dut.u_conv_engine.requantized_valid)
+          $fatal(1, "SHIFT_SIGN input valid alignment failed");
+        requant_shift_seen = 1'b1;
+      end
+
+      if ((dut.u_conv_engine.state_q == 4'd10) && dut.output_we) begin
+        if (!dut.u_conv_engine.requantized_valid)
+          $fatal(1, "WRITE_OUTPUT missing requantized valid");
+        requant_write_seen = 1'b1;
+      end
+
+      if ((dut.u_conv_engine.state_q == 4'd10) && dut.output_we
           && (expected_write_element == (cfg_output_bytes - 1)))
         address_last_output_seen = 1'b1;
     end
@@ -713,6 +769,7 @@ module tb_op_conv_directed;
     mac_product_pos16129_seen = 0; mac_padding_zero_seen = 0;
     mac_product_valid_seen = 0; mac_product_alignment_seen = 0;
     mac_last_tap_seen = 0; mac_bias_alignment_seen = 0; requant_handoff_seen = 0;
+    requant_round_add_seen = 0; requant_shift_seen = 0; requant_write_seen = 0;
     repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
 
     check_mac_pipeline_boundaries();
@@ -873,27 +930,26 @@ module tb_op_conv_directed;
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "mac_accumulate_abort");
     recover_with_normal("recovery_after_mac_accumulate_abort");
 
-    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
-    build_reference(); program_config(); clear_status(); begin_capture();
-    axi_write(REG_CONTROL, 1); send_normal_packets();
-    wait (dut.u_conv_engine.state_q == 4'd7);
-    @(negedge aclk);
-    force dut.engine_abort = 1'b1;
-    @(posedge aclk); #1;
-    release dut.engine_abort;
-    if (expected_write_element != 0 || dut.output_we)
-      $fatal(1, "postprocess abort allowed an incomplete output write");
-    postprocess_monitor_enabled = 1'b0; capture_enabled = 1'b0;
-    axi_write(REG_CONTROL, 2);
-    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "postprocess_abort");
-    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "postprocess_abort");
-    recover_with_normal("recovery_after_postprocess_abort");
+    abort_during_engine_state(4'd7, "requant_mul_abort",
+                             "recovery_after_requant_mul_abort");
+    abort_during_engine_state(4'd8, "round_add_abort",
+                             "recovery_after_round_add_abort");
+    abort_during_engine_state(4'd9, "shift_sign_abort",
+                             "recovery_after_shift_sign_abort");
+    abort_during_engine_state(4'd10, "write_output_abort",
+                             "recovery_after_write_output_abort");
 
     program_config(); clear_status(); axi_write(REG_CONTROL, 1);
     send_word(32'h0101_0101, 4'b1111, 0); axi_write(REG_CONTROL, 2);
     repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "abort");
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "abort");
     recover_with_normal("recovery_after_abort");
+
+    if (!requant_round_add_seen || !requant_shift_seen || !requant_write_seen)
+      $fatal(1, "requant pipeline coverage incomplete round=%0b shift=%0b write=%0b",
+             requant_round_add_seen, requant_shift_seen, requant_write_seen);
+    tests_passed = tests_passed + 1;
+    $display("TEST %-32s PASS", "requant_pipeline_trace");
 
     if (!mac_product_pos16384_seen || !mac_product_neg16256_seen
         || !mac_product_pos16129_seen || !mac_padding_zero_seen
