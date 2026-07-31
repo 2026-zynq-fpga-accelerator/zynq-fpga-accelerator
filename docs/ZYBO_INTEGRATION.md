@@ -23,9 +23,11 @@ accelerator. It is not a complete ResNet-20 accelerator.
 - OOC timing at 100 MHz: WNS +0.691 ns, TNS 0, 0 failing endpoints
 - Phase 3B-1 wrapper smoke/full-vector and IP integrity: PASS
 - Phase 3C BD validation, output products, and HDL wrapper: PASS
+- Phase 3D-1 synthesis and route: complete; 100 MHz setup timing: FAIL
 
-Full-design synthesis/implementation, bitstream, XSA, Vitis, FSBL, BOOT.BIN,
-and physical-board execution have not been performed.
+Full-design synthesis and implementation through `route_design` have been
+performed. Bitstream, XSA, Vitis, FSBL, BOOT.BIN, and physical-board execution
+have not been performed.
 
 ## Wrapper contract
 
@@ -55,6 +57,10 @@ vivado -mode batch -nolog -nojournal \
 # Reopen and independently validate the existing generated project
 vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/validate_zybo_system.tcl
+
+# Phase 3D-1 synthesis, implementation through route_design, and reports
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/build_zybo_implementation.tcl
 ```
 
 The create script regenerates the accelerator package automatically when
@@ -169,8 +175,71 @@ Observed warnings:
   (`BD 41-2384`). This is not an external AXIS TDATA width mismatch; direct
   32-bit MM2S/S2MM stream validation passes.
 
+## Phase 3D-1 synthesis and implementation result
+
+A clean rebuild ran the package, BD creation, and implementation scripts in
+that order. Full-design synthesis completed with no errors or critical
+warnings. Implementation completed through `route_design`; `phys_opt_design`
+was enabled and executed. The design is fully routed with zero routing errors,
+zero black boxes, and zero DRC errors.
+
+The strict 100 MHz acceptance gate stopped Phase 3D-1 because setup timing
+failed:
+
+| Check | Result |
+|---|---:|
+| Setup WNS / TNS | `-0.258 ns` / `-0.715 ns` |
+| Setup failing endpoints | 5 |
+| Hold WHS / THS | `+0.050 ns` / `0.000 ns` |
+| Hold failing endpoints | 0 |
+| Pulse-width failing endpoints | 0 |
+| No-clock registers | 0 |
+| Unconstrained internal endpoints | 0 |
+| DRC errors / unrouted nets | 0 / 0 |
+
+The worst setup path is entirely inside the accelerator, from
+`u_buffers/weight_mem_reg_15/CLKBWRCLK` to
+`u_conv_engine/mac_product_q_reg[12]/D`. Its data-path delay is `9.947 ns`
+(`5.009 ns` logic, `4.938 ns` routing) over eight logic levels. This is not a
+SmartConnect, DMA, PS, or CDC path. The worst hold path is inside AXI DMA and
+meets timing with `+0.050 ns`.
+
+There is exactly one implemented clock, `clk_fpga_0`, at `10.000 ns`. The CDC
+report says all paths are safely timed. `FCLK_RESET0_N` and
+`peripheral_aresetn` connectivity remains the validated Phase 3C topology; no
+clock/reset RTL or BD change was made. The highest-fanout reset-related net is
+the accelerator's internal `aresetn_0` (fanout 1,366); its worst slack is
+`+2.180 ns`. No reset-related DRC, methodology, CDC, or timing failure appears.
+
+Post-route utilization:
+
+| Resource | Used | Device utilization |
+|---|---:|---:|
+| Slice LUTs | 6,087 | 11.44% |
+| LUT as Logic | 5,521 | 10.38% |
+| LUT as Memory | 566 | 3.25% |
+| Slice Registers | 7,620 | 7.16% |
+| RAMB36/FIFO | 26 | 18.57% |
+| RAMB18 | 1 | 0.36% |
+| DSP48E1 | 3 | 1.36% |
+| BUFGCTRL | 1 | 3.13% |
+| MMCM / PLL | 0 / 0 | 0% / 0% |
+
+The accelerator hierarchy retains 24 RAMB36E1, one RAMB18E1, three DSP48E1,
+and zero LUTRAM/SRL cells. The two additional RAMB36E1 blocks belong to AXI
+DMA. Implementation DRC reports nine non-error findings: six DSP pipelining
+warnings in the accelerator, one no-routable-load warning in generated
+SmartConnect logic, and two AXI DMA BRAM write-first advisories. Methodology
+reports zero violations.
+
+Generated evidence is under `build/vivado_zybo/reports/`, including
+`implementation_summary.txt`, post-synthesis/post-route timing and utilization,
+hierarchical utilization, DRC, methodology, route status, clock utilization,
+clock interaction, CDC, high-fanout, and worst setup/hold path reports.
+
 ## Phase boundary
 
-The next separately approved task is Phase 3D full-design synthesis and
-implementation. Phase 3C success does not imply synthesis, implemented timing,
-bitstream, XSA, BOOT.BIN, or physical-board execution success.
+Phase 3D-1 is stopped at the setup-timing acceptance condition. A separately
+approved timing-remediation task is required before Phase 3D-2. No implementation
+strategy sweep or RTL/BD modification was attempted. No bitstream, XSA, Vitis
+workspace, FSBL, ELF, or BOOT.BIN was generated.

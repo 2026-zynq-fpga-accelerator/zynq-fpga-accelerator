@@ -1,7 +1,8 @@
 # Zybo Z7-20 Single OP_CONV Integration Plan
 
-Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, and Phase 3C Block Design
-validation/output products are complete. Phase 3D synthesis has not started.
+Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, Phase 3C Block Design, and
+Phase 3D-1 synthesis/route are complete. Phase 3D-1 is stopped because the
+implemented 100 MHz setup-timing acceptance gate failed.
 
 ## 1. Confirmed baseline
 
@@ -28,7 +29,10 @@ milestone.
 - `validate_bd_design`: PASS
 - `generate_target all`: PASS
 - HDL wrapper and compile-order update: PASS
-- Synthesis run started: no
+- Full-design synthesis: complete
+- Implementation through `route_design`: complete, fully routed
+- Implemented 100 MHz setup timing: FAIL (`WNS -0.258 ns`, `TNS -0.715 ns`,
+  5 failing endpoints)
 
 OOC timing is not full-design implemented timing, and BD validation is not FPGA
 execution.
@@ -129,6 +133,8 @@ vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/create_zybo_system.tcl
 vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/validate_zybo_system.tcl
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/build_zybo_implementation.tcl
 ```
 
 Reports are regenerated under `build/vivado_zybo/reports/`:
@@ -145,11 +151,48 @@ validation passes and no BD validation error occurred.
 
 ## 8. Remaining phases
 
-### Phase 3D - Full hardware build
+### Phase 3D-1 - Synthesis, implementation, and reports
 
-Generate/review full synthesis and implementation reports, verify setup/hold and
-reset/CDC behavior, then generate bitstream and bitstream-included XSA only after
-review. None of these actions has started.
+The clean Tcl flow completed synthesis, `opt_design`, `place_design`,
+`phys_opt_design`, and `route_design`. Synthesis and implementation reported
+zero errors; the design has no black boxes, DRC errors, unrouted nets,
+no-clock registers, or unconstrained internal endpoints.
+
+Timing at the single `clk_fpga_0` 100 MHz clock:
+
+```text
+Setup: WNS -0.258 ns, TNS -0.715 ns, 5 failing endpoints  -> FAIL
+Hold:  WHS +0.050 ns, THS  0.000 ns, 0 failing endpoints -> PASS
+Pulse width: 0 failing endpoints                         -> PASS
+```
+
+The worst setup path lies wholly inside `resnet_accel_0`, from weight BRAM
+`weight_mem_reg_15/CLKBWRCLK` to convolution register
+`mac_product_q_reg[12]/D`. The path is 9.947 ns of data delay across eight
+logic levels, split almost equally between logic (5.009 ns) and routing
+(4.938 ns). It is not a DMA, SmartConnect, PS7, or CDC path.
+
+Post-route resources are 6,087 Slice LUTs (5,521 logic, 566 memory), 7,620
+registers, 26 RAMB36/FIFO, one RAMB18, three DSP48E1, and one BUFGCTRL; no
+MMCM or PLL is used. Accelerator structure remains exactly 24 RAMB36E1, one
+RAMB18E1, three DSP48E1, and zero LUTRAM/SRL.
+
+DRC has zero errors and nine warning/advisory findings: accelerator DSP
+pipelining guidance (six), generated SmartConnect nets without routable loads
+(one), and AXI DMA BRAM write-first advisories (two). Methodology has zero
+violations. The one-clock CDC report says all paths are safely timed. The
+accelerator internal `aresetn_0` is the highest-fanout reset-related net at
+1,366 loads and still has `+2.180 ns` worst slack; no reset deassertion failure
+is reported.
+
+The timing failure is a mandatory stop condition. No strategy sweep, RTL
+change, BD/topology change, clock/reset change, or address-map change was made.
+
+### Phase 3D-2 - Bitstream and hardware handoff
+
+Blocked until a separately approved timing-remediation task passes the 100 MHz
+acceptance gate. Bitstream and bitstream-included XSA generation have not
+started.
 
 ### Phase 3E - Firmware and boot image
 
@@ -170,4 +213,5 @@ regression failure, IP integrity failure, BD validation error, address conflict,
 external stream-width mismatch, CDC requirement, required interrupt connection,
 or any need for an unplanned IP.
 
-The next separately approved step is Phase 3D synthesis/implementation.
+The next separately approved step is timing remediation for the accelerator
+critical path. Phase 3D-2 must not proceed while setup timing is failing.
