@@ -1,8 +1,8 @@
 # Zybo Z7-20 Single OP_CONV Integration Plan
 
 Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, Phase 3C Block Design, and
-Phase 3D-1 synthesis/route are complete. Phase 3D-1 is stopped because the
-implemented 100 MHz setup-timing acceptance gate failed.
+Phase 3D-1 synthesis/route/timing closure are complete. The implemented design
+passes the 100 MHz timing acceptance gate.
 
 ## 1. Confirmed baseline
 
@@ -31,8 +31,10 @@ milestone.
 - HDL wrapper and compile-order update: PASS
 - Full-design synthesis: complete
 - Implementation through `route_design`: complete, fully routed
-- Implemented 100 MHz setup timing: FAIL (`WNS -0.258 ns`, `TNS -0.715 ns`,
+- Baseline 100 MHz setup timing: FAIL (`WNS -0.258 ns`, `TNS -0.715 ns`,
   5 failing endpoints)
+- Final controlled-strategy timing: PASS (`WNS +0.018 ns`, `TNS 0`,
+  0 failing endpoints)
 
 OOC timing is not full-design implemented timing, and BD validation is not FPGA
 execution.
@@ -185,14 +187,29 @@ accelerator internal `aresetn_0` is the highest-fanout reset-related net at
 1,366 loads and still has `+2.180 ns` worst slack; no reset deassertion failure
 is reported.
 
-The timing failure is a mandatory stop condition. No strategy sweep, RTL
-change, BD/topology change, clock/reset change, or address-map change was made.
+The baseline timing failure was a mandatory stop condition. The separately
+approved controlled strategy comparison then reused `synth_1` and tested only
+three candidates including baseline. `Performance_Explore` improved WNS to
+`-0.115 ns`. `Performance_ExplorePostRoutePhysOpt`, with Explore directives for
+opt/place/pre-route phys-opt/route and post-route phys-opt, produced:
+
+```text
+Setup: WNS +0.018 ns, TNS 0.000 ns, 0 failing endpoints
+Hold:  WHS +0.051 ns, THS 0.000 ns, 0 failing endpoints
+Pulse width / DRC errors / unrouted nets: 0 / 0 / 0
+No-clock / unconstrained internal endpoints: 0 / 0
+```
+
+Accelerator resources remain 24 RAMB36E1, one RAMB18E1, three DSP48E1, and
+zero LUTRAM/SRL. No source RTL, BD, clock configuration, constraint, address,
+or floorplan change was made. Physical optimization automatically replicated
+the PS7 clock BUFG (BUFGCTRL one to two), reported as a non-error
+`PLBUFGOPT-1` warning.
 
 ### Phase 3D-2 - Bitstream and hardware handoff
 
-Blocked until a separately approved timing-remediation task passes the 100 MHz
-acceptance gate. Bitstream and bitstream-included XSA generation have not
-started.
+The 100 MHz timing prerequisite now passes. Bitstream and bitstream-included
+XSA generation remain a separately approved task and have not started.
 
 ### Phase 3E - Firmware and boot image
 
@@ -213,5 +230,5 @@ regression failure, IP integrity failure, BD validation error, address conflict,
 external stream-width mismatch, CDC requirement, required interrupt connection,
 or any need for an unplanned IP.
 
-The next separately approved step is timing remediation for the accelerator
-critical path. Phase 3D-2 must not proceed while setup timing is failing.
+The next separately approved step may be Phase 3D-2 bitstream and hardware
+handoff.

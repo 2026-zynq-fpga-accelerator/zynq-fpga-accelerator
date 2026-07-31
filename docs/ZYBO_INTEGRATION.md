@@ -23,7 +23,7 @@ accelerator. It is not a complete ResNet-20 accelerator.
 - OOC timing at 100 MHz: WNS +0.691 ns, TNS 0, 0 failing endpoints
 - Phase 3B-1 wrapper smoke/full-vector and IP integrity: PASS
 - Phase 3C BD validation, output products, and HDL wrapper: PASS
-- Phase 3D-1 synthesis and route: complete; 100 MHz setup timing: FAIL
+- Phase 3D-1 synthesis, route, and controlled timing closure: PASS at 100 MHz
 
 Full-design synthesis and implementation through `route_design` have been
 performed. Bitstream, XSA, Vitis, FSBL, BOOT.BIN, and physical-board execution
@@ -183,8 +183,8 @@ warnings. Implementation completed through `route_design`; `phys_opt_design`
 was enabled and executed. The design is fully routed with zero routing errors,
 zero black boxes, and zero DRC errors.
 
-The strict 100 MHz acceptance gate stopped Phase 3D-1 because setup timing
-failed:
+The baseline `Vivado Implementation Defaults` run failed the strict 100 MHz
+acceptance gate:
 
 | Check | Result |
 |---|---:|
@@ -237,9 +237,30 @@ Generated evidence is under `build/vivado_zybo/reports/`, including
 hierarchical utilization, DRC, methodology, route status, clock utilization,
 clock interaction, CDC, high-fanout, and worst setup/hold path reports.
 
+### Controlled timing closure
+
+The same `synth_1` checkpoint was compared with no RTL, BD, constraint, clock,
+address, or floorplan change. `Performance_Explore` improved WNS to
+`-0.115 ns`; `Performance_ExplorePostRoutePhysOpt` then ran post-route
+`phys_opt_design -directive Explore` and closed timing:
+
+| Check | Final result |
+|---|---:|
+| Setup WNS / TNS / failing endpoints | `+0.018 ns` / `0.000 ns` / 0 |
+| Hold WHS / THS / failing endpoints | `+0.051 ns` / `0.000 ns` / 0 |
+| Pulse-width failing endpoints | 0 |
+| DRC errors / unrouted nets | 0 / 0 |
+| No-clock / unconstrained internal endpoints | 0 / 0 |
+
+The final run retains 24 accelerator RAMB36E1, one RAMB18E1, three DSP48E1,
+and zero LUTRAM/SRL cells. Physical optimization automatically replicated the
+PS7 clock BUFG, increasing BUFGCTRL use from one to two and producing one
+non-error `PLBUFGOPT-1` warning; source clock configuration remains unchanged.
+Full comparison evidence is in
+`build/vivado_zybo/reports/timing_strategy_comparison.txt`.
+
 ## Phase boundary
 
-Phase 3D-1 is stopped at the setup-timing acceptance condition. A separately
-approved timing-remediation task is required before Phase 3D-2. No implementation
-strategy sweep or RTL/BD modification was attempted. No bitstream, XSA, Vitis
-workspace, FSBL, ELF, or BOOT.BIN was generated.
+Phase 3D-1 now passes the 100 MHz implementation acceptance gate. Phase 3D-2
+bitstream and hardware handoff may proceed only as a separately approved task.
+No bitstream, XSA, Vitis workspace, FSBL, ELF, or BOOT.BIN was generated.
