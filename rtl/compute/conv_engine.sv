@@ -51,6 +51,7 @@ module conv_engine #(
     ENG_ADDR_INIT,
     ENG_PREPARE_OUTPUT,
     ENG_READ_TAP,
+    ENG_MAC_PRODUCT,
     ENG_ACCUMULATE,
     ENG_ADD_BIAS,
     ENG_REQUANT_MUL,
@@ -96,6 +97,9 @@ module conv_engine #(
   logic               tap_row_next_padding;
 
   logic signed [15:0] product;
+  logic signed [15:0] mac_product_q;
+  logic               mac_product_valid_q;
+  logic               mac_product_last_tap_q;
   logic signed [31:0] product_extended;
   logic signed [31:0] mac_sum;
   logic               mac_saturated;
@@ -115,6 +119,7 @@ module conv_engine #(
   logic                                      last_output_q;
   logic                                      relu_enable_q;
   logic                                      postprocess_valid_q;
+  logic signed [31:0]                        requant_accumulator_q;
 
   function automatic logic coordinate_is_padding(
     input logic signed [16:0] coordinate_y,
@@ -150,7 +155,7 @@ module conv_engine #(
     .clear_i(requant_clear),
     .mul_enable_i(requant_mul_enable),
     .round_enable_i(requant_round_enable),
-    .accumulator_i(accumulator_q),
+    .accumulator_i(requant_accumulator_q),
     .multiplier_i(multiplier_i),
     .shift_i(shift_i),
     .requantized_o(requantized),
@@ -197,7 +202,8 @@ module conv_engine #(
             && (kernel_w_q == 32'd2)
             && (in_c_q == (in_channels_i - 32'd1));
 
-    bias_rd_en_o   = (state_q == ENG_ACCUMULATE) && last_tap && !abort_i;
+    bias_rd_en_o   = (state_q == ENG_ACCUMULATE)
+                  && mac_product_valid_q && mac_product_last_tap_q && !abort_i;
     bias_rd_addr_o = out_c_q[$clog2(MAX_BIAS_WORDS)-1:0];
 
     requant_clear        = abort_i
@@ -224,7 +230,7 @@ module conv_engine #(
     else
       product = $signed(input_rd_data_i) * $signed(weight_rd_data_i);
 
-    product_extended = $signed({{16{product[15]}}, product});
+    product_extended = $signed({{16{mac_product_q[15]}}, mac_product_q});
     busy_o = (state_q != ENG_IDLE);
   end
 
@@ -238,6 +244,10 @@ module conv_engine #(
       kernel_w_q              <= 32'd0;
       in_c_q                  <= 32'd0;
       accumulator_q           <= 32'sd0;
+      mac_product_q           <= 16'sd0;
+      mac_product_valid_q     <= 1'b0;
+      mac_product_last_tap_q  <= 1'b0;
+      requant_accumulator_q   <= 32'sd0;
       output_x_step_q         <= 14'd0;
       output_y_step_q         <= 16'd0;
       kernel_row_advance_q    <= 17'sd0;
@@ -269,6 +279,10 @@ module conv_engine #(
       kernel_w_q              <= 32'd0;
       in_c_q                  <= 32'd0;
       accumulator_q           <= 32'sd0;
+      mac_product_q           <= 16'sd0;
+      mac_product_valid_q     <= 1'b0;
+      mac_product_last_tap_q  <= 1'b0;
+      requant_accumulator_q   <= 32'sd0;
       output_x_step_q         <= 14'd0;
       output_y_step_q         <= 16'd0;
       kernel_row_advance_q    <= 17'sd0;
@@ -305,6 +319,10 @@ module conv_engine #(
             kernel_w_q           <= 32'd0;
             in_c_q               <= 32'd0;
             accumulator_q        <= 32'sd0;
+            mac_product_q        <= 16'sd0;
+            mac_product_valid_q  <= 1'b0;
+            mac_product_last_tap_q <= 1'b0;
+            requant_accumulator_q <= 32'sd0;
             output_element_q     <= 14'd0;
             address_init_valid_q <= 1'b0;
             tap_valid_q          <= 1'b0;
@@ -359,44 +377,55 @@ module conv_engine #(
         end
 
         ENG_READ_TAP: begin
-          state_q <= ENG_ACCUMULATE;
+          state_q <= ENG_MAC_PRODUCT;
+        end
+
+        ENG_MAC_PRODUCT: begin
+          mac_product_q          <= tap_padding_q ? 16'sd0 : product;
+          mac_product_valid_q    <= 1'b1;
+          mac_product_last_tap_q <= last_tap;
+          state_q                <= ENG_ACCUMULATE;
         end
 
         ENG_ACCUMULATE: begin
-          accumulator_q <= mac_sum;
-          if (mac_saturated)
-            overflow_event_o <= 1'b1;
+          if (mac_product_valid_q) begin
+            accumulator_q       <= mac_sum;
+            mac_product_valid_q <= 1'b0;
+            if (mac_saturated)
+              overflow_event_o <= 1'b1;
 
-          if (last_tap) begin
-            tap_valid_q <= 1'b0;
-            state_q <= ENG_ADD_BIAS;
-          end else begin
-            weight_element_q <= weight_element_q + {9'd0, out_channels_i[6:0]};
-            if (in_c_q + 32'd1 < in_channels_i) begin
-              in_c_q              <= in_c_q + 32'd1;
-              tap_input_element_q <= tap_input_element_q + 17'sd1;
+            if (mac_product_last_tap_q) begin
+              tap_valid_q <= 1'b0;
+              state_q <= ENG_ADD_BIAS;
             end else begin
-              in_c_q <= 32'd0;
-              if (kernel_w_q < 32'd2) begin
-                kernel_w_q          <= kernel_w_q + 32'd1;
-                tap_input_x_q       <= tap_x_next;
+              weight_element_q <= weight_element_q + {9'd0, out_channels_i[6:0]};
+              if (in_c_q + 32'd1 < in_channels_i) begin
+                in_c_q              <= in_c_q + 32'd1;
                 tap_input_element_q <= tap_input_element_q + 17'sd1;
-                tap_padding_q       <= tap_x_next_padding;
               end else begin
-                kernel_w_q          <= 32'd0;
-                kernel_h_q          <= kernel_h_q + 32'd1;
-                tap_input_y_q       <= tap_y_next;
-                tap_input_x_q       <= patch_origin_x_q;
-                tap_input_element_q <= tap_input_element_q + kernel_row_advance_q;
-                tap_padding_q       <= tap_row_next_padding;
+                in_c_q <= 32'd0;
+                if (kernel_w_q < 32'd2) begin
+                  kernel_w_q          <= kernel_w_q + 32'd1;
+                  tap_input_x_q       <= tap_x_next;
+                  tap_input_element_q <= tap_input_element_q + 17'sd1;
+                  tap_padding_q       <= tap_x_next_padding;
+                end else begin
+                  kernel_w_q          <= 32'd0;
+                  kernel_h_q          <= kernel_h_q + 32'd1;
+                  tap_input_y_q       <= tap_y_next;
+                  tap_input_x_q       <= patch_origin_x_q;
+                  tap_input_element_q <= tap_input_element_q + kernel_row_advance_q;
+                  tap_padding_q       <= tap_row_next_padding;
+                end
               end
+              state_q <= ENG_READ_TAP;
             end
-            state_q <= ENG_READ_TAP;
           end
         end
 
         ENG_ADD_BIAS: begin
-          accumulator_q       <= bias_sum;
+          accumulator_q         <= bias_sum;
+          requant_accumulator_q <= bias_sum;
           output_waddr_q      <= output_element_q[$clog2(MAX_OUTPUT_WORDS)+1:2];
           output_wbyte_sel_q  <= output_element_q[1:0];
           last_output_q       <= last_output;

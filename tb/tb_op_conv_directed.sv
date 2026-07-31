@@ -53,6 +53,17 @@ module tb_op_conv_directed;
   logic [3:0] address_weight_lanes_seen;
   logic address_input_word_cross_seen, address_weight_word_cross_seen;
   logic address_last_tap_seen, address_last_output_seen;
+  logic mac_product_pos16384_seen, mac_product_neg16256_seen;
+  logic mac_product_pos16129_seen, mac_padding_zero_seen;
+  logic mac_product_valid_seen, mac_product_alignment_seen;
+  logic mac_last_tap_seen, mac_bias_alignment_seen, requant_handoff_seen;
+  logic signed [31:0] boundary_a, boundary_b, boundary_sum;
+  logic boundary_saturated;
+
+  sat_add_int32 u_boundary_sat_add (
+    .a_i(boundary_a), .b_i(boundary_b),
+    .sum_o(boundary_sum), .saturated_o(boundary_saturated)
+  );
 
   resnet_accel_top #(
     .MAX_WEIGHT_WORDS(64), .MAX_BIAS_WORDS(8),
@@ -388,6 +399,61 @@ module tb_op_conv_directed;
     begin set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal(name); end
   endtask
 
+  task automatic check_mac_pipeline_boundaries;
+    begin
+      force dut.u_conv_engine.accumulator_q = 32'sh7fff_ffff;
+      force dut.u_conv_engine.mac_product_q = 16'sd1;
+      #1;
+      if (($signed(dut.u_conv_engine.mac_sum) !== 32'sh7fff_ffff)
+          || !dut.u_conv_engine.mac_saturated)
+        $fatal(1, "MAC positive saturation boundary failed");
+      release dut.u_conv_engine.accumulator_q;
+      release dut.u_conv_engine.mac_product_q;
+
+      force dut.u_conv_engine.accumulator_q = 32'sh8000_0000;
+      force dut.u_conv_engine.mac_product_q = -16'sd1;
+      #1;
+      if (($signed(dut.u_conv_engine.mac_sum) !== 32'sh8000_0000)
+          || !dut.u_conv_engine.mac_saturated)
+        $fatal(1, "MAC negative saturation boundary failed");
+      release dut.u_conv_engine.accumulator_q;
+      release dut.u_conv_engine.mac_product_q;
+
+      force dut.u_conv_engine.accumulator_q = 32'sd2147467263;
+      force dut.u_conv_engine.mac_product_q = 16'sd16384;
+      #1;
+      if (($signed(dut.u_conv_engine.mac_sum) !== 32'sh7fff_ffff)
+          || dut.u_conv_engine.mac_saturated)
+        $fatal(1, "MAC positive pre-overflow boundary failed");
+      release dut.u_conv_engine.accumulator_q;
+      release dut.u_conv_engine.mac_product_q;
+
+      force dut.u_conv_engine.accumulator_q = 32'sh7fff_ffff;
+      force dut.u_conv_engine.mac_product_q = -16'sd1;
+      #1;
+      if (($signed(dut.u_conv_engine.mac_sum) !== 32'sd2147483646)
+          || dut.u_conv_engine.mac_saturated)
+        $fatal(1, "MAC per-tap saturation ordering failed");
+      release dut.u_conv_engine.accumulator_q;
+      release dut.u_conv_engine.mac_product_q;
+
+      boundary_a = 32'sh7fff_ffff;
+      boundary_b = 32'sd1;
+      #1;
+      if (($signed(boundary_sum) !== 32'sh7fff_ffff) || !boundary_saturated)
+        $fatal(1, "Bias positive saturation failed");
+
+      boundary_a = 32'sh8000_0000;
+      boundary_b = -32'sd1;
+      #1;
+      if (($signed(boundary_sum) !== 32'sh8000_0000) || !boundary_saturated)
+        $fatal(1, "Bias negative saturation failed");
+
+      tests_passed = tests_passed + 1;
+      $display("TEST %-32s PASS", "mac_bias_saturation_boundaries");
+    end
+  endtask
+
   always @(posedge aclk) begin : independent_address_trace_monitor
     integer ref_oh, ref_ow, ref_oc, ref_kh, ref_kw, ref_ic;
     integer ref_out_h, ref_out_w;
@@ -469,6 +535,8 @@ module tb_op_conv_directed;
       end
 
       if (dut.u_conv_engine.state_q == 4'd4) begin
+        if (dut.u_conv_engine.mac_product_valid_q)
+          $fatal(1, "MAC product valid asserted before product register edge");
         ref_oh = dut.u_conv_engine.out_h_q;
         ref_ow = dut.u_conv_engine.out_w_q;
         ref_oc = dut.u_conv_engine.out_c_q;
@@ -499,7 +567,62 @@ module tb_op_conv_directed;
         end
       end
 
-      if ((dut.u_conv_engine.state_q == 4'd8) && dut.output_we
+      if (dut.u_conv_engine.state_q == 4'd5) begin
+        ref_oh = dut.u_conv_engine.out_h_q;
+        ref_ow = dut.u_conv_engine.out_w_q;
+        ref_oc = dut.u_conv_engine.out_c_q;
+        ref_kh = dut.u_conv_engine.kernel_h_q;
+        ref_kw = dut.u_conv_engine.kernel_w_q;
+        ref_ic = dut.u_conv_engine.in_c_q;
+        ref_iy = ref_oh * cfg_stride + ref_kh - cfg_padding;
+        ref_ix = ref_ow * cfg_stride + ref_kw - cfg_padding;
+        ref_padding = (ref_iy < 0) || (ref_iy >= cfg_h)
+                   || (ref_ix < 0) || (ref_ix >= cfg_w);
+        ref_input_element = ((ref_iy * cfg_w) + ref_ix) * cfg_ic + ref_ic;
+        ref_weight_element = (((ref_kh * 3) + ref_kw) * cfg_ic + ref_ic)
+                           * cfg_oc + ref_oc;
+        ref_product = ref_padding ? 0
+                    : ($signed(input_data[ref_input_element])
+                       * $signed(weight_data[ref_weight_element]));
+        if (!dut.u_conv_engine.mac_product_valid_q)
+          $fatal(1, "MAC product valid missing in ENG_ACCUMULATE");
+        if ($signed(dut.u_conv_engine.mac_product_q) !== ref_product)
+          $fatal(1, "registered MAC product mismatch got=%0d expected=%0d",
+                 $signed(dut.u_conv_engine.mac_product_q), ref_product);
+        if (dut.u_conv_engine.mac_product_last_tap_q
+            !== ((ref_kh == 2) && (ref_kw == 2) && (ref_ic == (cfg_ic - 1))))
+          $fatal(1, "registered last-tap metadata mismatch");
+        if (dut.bias_rd_en !== dut.u_conv_engine.mac_product_last_tap_q)
+          $fatal(1, "bias read did not align with last committed product");
+        mac_product_valid_seen = 1'b1;
+        mac_product_alignment_seen = 1'b1;
+        mac_padding_zero_seen = mac_padding_zero_seen
+                              || (ref_padding && (ref_product == 0));
+        mac_product_pos16384_seen = mac_product_pos16384_seen || (ref_product == 16384);
+        mac_product_neg16256_seen = mac_product_neg16256_seen || (ref_product == -16256);
+        mac_product_pos16129_seen = mac_product_pos16129_seen || (ref_product == 16129);
+        mac_last_tap_seen = mac_last_tap_seen
+                          || dut.u_conv_engine.mac_product_last_tap_q;
+      end
+
+      if (dut.u_conv_engine.state_q == 4'd6) begin
+        if ($signed(dut.bias_rd_data) !== $signed(bias_data[dut.u_conv_engine.out_c_q]))
+          $fatal(1, "bias BRAM data alignment mismatch oc=%0d got=%0d expected=%0d",
+                 dut.u_conv_engine.out_c_q, $signed(dut.bias_rd_data),
+                 $signed(bias_data[dut.u_conv_engine.out_c_q]));
+        mac_bias_alignment_seen = 1'b1;
+      end
+
+      if (dut.u_conv_engine.state_q == 4'd7) begin
+        if ($signed(dut.u_conv_engine.requant_accumulator_q)
+            !== $signed(dut.u_conv_engine.accumulator_q))
+          $fatal(1, "requant accumulator handoff mismatch got=%0d expected=%0d",
+                 $signed(dut.u_conv_engine.requant_accumulator_q),
+                 $signed(dut.u_conv_engine.accumulator_q));
+        requant_handoff_seen = 1'b1;
+      end
+
+      if ((dut.u_conv_engine.state_q == 4'd9) && dut.output_we
           && (expected_write_element == (cfg_output_bytes - 1)))
         address_last_output_seen = 1'b1;
     end
@@ -570,6 +693,7 @@ module tb_op_conv_directed;
     logic [31:0] packed_word;
 
     aclk = 0; aresetn = 0;
+    boundary_a = 32'sd0; boundary_b = 32'sd0;
     s_axi_awaddr = 0; s_axi_awvalid = 0; s_axi_wdata = 0; s_axi_wstrb = 4'b1111;
     s_axi_wvalid = 0; s_axi_bready = 1; s_axi_araddr = 0; s_axi_arvalid = 0;
     s_axi_rready = 1; s_axis_tdata = 0; s_axis_tkeep = 4'b1111;
@@ -585,7 +709,28 @@ module tb_op_conv_directed;
     address_input_lanes_seen = 4'b0000; address_weight_lanes_seen = 4'b0000;
     address_input_word_cross_seen = 0; address_weight_word_cross_seen = 0;
     address_last_tap_seen = 0; address_last_output_seen = 0;
+    mac_product_pos16384_seen = 0; mac_product_neg16256_seen = 0;
+    mac_product_pos16129_seen = 0; mac_padding_zero_seen = 0;
+    mac_product_valid_seen = 0; mac_product_alignment_seen = 0;
+    mac_last_tap_seen = 0; mac_bias_alignment_seen = 0; requant_handoff_seen = 0;
     repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
+
+    check_mac_pipeline_boundaries();
+
+    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
+    for (word_index = 0; word_index < MAX_INPUT_BYTES; word_index = word_index + 1)
+      case (word_index & 3)
+        0: input_data[word_index] = -8'sd128;
+        2: input_data[word_index] =  8'sd127;
+        default: input_data[word_index] = 8'sd0;
+      endcase
+    for (word_index = 0; word_index < MAX_WEIGHT_BYTES; word_index = word_index + 1)
+      case (word_index & 3)
+        0: weight_data[word_index] = -8'sd128;
+        1: weight_data[word_index] =  8'sd127;
+        default: weight_data[word_index] = 8'sd0;
+      endcase
+    run_normal("mac_product_extremes");
 
     set_shape(1, 1, 0, 3, 2); initialize_pattern(1); run_normal("signed_bias_relu_off_requant");
 
@@ -695,9 +840,43 @@ module tb_op_conv_directed;
     recover_with_normal("recovery_after_validation_abort");
 
     set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1); send_normal_packets();
+    wait (dut.u_conv_engine.state_q == 4'd4);
+    @(negedge aclk);
+    force dut.engine_abort = 1'b1;
+    @(posedge aclk); #1;
+    if ((dut.u_conv_engine.state_q != 4'd0)
+        || dut.u_conv_engine.mac_product_valid_q
+        || (dut.u_conv_engine.mac_product_q != 16'sd0)
+        || dut.u_conv_engine.mac_product_last_tap_q)
+      $fatal(1, "ENG_MAC_PRODUCT abort left stale product state");
+    release dut.engine_abort;
+    axi_write(REG_CONTROL, 2);
+    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "mac_product_abort");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "mac_product_abort");
+    recover_with_normal("recovery_after_mac_product_abort");
+
+    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
+    program_config(); clear_status(); axi_write(REG_CONTROL, 1); send_normal_packets();
+    wait (dut.u_conv_engine.state_q == 4'd5);
+    @(negedge aclk);
+    force dut.engine_abort = 1'b1;
+    @(posedge aclk); #1;
+    if ((dut.u_conv_engine.state_q != 4'd0)
+        || dut.u_conv_engine.mac_product_valid_q
+        || (dut.u_conv_engine.mac_product_q != 16'sd0)
+        || dut.u_conv_engine.mac_product_last_tap_q)
+      $fatal(1, "ENG_ACCUMULATE abort left stale product state");
+    release dut.engine_abort;
+    axi_write(REG_CONTROL, 2);
+    repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "mac_accumulate_abort");
+    tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "mac_accumulate_abort");
+    recover_with_normal("recovery_after_mac_accumulate_abort");
+
+    set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
     build_reference(); program_config(); clear_status(); begin_capture();
     axi_write(REG_CONTROL, 1); send_normal_packets();
-    wait (dut.u_conv_engine.state_q == 4'd6);
+    wait (dut.u_conv_engine.state_q == 4'd7);
     @(negedge aclk);
     force dut.engine_abort = 1'b1;
     @(posedge aclk); #1;
@@ -715,6 +894,18 @@ module tb_op_conv_directed;
     repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "abort");
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "abort");
     recover_with_normal("recovery_after_abort");
+
+    if (!mac_product_pos16384_seen || !mac_product_neg16256_seen
+        || !mac_product_pos16129_seen || !mac_padding_zero_seen
+        || !mac_product_valid_seen || !mac_product_alignment_seen
+        || !mac_last_tap_seen || !mac_bias_alignment_seen || !requant_handoff_seen)
+      $fatal(1, "MAC pipeline coverage incomplete products=%0b%0b%0b pad=%0b valid=%0b align=%0b last=%0b bias=%0b req=%0b",
+             mac_product_pos16384_seen, mac_product_neg16256_seen,
+             mac_product_pos16129_seen, mac_padding_zero_seen,
+             mac_product_valid_seen, mac_product_alignment_seen,
+             mac_last_tap_seen, mac_bias_alignment_seen, requant_handoff_seen);
+    tests_passed = tests_passed + 1;
+    $display("TEST %-32s PASS", "mac_pipeline_trace");
 
     if (!address_trace_seen || !address_padding_seen || !address_valid_seen
         || !address_stride1_seen || !address_stride2_seen
