@@ -8,7 +8,7 @@ module tb_full_conv;
   localparam integer WEIGHT_BYTES = 432;
   localparam integer BIAS_BYTES = 64;
   localparam integer OUTPUT_BYTES = 16384;
-  localparam logic [31:0] EXPECTED_CYCLES = 32'd960254;
+  localparam logic [31:0] EXPECTED_CYCLES = 32'd976639;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;

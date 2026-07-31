@@ -43,6 +43,16 @@ module tb_op_conv_directed;
   logic previous_output_we;
   logic last_write_pending;
   logic last_output_write_seen;
+  logic address_trace_seen;
+  logic address_padding_seen, address_valid_seen;
+  logic address_stride1_seen, address_stride2_seen;
+  logic address_top_seen, address_left_seen, address_right_seen, address_bottom_seen;
+  logic address_center_seen, address_ic_nonzero_seen, address_oc_nonzero_seen;
+  logic address_kw_nonzero_seen, address_kh_nonzero_seen;
+  logic [3:0] address_input_lanes_seen;
+  logic [3:0] address_weight_lanes_seen;
+  logic address_input_word_cross_seen, address_weight_word_cross_seen;
+  logic address_last_tap_seen, address_last_output_seen;
 
   resnet_accel_top #(
     .MAX_WEIGHT_WORDS(64), .MAX_BIAS_WORDS(8),
@@ -378,6 +388,123 @@ module tb_op_conv_directed;
     begin set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal(name); end
   endtask
 
+  always @(posedge aclk) begin : independent_address_trace_monitor
+    integer ref_oh, ref_ow, ref_oc, ref_kh, ref_kw, ref_ic;
+    integer ref_out_h, ref_out_w;
+    integer ref_iy, ref_ix, ref_input_element, ref_weight_element;
+    integer signed ref_product;
+    logic ref_padding;
+    if (aresetn && postprocess_monitor_enabled) begin
+      if (dut.u_conv_engine.state_q == 4'd3) begin
+        ref_oh = dut.u_conv_engine.out_h_q;
+        ref_ow = dut.u_conv_engine.out_w_q;
+        ref_oc = dut.u_conv_engine.out_c_q;
+        ref_kh = dut.u_conv_engine.kernel_h_q;
+        ref_kw = dut.u_conv_engine.kernel_w_q;
+        ref_ic = dut.u_conv_engine.in_c_q;
+        ref_out_h = ((cfg_h + 2*cfg_padding - 3) / cfg_stride) + 1;
+        ref_out_w = ((cfg_w + 2*cfg_padding - 3) / cfg_stride) + 1;
+        ref_iy = ref_oh * cfg_stride + ref_kh - cfg_padding;
+        ref_ix = ref_ow * cfg_stride + ref_kw - cfg_padding;
+        ref_padding = (ref_iy < 0) || (ref_iy >= cfg_h)
+                   || (ref_ix < 0) || (ref_ix >= cfg_w);
+        ref_input_element = ((ref_iy * cfg_w) + ref_ix) * cfg_ic + ref_ic;
+        ref_weight_element = (((ref_kh * 3) + ref_kw) * cfg_ic + ref_ic)
+                           * cfg_oc + ref_oc;
+
+        address_trace_seen = 1'b1;
+        address_padding_seen = address_padding_seen || ref_padding;
+        address_valid_seen = address_valid_seen || !ref_padding;
+        address_stride1_seen = address_stride1_seen || (cfg_stride == 1);
+        address_stride2_seen = address_stride2_seen || (cfg_stride == 2);
+        address_top_seen = address_top_seen || (ref_oh == 0);
+        address_left_seen = address_left_seen || (ref_ow == 0);
+        address_right_seen = address_right_seen || (ref_ow == (ref_out_w - 1));
+        address_bottom_seen = address_bottom_seen || (ref_oh == (ref_out_h - 1));
+        address_center_seen = address_center_seen
+                           || ((ref_oh > 0) && (ref_oh < (ref_out_h - 1))
+                               && (ref_ow > 0) && (ref_ow < (ref_out_w - 1)));
+        address_ic_nonzero_seen = address_ic_nonzero_seen || (ref_ic != 0);
+        address_oc_nonzero_seen = address_oc_nonzero_seen || (ref_oc != 0);
+        address_kw_nonzero_seen = address_kw_nonzero_seen || (ref_kw != 0);
+        address_kh_nonzero_seen = address_kh_nonzero_seen || (ref_kh != 0);
+        address_weight_lanes_seen[ref_weight_element & 3] = 1'b1;
+        if (!ref_padding)
+          address_input_lanes_seen[ref_input_element & 3] = 1'b1;
+        address_input_word_cross_seen = address_input_word_cross_seen
+                                      || (!ref_padding && (ref_input_element > 0)
+                                          && ((ref_input_element & 3) == 0));
+        address_weight_word_cross_seen = address_weight_word_cross_seen
+                                       || ((ref_weight_element > 0)
+                                           && ((ref_weight_element & 3) == 0));
+        address_last_tap_seen = address_last_tap_seen
+                              || ((ref_kh == 2) && (ref_kw == 2)
+                                  && (ref_ic == (cfg_ic - 1)));
+
+        if ($signed(dut.u_conv_engine.tap_input_y_q) !== ref_iy)
+          $fatal(1, "tap Y mismatch got=%0d expected=%0d", $signed(dut.u_conv_engine.tap_input_y_q), ref_iy);
+        if ($signed(dut.u_conv_engine.tap_input_x_q) !== ref_ix)
+          $fatal(1, "tap X mismatch got=%0d expected=%0d", $signed(dut.u_conv_engine.tap_input_x_q), ref_ix);
+        if ($signed(dut.u_conv_engine.tap_input_element_q) !== ref_input_element)
+          $fatal(1, "input element mismatch got=%0d expected=%0d", $signed(dut.u_conv_engine.tap_input_element_q), ref_input_element);
+        if (dut.u_conv_engine.weight_element_q !== ref_weight_element)
+          $fatal(1, "weight element mismatch got=%0d expected=%0d", dut.u_conv_engine.weight_element_q, ref_weight_element);
+        if (dut.u_conv_engine.tap_padding_q !== ref_padding)
+          $fatal(1, "padding mismatch oh=%0d ow=%0d kh=%0d kw=%0d got=%0b expected=%0b",
+                 ref_oh, ref_ow, ref_kh, ref_kw, dut.u_conv_engine.tap_padding_q, ref_padding);
+        if (dut.input_rd_en !== !ref_padding)
+          $fatal(1, "input read enable mismatch padding=%0b rd_en=%0b", ref_padding, dut.input_rd_en);
+        if (dut.weight_rd_en !== 1'b1)
+          $fatal(1, "weight read unexpectedly disabled");
+        if (!ref_padding) begin
+          if (dut.input_rd_word_addr !== (ref_input_element >> 2))
+            $fatal(1, "input word address mismatch got=%0d expected=%0d", dut.input_rd_word_addr, ref_input_element >> 2);
+          if (dut.input_rd_byte_sel !== (ref_input_element & 3))
+            $fatal(1, "input lane mismatch got=%0d expected=%0d", dut.input_rd_byte_sel, ref_input_element & 3);
+        end
+        if (dut.weight_rd_word_addr !== (ref_weight_element >> 2))
+          $fatal(1, "weight word address mismatch got=%0d expected=%0d", dut.weight_rd_word_addr, ref_weight_element >> 2);
+        if (dut.weight_rd_byte_sel !== (ref_weight_element & 3))
+          $fatal(1, "weight lane mismatch got=%0d expected=%0d", dut.weight_rd_byte_sel, ref_weight_element & 3);
+      end
+
+      if (dut.u_conv_engine.state_q == 4'd4) begin
+        ref_oh = dut.u_conv_engine.out_h_q;
+        ref_ow = dut.u_conv_engine.out_w_q;
+        ref_oc = dut.u_conv_engine.out_c_q;
+        ref_kh = dut.u_conv_engine.kernel_h_q;
+        ref_kw = dut.u_conv_engine.kernel_w_q;
+        ref_ic = dut.u_conv_engine.in_c_q;
+        ref_iy = ref_oh * cfg_stride + ref_kh - cfg_padding;
+        ref_ix = ref_ow * cfg_stride + ref_kw - cfg_padding;
+        ref_padding = (ref_iy < 0) || (ref_iy >= cfg_h)
+                   || (ref_ix < 0) || (ref_ix >= cfg_w);
+        ref_input_element = ((ref_iy * cfg_w) + ref_ix) * cfg_ic + ref_ic;
+        ref_weight_element = (((ref_kh * 3) + ref_kw) * cfg_ic + ref_ic)
+                           * cfg_oc + ref_oc;
+        if ($signed(dut.weight_rd_data) !== $signed(weight_data[ref_weight_element]))
+          $fatal(1, "synchronous weight data mismatch element=%0d got=%0d expected=%0d",
+                 ref_weight_element, $signed(dut.weight_rd_data), $signed(weight_data[ref_weight_element]));
+        if (ref_padding) begin
+          if ($signed(dut.u_conv_engine.product) !== 0)
+            $fatal(1, "padding tap consumed stale input data product=%0d", $signed(dut.u_conv_engine.product));
+        end else begin
+          if ($signed(dut.input_rd_data) !== $signed(input_data[ref_input_element]))
+            $fatal(1, "synchronous input data mismatch element=%0d got=%0d expected=%0d",
+                   ref_input_element, $signed(dut.input_rd_data), $signed(input_data[ref_input_element]));
+          ref_product = $signed(input_data[ref_input_element]) * $signed(weight_data[ref_weight_element]);
+          if ($signed(dut.u_conv_engine.product) !== ref_product)
+            $fatal(1, "MAC product mismatch input=%0d weight=%0d got=%0d expected=%0d",
+                   ref_input_element, ref_weight_element, $signed(dut.u_conv_engine.product), ref_product);
+        end
+      end
+
+      if ((dut.u_conv_engine.state_q == 4'd8) && dut.output_we
+          && (expected_write_element == (cfg_output_bytes - 1)))
+        address_last_output_seen = 1'b1;
+    end
+  end
+
   always @(posedge aclk) begin : postprocess_write_monitor
     if (!aresetn) begin
       previous_output_we = 1'b0;
@@ -450,6 +577,14 @@ module tb_op_conv_directed;
     output_byte_count = 0; mismatch_count = 0; capture_enabled = 0; tests_passed = 0;
     expected_write_element = 0; postprocess_monitor_enabled = 0;
     previous_output_we = 0; last_write_pending = 0; last_output_write_seen = 0;
+    address_trace_seen = 0; address_padding_seen = 0; address_valid_seen = 0;
+    address_stride1_seen = 0; address_stride2_seen = 0;
+    address_top_seen = 0; address_left_seen = 0; address_right_seen = 0; address_bottom_seen = 0;
+    address_center_seen = 0; address_ic_nonzero_seen = 0; address_oc_nonzero_seen = 0;
+    address_kw_nonzero_seen = 0; address_kh_nonzero_seen = 0;
+    address_input_lanes_seen = 4'b0000; address_weight_lanes_seen = 4'b0000;
+    address_input_word_cross_seen = 0; address_weight_word_cross_seen = 0;
+    address_last_tap_seen = 0; address_last_output_seen = 0;
     repeat (6) @(posedge aclk); @(negedge aclk); aresetn = 1; repeat (4) @(posedge aclk);
 
     set_shape(1, 1, 0, 3, 2); initialize_pattern(1); run_normal("signed_bias_relu_off_requant");
@@ -562,7 +697,7 @@ module tb_op_conv_directed;
     set_shape(1, 1, 0, 1, 0); initialize_pattern(0);
     build_reference(); program_config(); clear_status(); begin_capture();
     axi_write(REG_CONTROL, 1); send_normal_packets();
-    wait (dut.u_conv_engine.state_q == 3'd4);
+    wait (dut.u_conv_engine.state_q == 4'd6);
     @(negedge aclk);
     force dut.engine_abort = 1'b1;
     @(posedge aclk); #1;
@@ -580,6 +715,23 @@ module tb_op_conv_directed;
     repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "abort");
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "abort");
     recover_with_normal("recovery_after_abort");
+
+    if (!address_trace_seen || !address_padding_seen || !address_valid_seen
+        || !address_stride1_seen || !address_stride2_seen
+        || !address_top_seen || !address_left_seen || !address_right_seen || !address_bottom_seen
+        || !address_center_seen || !address_ic_nonzero_seen || !address_oc_nonzero_seen
+        || !address_kw_nonzero_seen || !address_kh_nonzero_seen
+        || (address_input_lanes_seen != 4'b1111) || (address_weight_lanes_seen != 4'b1111)
+        || !address_input_word_cross_seen || !address_weight_word_cross_seen
+        || !address_last_tap_seen || !address_last_output_seen)
+      $fatal(1, "address trace coverage incomplete pad=%0b valid=%0b stride=%0b%0b edge=%0b%0b%0b%0b center=%0b lanes=%b/%b cross=%0b/%0b last=%0b/%0b",
+             address_padding_seen, address_valid_seen, address_stride2_seen, address_stride1_seen,
+             address_top_seen, address_left_seen, address_right_seen, address_bottom_seen,
+             address_center_seen, address_input_lanes_seen, address_weight_lanes_seen,
+             address_input_word_cross_seen, address_weight_word_cross_seen,
+             address_last_tap_seen, address_last_output_seen);
+    tests_passed = tests_passed + 1;
+    $display("TEST %-32s PASS", "independent_address_trace");
 
     axi_read(REG_STATUS, status); axi_read(REG_ERROR_CODE, code);
     if (status[3] || (code != ERR_NONE))
