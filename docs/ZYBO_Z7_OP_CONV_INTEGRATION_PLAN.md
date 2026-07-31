@@ -1,8 +1,9 @@
 # Zybo Z7-20 Single OP_CONV Integration Plan
 
-Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, Phase 3C Block Design, and
-Phase 3D-1 synthesis/route/timing closure are complete. The implemented design
-passes the 100 MHz timing acceptance gate.
+Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, Phase 3C Block Design, Phase
+3D-1 synthesis/route/timing closure, and Phase 3D-2 bitstream/XSA generation
+are complete. The implemented design passes the 100 MHz timing acceptance
+gate, and the hardware build is ready for Phase 3E.
 
 ## 1. Confirmed baseline
 
@@ -35,6 +36,8 @@ milestone.
   5 failing endpoints)
 - Final controlled-strategy timing: PASS (`WNS +0.018 ns`, `TNS 0`,
   0 failing endpoints)
+- Official PASS-run bitstream: generated
+- Bitstream-included XSA: generated and archive-validated
 
 OOC timing is not full-design implemented timing, and BD validation is not FPGA
 execution.
@@ -137,6 +140,10 @@ vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/validate_zybo_system.tcl
 vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/build_zybo_implementation.tcl
+vivado -mode batch -notrace \
+  -log build/vivado_zybo/reports/generate_bitstream_xsa.log \
+  -journal build/vivado_zybo/reports/generate_bitstream_xsa.jou \
+  -source scripts/vivado/generate_bitstream_xsa.tcl
 ```
 
 Reports are regenerated under `build/vivado_zybo/reports/`:
@@ -208,13 +215,30 @@ the PS7 clock BUFG (BUFGCTRL one to two), reported as a non-error
 
 ### Phase 3D-2 - Bitstream and hardware handoff
 
-The 100 MHz timing prerequisite now passes. Bitstream and bitstream-included
-XSA generation remain a separately approved task and have not started.
+The official `write_bitstream` run step completed on the timing-PASS
+`impl_performance_postroute_physopt` run without rerunning opt, place, route,
+or post-route physical optimization. All implementation DCP and completion
+marker sizes, timestamps, and SHA-256 values remained unchanged. Post-step
+timing remained WNS `+0.018 ns`, TNS `0`, and WHS `+0.051 ns`; DRC errors and
+unrouted nets remain zero.
+
+The final bitstream and bitstream-included fixed XSA are:
+
+```text
+build/vivado_zybo/artifacts/zybo_resnet_system.bit
+build/vivado_zybo/artifacts/zybo_resnet_system.xsa
+```
+
+The XSA archive contains the official run bitstream, PS7 initialization data,
+BD hardware metadata, and accelerator/DMA instance information. The generated
+sizes, checksums, run-state evidence, and archive validation are recorded in
+`build/vivado_zybo/reports/bitstream_xsa_manifest.txt`.
 
 ### Phase 3E - Firmware and boot image
 
-Create the Vitis platform/BSP, replace hardware identifiers from
-`xparameters.h`, build the firmware ELF and FSBL, and generate BOOT.BIN.
+The hardware build prerequisite is complete. Create the Vitis platform/BSP,
+replace hardware identifiers from `xparameters.h`, build the firmware ELF and
+FSBL, and generate BOOT.BIN.
 BOOT.BIN generation will not prove physical-board execution.
 
 ### Physical-board acceptance
@@ -230,5 +254,5 @@ regression failure, IP integrity failure, BD validation error, address conflict,
 external stream-width mismatch, CDC requirement, required interrupt connection,
 or any need for an unplanned IP.
 
-The next separately approved step may be Phase 3D-2 bitstream and hardware
-handoff.
+The next separately approved step may be Phase 3E Vitis platform and firmware
+work.

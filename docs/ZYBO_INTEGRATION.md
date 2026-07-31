@@ -24,10 +24,11 @@ accelerator. It is not a complete ResNet-20 accelerator.
 - Phase 3B-1 wrapper smoke/full-vector and IP integrity: PASS
 - Phase 3C BD validation, output products, and HDL wrapper: PASS
 - Phase 3D-1 synthesis, route, and controlled timing closure: PASS at 100 MHz
+- Phase 3D-2 official run bitstream and bitstream-included XSA: PASS
 
-Full-design synthesis and implementation through `route_design` have been
-performed. Bitstream, XSA, Vitis, FSBL, BOOT.BIN, and physical-board execution
-have not been performed.
+The hardware build through the official implementation-run bitstream and
+bitstream-included XSA is complete. Vitis, firmware ELF, FSBL, BOOT.BIN, and
+physical-board execution have not been performed.
 
 ## Wrapper contract
 
@@ -61,6 +62,12 @@ vivado -mode batch -nolog -nojournal \
 # Phase 3D-1 synthesis, implementation through route_design, and reports
 vivado -mode batch -nolog -nojournal \
   -source scripts/vivado/build_zybo_implementation.tcl
+
+# Phase 3D-2 official PASS-run bitstream and bitstream-included XSA
+vivado -mode batch -notrace \
+  -log build/vivado_zybo/reports/generate_bitstream_xsa.log \
+  -journal build/vivado_zybo/reports/generate_bitstream_xsa.jou \
+  -source scripts/vivado/generate_bitstream_xsa.tcl
 ```
 
 The create script regenerates the accelerator package automatically when
@@ -259,8 +266,35 @@ non-error `PLBUFGOPT-1` warning; source clock configuration remains unchanged.
 Full comparison evidence is in
 `build/vivado_zybo/reports/timing_strategy_comparison.txt`.
 
+## Phase 3D-2 bitstream and hardware handoff
+
+The official `write_bitstream` step completed on
+`impl_performance_postroute_physopt`. All implementation DCPs and the
+place/route/post-route-phys-opt completion markers retained identical sizes,
+timestamps, and SHA-256 values, confirming that no implementation stage was
+rerun. Timing remained WNS `+0.018 ns`, TNS `0`, WHS `+0.051 ns`, with zero
+failing endpoints, DRC errors, unrouted nets, no-clock registers, or
+unconstrained internal endpoints.
+
+Generated hardware artifacts:
+
+```text
+build/vivado_zybo/artifacts/zybo_resnet_system.bit
+build/vivado_zybo/artifacts/zybo_resnet_system.xsa
+```
+
+The XSA is a valid archive containing the official bitstream, PS7
+initialization files, system hardware handoff metadata, both SmartConnect HWH
+files, and the validated accelerator and AXI DMA instances. Artifact sizes,
+SHA-256 values, run-state transitions, and archive validation evidence are in
+`build/vivado_zybo/reports/bitstream_xsa_manifest.txt`.
+
+This completes the hardware build and permits Phase 3E Vitis work to begin.
+It does not indicate that a firmware ELF, FSBL, BOOT.BIN, or physical-board
+test has completed.
+
 ## Phase boundary
 
-Phase 3D-1 now passes the 100 MHz implementation acceptance gate. Phase 3D-2
-bitstream and hardware handoff may proceed only as a separately approved task.
-No bitstream, XSA, Vitis workspace, FSBL, ELF, or BOOT.BIN was generated.
+Phase 3D-2 hardware build and handoff are complete. The next separately
+approved phase is Phase 3E Vitis platform and firmware work. No Vitis workspace,
+firmware ELF, FSBL, BOOT.BIN, or physical-board result has been generated.
