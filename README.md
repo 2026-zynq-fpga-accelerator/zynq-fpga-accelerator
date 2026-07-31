@@ -1,96 +1,110 @@
-# Zynq FPGA SoC ResNet Inference Accelerator
+# Zynq FPGA SoC ResNet OP_CONV Accelerator
 
-Current completion level: **Single OP_CONV integrated RTL with Vivado XSim verification**.
+Current completion level: **bit-exact single OP_CONV RTL, 100 MHz OOC timing,
+and Phase 3B-1 wrapper/IP packaging verified**.
 
 This repository implements the HW/SW Interface Specification v1.1 single-layer
-`OP_CONV` baseline. It has not completed synthesis, implementation, bitstream
-generation, FPGA execution, or ResNet-20 end-to-end inference.
+`OP_CONV` baseline. It is not a complete ResNet-20 accelerator. Block Design,
+full-design implementation, bitstream/XSA, BOOT.BIN, and physical FPGA execution
+are not complete.
 
 ## Implemented
 
-- Batch `N=1`, NHWC activation, and HWIO weights
+- Batch `N=1`, NHWC activations, and HWIO weights
 - Signed INT8 input/weight, signed INT32 bias/accumulator, signed INT8 output
-- Single-MAC sequential 3x3 convolution
-- Stride 1/2 and padding 0/1
+- Single-MAC sequential 3x3 convolution with stride 1/2 and padding 0/1
 - Per-MAC and bias-add INT32 saturation
 - M/N sign-symmetric round-to-nearest, ties-away-from-zero requantization
 - Optional ReLU and signed INT8 clamp
-- 32-bit AXI4-Stream Weight -> Bias -> Input loader and buffered output streamer
+- 32-bit AXI4-Stream Weight -> Bias -> Input loader and output streamer
 - 32-bit AXI4-Lite v1.1 register interface
-- Configuration snapshot, controller FSM, sticky status/error, ABORT, debug state,
-  cycle counter, and parameterized capacity validation
+- Configuration validation/snapshot, FSM, sticky status/error, ABORT, debug
+  state, cycle counter, and capacity validation
+- Thin packaged-IP wrapper with standard AXI names and AWPROT/ARPROT
 
-## Simulation verified
+## Verified baseline
 
-The Vivado environment is:
+Environment:
 
 ```bash
 source /home/jmhwang/tools/Xilinxe/Vivado/2022.2/settings64.sh
 ```
 
-Run the complete regression with:
+Run the complete core regression:
 
 ```bash
 scripts/sim/run_regression.sh
 ```
 
-Verified with Icarus, Verilator lint, and Vivado 2022.2 xvlog/xelab/XSim:
+Current results:
 
-- Original 4x4x4 -> 4x4x4 smoke: 64 bytes, mismatch 0
-- Scalar saturation, requantization rounding/ties, ReLU, and clamp boundaries
-- Signed input/weight, non-zero bias, ReLU disabled, and `N>0`
-- Stride 2 and padding 0
-- Two consecutive operations
-- Non-fatal START/config-write while BUSY behavior
-- Capacity and register-byte-count invalid configuration
-- Early/missing TLAST and invalid TKEEP fatal behavior with recovery
-- ABORT followed by a successful new operation
-- Seed 20260730 full 32x32x3 -> 32x32x16 convolution:
-  16,384 output bytes, mismatch 0, XSim cycle count 927,486
+- Official regression: 10 PASS, 0 FAIL
+- Directed integration: 49 PASS
+- Full 32x32x3 -> 32x32x16 vector: 16,384 bytes, mismatch 0
+- Full-vector validator latency: 34 cycles
+- Full-vector operation cycle count: 1,435,391
+- 100 MHz OOC timing: WNS +0.691 ns, TNS 0 ns, 0 failing endpoints
+- OOC resources: 2,174 LUT, 1,993 FF, 3 DSP48E1, 24 RAMB36E1,
+  1 RAMB18E1
 
-The deterministic full-size vector is generated independently by
-`scripts/vector_gen/generate_full_conv_vector.py` from the v1.1 NHWC/HWIO
-indexing and arithmetic rules.
+The deterministic seed-20260730 vector under
+`vectors/full_conv_32x32x3x16/` follows v1.1 NHWC/HWIO indexing and arithmetic.
 
-## Not yet verified
+## Phase 3B-1 wrapper/IP verification
 
-- Accumulator saturation inside a complete convolution with deliberately
-  overflowing tensors
-- Invalid AXI-Lite address and partial-WSTRB corner cases
-- Output backpressure across every newly added directed case
-- Synthesis, timing, and inferred BRAM/DSP resources
-- AXI DMA/cache coherency and software timeouts on hardware
-
-## Not yet implemented
-
-- Vivado Block Design, packaged IP, board constraints, bitstream, and XSA
-- Zynq firmware integration and physical FPGA execution
-- PL residual add, projection shortcut, pooling, GAP, and FC
-- ResNet-20 scheduler and end-to-end inference
-- Interrupts, multiple MAC lanes, and DMA double buffering
-
-## Reference documents
-
-Approved source documents belong under `docs/reference/`. The current checkout
-contains only the placeholder in that directory; do not change the external
-interface without adding and approving the v1.1 source document.
-
-## Synthesis preparation
-
-After the board part is confirmed, out-of-context synthesis can be invoked as:
+Run wrapper smoke and full-vector simulation:
 
 ```bash
-vivado -mode batch \
-  -source scripts/vivado/synth_ooc.tcl \
-  -tclargs <FPGA_PART> <CLK_PERIOD_NS>
+vivado -mode batch -nolog -nojournal \
+  -source scripts/sim/run_wrapper_xsim.tcl
 ```
 
-The script rejects missing arguments. No FPGA part is hardcoded, and synthesis
-has not been run in the current project state.
+Create and validate the user IP:
+
+```bash
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/package_resnet_accel_ip.tcl
+```
+
+Verified package facts:
+
+- VLNV: `jmhwang.local:npu:resnet_accel:1.0`
+- `S_AXI_CTRL`: AXI4-Lite slave, 7-bit address, 32-bit data
+- `S_AXIS_INPUT`: AXIS slave, `TDATA_NUM_BYTES=4`
+- `M_AXIS_OUTPUT`: AXIS master, `TDATA_NUM_BYTES=4`
+- `aclk`: 100 MHz metadata, associated with all three buses and `aresetn`
+- `aresetn`: active-low
+- `ipx::check_integrity`: PASS
+
+Generated package/project products default to ignored paths under `build/`.
+See `docs/ZYBO_INTEGRATION.md` for the full wrapper contract and reproduction
+record.
+
+## Confirmed target
+
+- Board: Zybo Z7-20
+- Board part: `digilentinc.com:zybo-z7-20:part0:1.2`
+- FPGA: `xc7z020clg400-1`
+- Vivado/Vitis: 2022.2
+- PL clock: 100 MHz
+
+## Not yet implemented or verified
+
+- Zybo PS7 + AXI DMA Block Design
+- Full-design synthesis, implementation, and implemented timing
+- Bitstream and bitstream-included XSA
+- Vitis platform/BSP, firmware ELF, FSBL, and BOOT.BIN
+- AXI DMA/cache coherency and software timeouts on hardware
+- Physical-board UART/DMA/output comparison
+- Residual add, projection, GAP, FC, full ResNet-20 scheduler, and end-to-end
+  inference
+
+OOC timing must not be reported as final implemented timing, and future BOOT.BIN
+generation must not be reported as a successful physical-board run.
 
 ## Build policy
 
 Handwritten RTL, testbenches, scripts, documentation, firmware headers, and the
 small deterministic verification vector are source artifacts. Vivado/XSim
-projects, snapshots, logs, wave databases, and other reproducible build products
-are ignored.
+projects, snapshots, logs, wave databases, packaged-IP output, bitstreams, XSA,
+and other reproducible build products are ignored.

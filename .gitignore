@@ -49,6 +49,7 @@ vivado/*
 
 # Generic generated outputs
 build/
+dist/
 output/
 tmp/
 
