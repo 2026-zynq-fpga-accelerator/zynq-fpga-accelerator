@@ -9,7 +9,7 @@
 #define XAXIDMA_DMA_TO_DEVICE 0
 #define XAXIDMA_DEVICE_TO_DMA 1
 
-typedef struct { int dummy; } XAxiDma;
+typedef struct { UINTPTR RegBase; int dummy; } XAxiDma;
 typedef struct { int dummy; } XAxiDma_Config;
 typedef int XAxiDma_Bd;
 
