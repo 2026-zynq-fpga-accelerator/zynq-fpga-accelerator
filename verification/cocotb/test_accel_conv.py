@@ -27,6 +27,16 @@ async def _setup(dut):
     return bfm.AxiLite(dut)
 
 
+def _require_alias(config, old, new):
+    """Accepts either the firmware-side key (old) or the RTL-side key (new), not both --
+    mirrors scripts/generate_stage1_c_header.py's require_alias() so this harness stays in
+    sync regardless of which test-vector schema is currently checked into data/test_vectors/."""
+    present = [key for key in (old, new) if key in config]
+    if len(present) != 1:
+        raise KeyError(f"expected exactly one of {old!r}, {new!r} in config.json, got {present}")
+    return config[present[0]]
+
+
 async def _load_stage1_config(regs, config):
     await regs.write(bfm.OFF_OPERATION, 0)  # OP_CONV
     await regs.write(bfm.OFF_INPUT_HEIGHT, config["input_height"])
@@ -36,7 +46,8 @@ async def _load_stage1_config(regs, config):
     await regs.write(bfm.OFF_CONV_CONFIG, bfm.pack_conv_config(
         config["kernel_size"], config["stride"], config["padding"], config["relu_enable"]))
     await regs.write(bfm.OFF_OUTPUT_SCALE, bfm.pack_output_scale(
-        config["multiplier_m"], config["shift_n"]))
+        _require_alias(config, "multiplier_m", "multiplier"),
+        _require_alias(config, "shift_n", "shift")))
     await regs.write(bfm.OFF_INPUT_BYTES, config["input_bytes"])
     await regs.write(bfm.OFF_WEIGHT_BYTES, config["weight_bytes"])
     await regs.write(bfm.OFF_BIAS_BYTES, config["bias_bytes"])
