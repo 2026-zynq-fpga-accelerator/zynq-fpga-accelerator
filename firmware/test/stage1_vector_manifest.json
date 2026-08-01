@@ -1,0 +1,17 @@
+{
+  "candidate": "RTL canonical",
+  "source": "vectors/full_conv_32x32x3x16/ (hardware repo)",
+  "hardware_commit_referenced_in_proposal": "cecb4b66bc3cfb45a6cf2e0933f65b818374afbf",
+  "hardware_commit_files_pulled_from": "75a8487",
+  "provenance_status": "CONFIRMED by 황정민 (2026-08-01): commit 75a8487 data is identical to the cecb4b66 zero-mismatch RTL regression run",
+  "seed": 20260730,
+  "multiplier": 3,
+  "shift": 2,
+  "sha256": {
+    "weight.bin": "81c77e46ad92e7e3ad76ea3d5b68070ca3634e43fa62af8f25dd2e1f5da96011",
+    "bias.bin": "7a9f013ab5d1cff0e8373e0337c9b2e197404fb8de7d4624ffa11d9a63e15bb1",
+    "input.bin": "710b298d510a74ea9b85105dae21f6d59faca15e07058408b2dfe0bc58ff666f",
+    "expected_output.bin": "cb5d785b217283062f6fa7a77f591905578e7decf109954986272200dacb81f4",
+    "config.json": "1ea6ab30f1e141c4ffa5bd7e9aaf5e9d8d4d074d16e791e40e357d4c4c19e3ce"
+  }
+}
