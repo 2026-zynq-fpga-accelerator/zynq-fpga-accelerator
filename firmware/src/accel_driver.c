@@ -4,13 +4,9 @@
 #include "accel_regs.h"
 #include "dma_transfer.h"
 #include "platform_config.h"
+#include "platform_time.h"
 
 #include "xil_io.h" /* Xil_In32 / Xil_Out32, Xilinx standalone BSP */
-
-/* Default poll budget for accel_wait_done(); tune once real cycle counts are measured on hardware. */
-#define ACCEL_DEFAULT_TIMEOUT 1000000U
-/* Separate poll budget for confirming BUSY==0 after an ABORT (§11.4). */
-#define ACCEL_ABORT_CONFIRM_TIMEOUT 1000U
 
 static inline uint32_t accel_reg_read(uint32_t offset)
 {
@@ -116,10 +112,27 @@ void accel_clear_done_and_error(void)
     accel_reg_write(ACCEL_REG_STATUS, STATUS_DONE_MASK | STATUS_ERROR_MASK); /* W1C */
 }
 
-/* Polling wait with ABORT + BUSY==0 confirm loop, verbatim per HW_SW_Interface_v1.1 §11.4. */
-int accel_wait_done(uint32_t timeout)
+/* Polls until START is admitted (BUSY=1) or rejected (ERROR=1 while BUSY=0) (§11.1 steps 7-9, §11.2). */
+int accel_wait_start_admitted(uint32_t timeout_ms)
 {
-    while (timeout-- > 0U) {
+    XTime start = fw_time_now();
+    do {
+        uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
+        if ((status & STATUS_BUSY_MASK) != 0U) {
+            return ACCEL_OK;
+        }
+        if ((status & STATUS_ERROR_MASK) != 0U) {
+            return ACCEL_START_REJECTED;
+        }
+    } while (!fw_time_expired(start, timeout_ms));
+    return ACCEL_TIMEOUT;
+}
+
+/* Polling wait with ABORT + BUSY==0 confirm loop, verbatim per HW_SW_Interface_v1.1 §11.4. */
+int accel_wait_done(uint32_t timeout_ms)
+{
+    XTime start = fw_time_now();
+    do {
         uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
 
         if ((status & STATUS_BUSY_MASK) == 0U) {
@@ -132,20 +145,38 @@ int accel_wait_done(uint32_t timeout)
             /* DONE never asserted before BUSY dropped -> fatal error (§10.3). */
             return ACCEL_FATAL_ERROR;
         }
-    }
+    } while (!fw_time_expired(start, timeout_ms));
 
     accel_abort();
 
     /* ABORT is accepted asynchronously; re-poll BUSY==0 with its own timeout before trusting hw state. */
-    uint32_t confirm = ACCEL_ABORT_CONFIRM_TIMEOUT;
-    while (confirm-- > 0U) {
+    start = fw_time_now();
+    do {
         uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
         if ((status & STATUS_BUSY_MASK) == 0U) {
             return ACCEL_TIMEOUT;
         }
-    }
+    } while (!fw_time_expired(start, FW_WAIT_TIMEOUT_MS));
 
     /* ABORT accepted but BUSY still 1: FSM lockup or similar, hardware state can no longer be trusted. */
+    return ACCEL_ABORT_TIMEOUT;
+}
+
+/* Bounded abort-and-idle-confirm helper used on every layer failure (§8.3, §11.5); harmless no-op abort
+ * if BUSY is already 0 (e.g. accel_wait_done() already aborted). */
+int accel_abort_and_wait_idle(uint32_t timeout_ms)
+{
+    if ((accel_reg_read(ACCEL_REG_STATUS) & STATUS_BUSY_MASK) != 0U) {
+        accel_abort();
+    }
+
+    XTime start = fw_time_now();
+    do {
+        if ((accel_reg_read(ACCEL_REG_STATUS) & STATUS_BUSY_MASK) == 0U) {
+            return ACCEL_OK;
+        }
+    } while (!fw_time_expired(start, timeout_ms));
+
     return ACCEL_ABORT_TIMEOUT;
 }
 
@@ -168,11 +199,16 @@ int accel_run_layer(const resnet_layer_t *layer)
     }
 
     uint32_t output_bytes = accel_reg_read(ACCEL_REG_OUTPUT_BYTES);
-    if (dma_s2mm_prepare(layer->output_addr, output_bytes) != 0) {
+    if (dma_s2mm_prepare(layer->output_addr, output_bytes) != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
     rc = accel_start();
+    if (rc != ACCEL_OK) {
+        return rc;
+    }
+
+    rc = accel_wait_start_admitted(FW_WAIT_TIMEOUT_MS);
     if (rc != ACCEL_OK) {
         return rc;
     }
@@ -182,24 +218,38 @@ int accel_run_layer(const resnet_layer_t *layer)
     uint32_t input_bytes = accel_reg_read(ACCEL_REG_INPUT_BYTES);
 
     /* Packet order fixed by §7.1: WEIGHT -> BIAS -> INPUT. */
-    if (dma_mm2s_transfer(layer->weight_addr, weight_bytes) != 0 || dma_mm2s_wait_complete() != 0) {
-        return ACCEL_FATAL_ERROR;
+    int dma_rc = dma_mm2s_transfer(layer->weight_addr, weight_bytes);
+    if (dma_rc == DMA_OK) {
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
     }
-    if (dma_mm2s_transfer(layer->bias_addr, bias_bytes) != 0 || dma_mm2s_wait_complete() != 0) {
-        return ACCEL_FATAL_ERROR;
-    }
-    if (dma_mm2s_transfer(layer->input_addr, input_bytes) != 0 || dma_mm2s_wait_complete() != 0) {
+    if (dma_rc != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
-    rc = accel_wait_done(ACCEL_DEFAULT_TIMEOUT);
+    dma_rc = dma_mm2s_transfer(layer->bias_addr, bias_bytes);
+    if (dma_rc == DMA_OK) {
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
+    }
+    if (dma_rc != DMA_OK) {
+        return ACCEL_FATAL_ERROR;
+    }
+
+    dma_rc = dma_mm2s_transfer(layer->input_addr, input_bytes);
+    if (dma_rc == DMA_OK) {
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
+    }
+    if (dma_rc != DMA_OK) {
+        return ACCEL_FATAL_ERROR;
+    }
+
+    rc = accel_wait_done(FW_WAIT_TIMEOUT_MS);
     if (rc != ACCEL_OK && rc != ACCEL_DONE_WITH_WARNING) {
         return rc;
     }
 
     /* Accelerator DONE only means the last beat was handed to the DMA (§11.3 note); S2MM must
      * also confirm completion before the caller reads DDR output (§11.1 step 19-20). */
-    if (dma_s2mm_wait_complete() != 0) {
+    if (dma_s2mm_wait_complete(FW_WAIT_TIMEOUT_MS) != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
