@@ -23,10 +23,11 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
             uint32_t status = accel_get_status();
             uint32_t error_code = accel_get_error_code();
             uint32_t debug_state = accel_get_debug_state();
+            uint32_t cycle_count = accel_get_cycle_count();
             xil_printf(
-                "resnet_run: layer %u failed rc=%d status=0x%lx error_code=%lu debug_state=%lu\r\n",
+                "resnet_run: layer %u failed rc=%d status=0x%lx error_code=%lu debug_state=%lu cycle_count=%lu\r\n",
                 (unsigned)i, rc, (unsigned long)status,
-                (unsigned long)error_code, (unsigned long)debug_state);
+                (unsigned long)error_code, (unsigned long)debug_state, (unsigned long)cycle_count);
 
             /* ABORT does not reset DMA (§8.3); confirm accelerator idle, then reset both DMA
              * channels before reporting failure, so the next layer never inherits stale state (§10.3, §11.5). */
