@@ -2,6 +2,8 @@
 #include "resnet_scheduler.h"
 
 #include "accel_driver.h"
+#include "dma_transfer.h"
+#include "platform_time.h"
 #include "xil_printf.h" /* UART status/result output */
 
 int resnet_run(const resnet_layer_t *layers, size_t num_layers)
@@ -17,13 +19,24 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
         }
 
         if (rc != ACCEL_OK) {
+            /* Snapshot diagnostics before recovery touches hardware state (§11.5). */
+            uint32_t status = accel_get_status();
+            uint32_t error_code = accel_get_error_code();
+            uint32_t debug_state = accel_get_debug_state();
             xil_printf(
                 "resnet_run: layer %u failed rc=%d status=0x%lx error_code=%lu debug_state=%lu\r\n",
-                (unsigned)i, rc,
-                (unsigned long)accel_get_status(),
-                (unsigned long)accel_get_error_code(),
-                (unsigned long)accel_get_debug_state());
-            accel_abort();
+                (unsigned)i, rc, (unsigned long)status,
+                (unsigned long)error_code, (unsigned long)debug_state);
+
+            /* ABORT does not reset DMA (§8.3); confirm accelerator idle, then reset both DMA
+             * channels before reporting failure, so the next layer never inherits stale state (§10.3, §11.5). */
+            int accel_recovery = accel_abort_and_wait_idle(FW_WAIT_TIMEOUT_MS);
+            int dma_recovery = dma_halt_reset();
+            if (accel_recovery != ACCEL_OK || dma_recovery != DMA_OK) {
+                xil_printf(
+                    "resnet_run: recovery failed accel_recovery=%d dma_recovery=%d\r\n",
+                    accel_recovery, dma_recovery);
+            }
             return rc;
         }
     }

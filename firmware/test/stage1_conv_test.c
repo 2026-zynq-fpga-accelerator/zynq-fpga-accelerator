@@ -14,6 +14,7 @@
 #include "resnet_layer.h"
 #include "resnet_scheduler.h"
 #include "xil_printf.h"
+#include "platform.h"
 
 #include "generated/stage1_test_vector.h"
 
@@ -21,16 +22,19 @@ static uint8_t g_output_buffer[STAGE1_OUTPUT_BYTES] __attribute__((aligned(4)));
 
 int main(void)
 {
+    int exit_code = -1;
+    init_platform();
+
     int rc = dma_init();
     if (rc != 0) {
         xil_printf("stage1_conv_test: dma_init failed rc=%d\r\n", rc);
-        return -1;
+        goto out;
     }
 
     rc = accel_init();
     if (rc != ACCEL_OK) {
         xil_printf("stage1_conv_test: accel_init failed rc=%d (VERSION mismatch?)\r\n", rc);
-        return -1;
+        goto out;
     }
 
     resnet_layer_t layer = {
@@ -57,7 +61,7 @@ int main(void)
             "stage1_conv_test: FAIL - resnet_run rc=%d status=0x%lx error_code=%lu debug_state=%lu\r\n",
             rc, (unsigned long)accel_get_status(), (unsigned long)accel_get_error_code(),
             (unsigned long)accel_get_debug_state());
-        return -1;
+        goto out;
     }
 
     uint32_t mismatch_count = 0;
@@ -82,5 +86,9 @@ int main(void)
         (unsigned long)mismatch_count, (unsigned long)STAGE1_OUTPUT_BYTES,
         (unsigned long)first_mismatch_index, (unsigned long)accel_get_cycle_count());
 
-    return (mismatch_count == 0) ? 0 : -1;
+    exit_code = (mismatch_count == 0) ? 0 : -1;
+
+out:
+    cleanup_platform();
+    return exit_code;
 }
