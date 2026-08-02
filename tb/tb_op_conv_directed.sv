@@ -319,6 +319,24 @@ module tb_op_conv_directed;
     end
   endtask
 
+  task automatic finish_normal_keep_done(input string name);
+    begin
+      wait (output_byte_count == cfg_output_bytes);
+      capture_enabled = 0;
+      repeat (6) @(posedge aclk);
+      if (expected_write_element != cfg_output_bytes)
+        $fatal(1, "%s output write count=%0d expected=%0d",
+               name, expected_write_element, cfg_output_bytes);
+      if (!last_output_write_seen)
+        $fatal(1, "%s did not align final BRAM write with conv_done", name);
+      postprocess_monitor_enabled = 1'b0;
+      check_status(0, 1, 0, ERR_NONE, name);
+      if (mismatch_count != 0) $fatal(1, "%s had %0d mismatches", name, mismatch_count);
+      tests_passed = tests_passed + 1;
+      $display("TEST %-32s PASS (%0d bytes, DONE retained)", name, output_byte_count);
+    end
+  endtask
+
   task automatic run_normal(input string name);
     begin
       build_reference(); clear_status(); program_config(); begin_capture();
@@ -818,6 +836,21 @@ module tb_op_conv_directed;
     set_shape(1, 1, 1, 1, 0); initialize_pattern(0); run_normal("consecutive_operation_1");
     initialize_pattern(1); run_normal("consecutive_operation_2");
 
+
+    set_shape(1, 1, 1, 1, 0); initialize_pattern(0);
+    build_reference(); clear_status(); program_config(); begin_capture();
+    axi_write(REG_CONTROL, 1); send_normal_packets();
+    finish_normal_keep_done("previous_done_operation_1");
+
+    initialize_pattern(1); build_reference(); program_config(); begin_capture();
+    axi_write(REG_CONTROL, 1);
+    while (!dut.busy)
+      @(negedge aclk);
+    axi_read(REG_STATUS, status);
+    if (!status[1] || !status[2] || status[3])
+      $fatal(1, "New START changed previous DONE, STATUS=%08x", status);
+    send_normal_packets();
+    finish_normal("previous_done_new_start_2", 0, ERR_NONE);
     set_shape(1, 1, 1, 1, 0); initialize_pattern(0);
     run_validator_admission("validator_valid_admission");
 

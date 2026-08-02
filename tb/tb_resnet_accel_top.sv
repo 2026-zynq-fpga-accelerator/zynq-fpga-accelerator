@@ -67,6 +67,7 @@ module tb_resnet_accel_top;
   integer observed_value;
   integer expected_index;
   logic backpressure_applied;
+  logic final_backpressure_applied;
 
   resnet_accel_top #(
     .MAX_WEIGHT_WORDS(64),
@@ -364,9 +365,12 @@ module tb_resnet_accel_top;
   end
 
   initial begin
+    logic [31:0] held_final_data;
+    logic [3:0] held_final_keep;
     m_axis_tready = 1'b0;
     backpressure_applied = 1'b0;
     wait (aresetn === 1'b1);
+    final_backpressure_applied = 1'b0;
     @(negedge aclk);
     m_axis_tready = 1'b1;
     wait (output_byte_count >= 8);
@@ -376,6 +380,23 @@ module tb_resnet_accel_top;
     repeat (4) @(posedge aclk);
     @(negedge aclk);
     m_axis_tready = 1'b1;
+
+    wait (output_byte_count == OUTPUT_BYTES-4);
+    @(negedge aclk);
+    m_axis_tready = 1'b0;
+    wait (m_axis_tvalid && m_axis_tlast);
+    held_final_data = m_axis_tdata;
+    held_final_keep = m_axis_tkeep;
+    repeat (4) begin
+      @(posedge aclk); #1;
+      if (!dut.busy || dut.done || dut.error)
+        $fatal(1, "Final-beat backpressure changed completion status");
+      if (!m_axis_tvalid || !m_axis_tlast || (m_axis_tdata != held_final_data)
+          || (m_axis_tkeep != held_final_keep))
+        $fatal(1, "Final output beat was not stable under backpressure");
+    end
+    @(negedge aclk); m_axis_tready = 1'b1;
+    final_backpressure_applied = 1'b1;
   end
 
   initial begin
@@ -443,7 +464,9 @@ module tb_resnet_accel_top;
     send_input_packet();
 
     wait (output_byte_count == OUTPUT_BYTES);
-    repeat (8) @(posedge aclk);
+    @(negedge aclk); #1;
+    if (dut.busy || !dut.done || dut.error || (dut.debug_state != 4'd7))
+      $fatal(1, "Final handshake edge did not expose BUSY=0 DONE=1 ERROR=0 COMPLETE");
 
     axi_read(REG_STATUS, status);
     axi_read(REG_ERROR_CODE, code);
@@ -463,6 +486,8 @@ module tb_resnet_accel_top;
 
     axi_write(REG_STATUS, 32'h0000_0004);
     axi_read(REG_STATUS, status);
+    if (!final_backpressure_applied)
+      $fatal(1, "Final-beat backpressure was not applied");
     if (status[2])
       $fatal(1, "DONE W1C clear failed, STATUS=0x%08x", status);
 

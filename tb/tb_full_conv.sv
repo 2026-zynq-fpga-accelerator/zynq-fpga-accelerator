@@ -8,7 +8,7 @@ module tb_full_conv;
   localparam integer WEIGHT_BYTES = 432;
   localparam integer BIAS_BYTES = 64;
   localparam integer OUTPUT_BYTES = 16384;
-  localparam logic [31:0] EXPECTED_CYCLES = 32'd1435391;
+  localparam logic [31:0] EXPECTED_CYCLES = 32'd1435390;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;
@@ -41,6 +41,16 @@ module tb_full_conv;
   integer output_byte_count;
   integer mismatch_count;
   integer detail_count;
+  integer tb_cycle;
+  integer final_handshake_cycle;
+  integer busy_deassert_cycle;
+  integer done_assert_cycle;
+  integer complete_state_cycle;
+  integer idle_state_cycle;
+  logic previous_busy;
+  logic previous_done;
+  logic admitted_operation_active;
+  logic [3:0] previous_debug_state;
 
   resnet_accel_top dut (
     .aclk(aclk), .aresetn(aresetn),
@@ -57,6 +67,46 @@ module tb_full_conv;
   );
 
   always #(CLK_PERIOD_NS/2) aclk = ~aclk;
+
+  always @(posedge aclk) begin
+    tb_cycle = tb_cycle + 1;
+    if (aresetn && m_axis_tvalid && m_axis_tready && m_axis_tlast) begin
+      if (final_handshake_cycle >= 0)
+        $fatal(1, "Observed more than one final output handshake");
+      final_handshake_cycle = tb_cycle;
+    end
+  end
+
+  always @(negedge aclk) begin
+    if (!aresetn) begin
+      previous_busy = 1'b0;
+      previous_done = 1'b0;
+      admitted_operation_active = 1'b0;
+      previous_debug_state = DBG_RESET;
+    end else begin
+      if (!previous_busy && dut.busy)
+        admitted_operation_active = 1'b1;
+      if (previous_busy && !dut.busy)
+        busy_deassert_cycle = tb_cycle;
+      if (!previous_done && dut.done)
+        done_assert_cycle = tb_cycle;
+
+      if ((previous_debug_state != DBG_COMPLETE) && (dut.debug_state == DBG_COMPLETE))
+        complete_state_cycle = tb_cycle;
+      if ((previous_debug_state == DBG_COMPLETE) && (dut.debug_state == DBG_IDLE))
+        idle_state_cycle = tb_cycle;
+      if (admitted_operation_active && !dut.busy) begin
+        if (!dut.done && !dut.error)
+          $fatal(1, "Termination gap: BUSY=0 DONE=0 ERROR=0 at cycle %0d state=%0d",
+                 tb_cycle, dut.debug_state);
+        admitted_operation_active = 1'b0;
+      end
+
+      previous_busy = dut.busy;
+      previous_done = dut.done;
+      previous_debug_state = dut.debug_state;
+    end
+  end
 
   task automatic axi_write(input logic [6:0] address, input logic [31:0] data);
     logic aw_done, w_done;
@@ -76,6 +126,32 @@ module tb_full_conv;
       wait (s_axi_bvalid === 1'b1);
       if (s_axi_bresp != 2'b00) $fatal(1, "AXI write error at %02x", address);
       @(posedge aclk);
+    end
+  endtask
+
+  task automatic axi_write_masked(
+    input logic [6:0] address,
+    input logic [31:0] data,
+    input logic [3:0] strobe
+  );
+    logic aw_done, w_done;
+    begin
+      aw_done = 0; w_done = 0;
+      @(negedge aclk);
+      s_axi_awaddr = address; s_axi_awvalid = 1;
+      s_axi_wdata = data; s_axi_wstrb = strobe; s_axi_wvalid = 1;
+      while (!aw_done || !w_done) begin
+        @(posedge aclk);
+        if (s_axi_awvalid && s_axi_awready) aw_done = 1;
+        if (s_axi_wvalid && s_axi_wready) w_done = 1;
+        @(negedge aclk);
+        if (aw_done) s_axi_awvalid = 0;
+        if (w_done) s_axi_wvalid = 0;
+      end
+      wait (s_axi_bvalid === 1'b1);
+      if (s_axi_bresp != 2'b00) $fatal(1, "AXI masked write error at %02x", address);
+      @(posedge aclk);
+      s_axi_wstrb = 4'b1111;
     end
   endtask
 
@@ -175,6 +251,11 @@ module tb_full_conv;
     s_axi_rready = 1; s_axis_tdata = 0; s_axis_tkeep = 4'b1111;
     s_axis_tlast = 0; s_axis_tvalid = 0; m_axis_tready = 1;
     output_byte_count = 0; mismatch_count = 0; detail_count = 0;
+    tb_cycle = 0; final_handshake_cycle = -1;
+    busy_deassert_cycle = -1; done_assert_cycle = -1;
+    complete_state_cycle = -1; idle_state_cycle = -1;
+    previous_busy = 0; previous_done = 0; previous_debug_state = DBG_RESET;
+    admitted_operation_active = 0;
 
     $readmemh("vectors/full_conv_32x32x3x16/input.hex", input_data);
     $readmemh("vectors/full_conv_32x32x3x16/weight.hex", weight_data);
@@ -214,7 +295,48 @@ module tb_full_conv;
     send_packets();
 
     wait (output_byte_count == OUTPUT_BYTES);
-    repeat (8) @(posedge aclk);
+    @(negedge aclk); #1;
+    if (dut.busy || !dut.done || dut.error || (dut.debug_state != DBG_COMPLETE))
+      $fatal(1, "Completion-edge status failure BUSY=%0b DONE=%0b ERROR=%0b STATE=%0d",
+             dut.busy, dut.done, dut.error, dut.debug_state);
+    if ((final_handshake_cycle != busy_deassert_cycle)
+        || (final_handshake_cycle != done_assert_cycle))
+      $fatal(1, "Completion cycles misaligned handshake=%0d busy_fall=%0d done_rise=%0d",
+             final_handshake_cycle, busy_deassert_cycle, done_assert_cycle);
+    $display("COMPLETION EDGE PASS: handshake=%0d busy_fall=%0d done_rise=%0d state=COMPLETE",
+             final_handshake_cycle, busy_deassert_cycle, done_assert_cycle);
+
+    repeat (100) begin
+      @(posedge aclk); @(negedge aclk);
+      if (!dut.done || dut.busy || dut.error)
+        $fatal(1, "DONE sticky hold failure cycle=%0d BUSY=%0b DONE=%0b ERROR=%0b",
+               tb_cycle, dut.busy, dut.done, dut.error);
+    end
+    $display("DONE HOLD PASS: 100 clocks through cycle %0d", tb_cycle);
+    if ((complete_state_cycle != final_handshake_cycle)
+        || (idle_state_cycle != final_handshake_cycle + 1))
+      $fatal(1, "Completion state cycles unexpected COMPLETE=%0d IDLE=%0d handshake=%0d",
+             complete_state_cycle, idle_state_cycle, final_handshake_cycle);
+    $display("COMPLETION STATE PASS: COMPLETE=%0d IDLE=%0d",
+             complete_state_cycle, idle_state_cycle);
+
+    axi_read(REG_STATUS, status);
+    if (status[3:0] != 4'b0101)
+      $fatal(1, "STATUS read returned unexpected completion value %08x", status);
+    axi_read(REG_STATUS, status);
+    if (status[3:0] != 4'b0101)
+      $fatal(1, "STATUS read cleared DONE, STATUS=%08x", status);
+
+    axi_write(REG_CYCLE_COUNT, 32'h0000_0004);
+    axi_read(REG_STATUS, status);
+    if (status[3:0] != 4'b0101)
+      $fatal(1, "Unrelated AXI write cleared DONE, STATUS=%08x", status);
+
+    axi_write_masked(REG_STATUS, 32'h0000_0004, 4'b1110);
+    axi_read(REG_STATUS, status);
+    if (status[3:0] != 4'b0101)
+      $fatal(1, "WSTRB-masked W1C cleared DONE, STATUS=%08x", status);
+
     axi_read(REG_STATUS, status);
     axi_read(REG_ERROR_CODE, code);
     axi_read(REG_CYCLE_COUNT, cycles);
@@ -228,6 +350,15 @@ module tb_full_conv;
     if (mismatch_count != 0)
       $fatal(1, "FULL CONV FAIL: %0d mismatches across %0d output bytes",
              mismatch_count, output_byte_count);
+
+    axi_write(REG_STATUS, 32'h0000_0004);
+    axi_read(REG_STATUS, status);
+    axi_read(REG_ERROR_CODE, code);
+    if ((status[3:0] != 4'b0001) || (code != ERR_NONE))
+      $fatal(1, "Explicit DONE W1C failure STATUS=%08x CODE=%0d", status, code);
+    $display("DONE W1C PASS: cycle=%0d STATUS=%08x ERROR_CODE=%0d",
+             tb_cycle, status, code);
+
     $display("FULL CONV PASS: %0d output bytes, mismatch=0 cycles=%0d",
              output_byte_count, cycles);
     $finish;

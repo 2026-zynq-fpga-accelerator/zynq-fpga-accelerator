@@ -42,6 +42,7 @@ module resnet_accel_wrapper_test_adapter #(
   input  logic                      m_axis_tready
 );
   logic busy;
+  logic done;
   logic error;
   logic [3:0] debug_state;
 
@@ -86,6 +87,7 @@ module resnet_accel_wrapper_test_adapter #(
   );
 
   assign busy = dut_wrapper.u_core.busy;
+  assign done = dut_wrapper.u_core.done;
   assign error = dut_wrapper.u_core.error;
   assign debug_state = dut_wrapper.u_core.debug_state;
 endmodule
