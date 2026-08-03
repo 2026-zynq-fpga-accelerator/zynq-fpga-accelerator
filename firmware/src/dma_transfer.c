@@ -20,6 +20,11 @@ static int s2mm_active;
 
 /* Captured once in dma_init(); see dma_static_diag_t. */
 static int g_cfginit_status = -1;
+/* DRE capability flags exist on XAxiDma_Config (pre-init) but are not surfaced as top-level
+ * XAxiDma instance members post-init (they end up in the internal Tx/Rx BD ring instead), so
+ * they must be captured from config while it's still in scope. */
+static int g_has_mm2s_dre;
+static int g_has_s2mm_dre;
 
 static int dma_buffer_is_valid(uintptr_t addr, uint32_t byte_count)
 {
@@ -62,6 +67,9 @@ int dma_init(void)
         return -1;
     }
 
+    g_has_mm2s_dre = config->HasMm2SDRE;
+    g_has_s2mm_dre = config->HasS2MmDRE;
+
     g_cfginit_status = XAxiDma_CfgInitialize(&dma_instance, config);
     if (g_cfginit_status != XST_SUCCESS) {
         return -1;
@@ -83,9 +91,9 @@ void dma_get_static_diag(dma_static_diag_t *out)
     out->reg_base = dma_instance.RegBase;
     out->has_sg = XAxiDma_HasSg(&dma_instance);
     out->has_mm2s = dma_instance.HasMm2S;
-    out->has_mm2s_dre = dma_instance.HasMm2SDRE;
+    out->has_mm2s_dre = g_has_mm2s_dre;
     out->has_s2mm = dma_instance.HasS2Mm;
-    out->has_s2mm_dre = dma_instance.HasS2MmDRE;
+    out->has_s2mm_dre = g_has_s2mm_dre;
 }
 
 int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count)

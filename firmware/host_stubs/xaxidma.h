@@ -5,7 +5,7 @@
 #include "xil_io.h"
 
 #define XST_SUCCESS 0
-#define XAXIDMA_IRQ_ALL_MASK 0xFFU
+#define XAXIDMA_IRQ_ALL_MASK 0x00007000U
 #define XAXIDMA_DMA_TO_DEVICE 0
 #define XAXIDMA_DEVICE_TO_DMA 1
 
@@ -13,11 +13,12 @@ typedef struct {
     UINTPTR RegBase;
     int HasSg;
     int HasMm2S;
-    int HasMm2SDRE;
     int HasS2Mm;
-    int HasS2MmDRE;
 } XAxiDma;
-typedef struct { int dummy; } XAxiDma_Config;
+typedef struct {
+    int HasMm2SDRE;
+    int HasS2MmDRE;
+} XAxiDma_Config;
 typedef int XAxiDma_Bd;
 
 XAxiDma_Config *XAxiDma_LookupConfig(uint32_t DeviceId);

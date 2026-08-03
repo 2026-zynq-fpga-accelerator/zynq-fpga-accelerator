@@ -21,9 +21,9 @@ typedef struct {
     uintptr_t reg_base;   /* AXI DMA instance's register base address */
     int has_sg;
     int has_mm2s;
-    int has_mm2s_dre;
+    int has_mm2s_dre;    /* captured from XAxiDma_Config at dma_init(); not an XAxiDma instance field */
     int has_s2mm;
-    int has_s2mm_dre;
+    int has_s2mm_dre;    /* captured from XAxiDma_Config at dma_init(); not an XAxiDma instance field */
 } dma_static_diag_t;
 
 /* Per-call diagnostics for dma_s2mm_prepare(), filled in regardless of outcome (정민님 요청,
