@@ -72,7 +72,6 @@ module resnet_accel_top #(
   logic [31:0] skip_bytes;
   logic [31:0] output_bytes;
 
-  logic operation_accept;
   logic operation_done;
   logic cancel_pulse;
   logic packet_active;
@@ -228,7 +227,7 @@ module resnet_accel_top #(
     .busy_o(busy),
     .admission_active_o(admission_active),
     .debug_state_o(debug_state),
-    .operation_accept_o(operation_accept),
+    .operation_accept_o(),
     .operation_done_o(operation_done),
     .cancel_pulse_o(cancel_pulse),
     .packet_active_o(packet_active),
@@ -408,7 +407,7 @@ module resnet_accel_top #(
   cycle_counter u_cycle_counter (
     .clk_i(aclk),
     .aresetn_i(aresetn),
-    .operation_accept_i(operation_accept),
+    .operation_start_i(start_pulse),
     .busy_i(busy),
     .cycle_count_o(cycle_count)
   );

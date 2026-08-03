@@ -164,8 +164,18 @@ module controller_fsm #(
     else
       mul_multiplicand_next = mul_multiplicand_q << 1;
 
-    idle_o        = (state_q == DBG_IDLE) || (state_q == DBG_COMPLETE);
-    busy_o        = (state_q != DBG_IDLE) && (state_q != DBG_COMPLETE);
+    // Admission is part of the externally visible operation lifecycle. Keep
+    // BUSY continuous from an accepted START through validation and the main
+    // datapath states, while excluding the reset-release transition.
+    busy_o        = admission_active_o
+                  || invalid_operation_event_o
+                  || invalid_config_event_o
+                  || internal_error_event_o
+                  || ((state_q != DBG_RESET)
+                   && (state_q != DBG_IDLE)
+                   && (state_q != DBG_COMPLETE));
+    idle_o        = !busy_o
+                  && ((state_q == DBG_IDLE) || (state_q == DBG_COMPLETE));
     debug_state_o = state_q;
     operation_done_o = (state_q == DBG_SEND_OUTPUT)
                     && output_done_i

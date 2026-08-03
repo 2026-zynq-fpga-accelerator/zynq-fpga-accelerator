@@ -8,7 +8,8 @@ module tb_full_conv;
   localparam integer WEIGHT_BYTES = 432;
   localparam integer BIAS_BYTES = 64;
   localparam integer OUTPUT_BYTES = 16384;
-  localparam logic [31:0] EXPECTED_CYCLES = 32'd1435390;
+  localparam logic [31:0] OLD_EXPECTED_CYCLES = 32'd1435390;
+  localparam logic [31:0] EXPECTED_CYCLES     = 32'd1435424;
 
   logic aclk, aresetn;
   logic [6:0] s_axi_awaddr;
@@ -244,6 +245,7 @@ module tb_full_conv;
 
   initial begin
     logic [31:0] status, code, cycles, state;
+    logic [31:0] previous_validation_count;
     integer validation_cycles;
     aclk = 0; aresetn = 0;
     s_axi_awaddr = 0; s_axi_awvalid = 0; s_axi_wdata = 0; s_axi_wstrb = 4'b1111;
@@ -280,18 +282,35 @@ module tb_full_conv;
     axi_write(REG_SKIP_BYTES, 0);
     axi_write(REG_OUTPUT_BYTES, OUTPUT_BYTES);
     axi_write(REG_CONTROL, 1);
+    axi_read(REG_STATUS, status);
+    axi_read(REG_CYCLE_COUNT, cycles);
+    if (status[3:0] != 4'b0010)
+      $fatal(1, "Full conv first START status was not BUSY-only: %08x", status);
+    if (cycles == 32'd0)
+      $fatal(1, "Full conv admission counter did not advance");
+
     validation_cycles = 0;
-    while (!dut.busy) begin
+    previous_validation_count = dut.cycle_count;
+    while (dut.admission_active) begin
       @(negedge aclk);
-      if (!dut.busy && (dut.debug_state != DBG_IDLE))
-        $fatal(1, "Full conv DEBUG_STATE changed during validation: %0d", dut.debug_state);
-      if (dut.error)
-        $fatal(1, "Full conv ERROR during valid admission");
-      validation_cycles = validation_cycles + 1;
-      if (validation_cycles > 256)
-        $fatal(1, "Full conv timed out waiting for validation");
+      if (dut.admission_active) begin
+        if (!dut.busy || dut.idle)
+          $fatal(1, "Full conv BUSY/IDLE contract failed during validation");
+        if (dut.debug_state != DBG_IDLE)
+          $fatal(1, "Full conv DEBUG_STATE changed during validation: %0d", dut.debug_state);
+        if (dut.cycle_count <= previous_validation_count)
+          $fatal(1, "Full conv cycle counter did not advance during validation");
+        previous_validation_count = dut.cycle_count;
+        if (dut.error)
+          $fatal(1, "Full conv ERROR during valid admission");
+        validation_cycles = validation_cycles + 1;
+        if (validation_cycles > 256)
+          $fatal(1, "Full conv timed out waiting for validation");
+      end
     end
-    $display("FULL CONV VALIDATOR LATENCY: %0d cycles", validation_cycles);
+    if (!dut.busy || dut.idle)
+      $fatal(1, "Full conv BUSY-low gap after validation");
+    $display("FULL CONV REMAINING VALIDATOR ACTIVE: %0d cycles", validation_cycles);
     send_packets();
 
     wait (output_byte_count == OUTPUT_BYTES);
@@ -359,6 +378,8 @@ module tb_full_conv;
     $display("DONE W1C PASS: cycle=%0d STATUS=%08x ERROR_CODE=%0d",
              tb_cycle, status, code);
 
+    $display("CYCLE COUNT SEMANTICS: old=%0d new=%0d delta=%0d (admission active clocks)",
+             OLD_EXPECTED_CYCLES, cycles, cycles - OLD_EXPECTED_CYCLES);
     $display("FULL CONV PASS: %0d output bytes, mismatch=0 cycles=%0d",
              output_byte_count, cycles);
     $finish;

@@ -41,9 +41,12 @@ module resnet_accel_wrapper_test_adapter #(
   output logic                      m_axis_tvalid,
   input  logic                      m_axis_tready
 );
+  logic idle;
   logic busy;
+  logic admission_active;
   logic done;
   logic error;
+  logic [31:0] cycle_count;
   logic [3:0] debug_state;
 
   resnet_accel_ip_wrapper #(
@@ -86,9 +89,12 @@ module resnet_accel_wrapper_test_adapter #(
     .m_axis_output_tready(m_axis_tready)
   );
 
+  assign idle = dut_wrapper.u_core.idle;
   assign busy = dut_wrapper.u_core.busy;
+  assign admission_active = dut_wrapper.u_core.admission_active;
   assign done = dut_wrapper.u_core.done;
   assign error = dut_wrapper.u_core.error;
+  assign cycle_count = dut_wrapper.u_core.cycle_count;
   assign debug_state = dut_wrapper.u_core.debug_state;
 endmodule
 

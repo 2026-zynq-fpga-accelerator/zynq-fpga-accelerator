@@ -340,33 +340,46 @@ module tb_op_conv_directed;
   task automatic run_normal(input string name);
     begin
       build_reference(); clear_status(); program_config(); begin_capture();
-      axi_write(REG_CONTROL, 1); send_normal_packets(); finish_normal(name, 0, ERR_NONE);
+      axi_write(REG_CONTROL, 1);
+      @(negedge aclk);
+      if (!dut.busy || dut.idle || (dut.cycle_count != 32'd0))
+        $fatal(1, "%s START lifecycle failure IDLE=%0b BUSY=%0b CYCLE_COUNT=%0d",
+               name, dut.idle, dut.busy, dut.cycle_count);
+      send_normal_packets(); finish_normal(name, 0, ERR_NONE);
     end
   endtask
 
   task automatic run_validator_admission(input string name);
     integer wait_cycles;
-    logic [31:0] count_before;
+    logic [31:0] count_previous;
     begin
       build_reference(); clear_status(); program_config(); begin_capture();
-      count_before = dut.cycle_count;
       axi_write(REG_CONTROL, 1);
+      @(negedge aclk);
+      if (!dut.admission_active || !dut.busy || dut.idle || (dut.cycle_count != 32'd0))
+        $fatal(1, "%s did not enter admission on START", name);
       wait_cycles = 0;
-      while (!dut.busy) begin
+      count_previous = dut.cycle_count;
+      while (dut.admission_active) begin
         @(negedge aclk);
-        if (!dut.busy && (dut.debug_state != DBG_IDLE))
-          $fatal(1, "%s DEBUG_STATE changed during admission: %0d", name, dut.debug_state);
-        if (!dut.busy && (dut.cycle_count != count_before))
-          $fatal(1, "%s cycle counter changed during admission", name);
-        if (dut.error)
-          $fatal(1, "%s asserted ERROR during valid admission", name);
-        wait_cycles = wait_cycles + 1;
-        if (wait_cycles > 256)
-          $fatal(1, "%s timed out waiting for BUSY", name);
+        if (dut.admission_active) begin
+          if (!dut.busy || dut.idle)
+            $fatal(1, "%s did not expose BUSY throughout admission", name);
+          if (dut.debug_state != DBG_IDLE)
+            $fatal(1, "%s DEBUG_STATE changed during admission: %0d", name, dut.debug_state);
+          if (dut.cycle_count <= count_previous)
+            $fatal(1, "%s cycle counter did not advance during admission", name);
+          count_previous = dut.cycle_count;
+          if (dut.error)
+            $fatal(1, "%s asserted ERROR during valid admission", name);
+          wait_cycles = wait_cycles + 1;
+          if (wait_cycles > 256)
+            $fatal(1, "%s timed out waiting for validation acceptance", name);
+        end
       end
-      if (wait_cycles == 0)
-        $fatal(1, "%s did not expose a multi-cycle admission interval", name);
-      $display("VALIDATOR LATENCY: %0d cycles (%s)", wait_cycles, name);
+      if (!dut.busy || dut.idle)
+        $fatal(1, "%s exposed a BUSY-low gap after admission", name);
+      $display("VALIDATOR ACTIVE: %0d counted cycles (%s)", wait_cycles, name);
       send_normal_packets();
       finish_normal(name, 0, ERR_NONE);
     end
@@ -374,14 +387,15 @@ module tb_op_conv_directed;
 
   task automatic expect_invalid_config(input string name);
     integer wait_cycles;
+    logic [31:0] frozen_count;
     begin
       clear_status();
       axi_write(REG_CONTROL, 1);
       wait_cycles = 0;
       while (!dut.error) begin
         @(negedge aclk);
-        if (dut.busy)
-          $fatal(1, "%s entered BUSY during invalid validation", name);
+        if (!dut.error && (!dut.busy || dut.idle))
+          $fatal(1, "%s did not stay BUSY through invalid validation", name);
         if (dut.debug_state != DBG_IDLE)
           $fatal(1, "%s changed DEBUG_STATE during invalid validation: %0d", name, dut.debug_state);
         wait_cycles = wait_cycles + 1;
@@ -389,6 +403,12 @@ module tb_op_conv_directed;
           $fatal(1, "%s timed out waiting for ERR_INVALID_CONFIG", name);
       end
       check_status(0, 0, 1, ERR_INVALID_CONFIG, name);
+      frozen_count = dut.cycle_count;
+      repeat (3) begin
+        @(posedge aclk); #1;
+        if (dut.cycle_count != frozen_count)
+          $fatal(1, "%s cycle counter did not freeze after rejection", name);
+      end
       tests_passed = tests_passed + 1; $display("TEST %-32s PASS", name); clear_status();
     end
   endtask
@@ -401,8 +421,8 @@ module tb_op_conv_directed;
       wait_cycles = 0;
       while (!dut.error) begin
         @(negedge aclk);
-        if (dut.busy)
-          $fatal(1, "%s entered BUSY during invalid operation validation", name);
+        if (!dut.error && (!dut.busy || dut.idle))
+          $fatal(1, "%s did not stay BUSY during invalid operation validation", name);
         if (dut.debug_state != DBG_IDLE)
           $fatal(1, "%s changed DEBUG_STATE during invalid operation validation", name);
         wait_cycles = wait_cycles + 1;
@@ -863,15 +883,15 @@ module tb_op_conv_directed;
     build_reference(); clear_status(); program_config(); begin_capture();
     axi_write(REG_CONTROL, 1);
     @(negedge aclk);
-    if (!dut.admission_active || dut.busy)
-      $fatal(1, "second START was not issued during admission: admission=%0b busy=%0b val_state=%0d", dut.admission_active, dut.busy, dut.u_controller.validator_state_q);
+    if (!dut.admission_active || !dut.busy || dut.idle)
+      $fatal(1, "second START was not issued during BUSY admission: admission=%0b busy=%0b val_state=%0d", dut.admission_active, dut.busy, dut.u_controller.validator_state_q);
     axi_write(REG_CONTROL, 1); send_normal_packets();
     finish_normal("start_while_busy_nonfatal", 1, ERR_START_WHILE_BUSY);
 
     build_reference(); clear_status(); program_config(); original_height = cfg_h; begin_capture();
     axi_write(REG_CONTROL, 1);
     @(negedge aclk);
-    if (!dut.admission_active || dut.busy)
+    if (!dut.admission_active || !dut.busy || dut.idle)
       $fatal(1, "config write was not issued during admission");
     axi_write(REG_INPUT_HEIGHT, 99); axi_read(REG_INPUT_HEIGHT, status);
     if (status != original_height) $fatal(1, "BUSY config write changed register: %0d", status);
@@ -922,10 +942,16 @@ module tb_op_conv_directed;
 
     program_config(); clear_status(); axi_write(REG_CONTROL, 1);
     @(negedge aclk);
-    if (!dut.admission_active || dut.busy)
+    if (!dut.admission_active || !dut.busy || dut.idle)
       $fatal(1, "ABORT was not issued during admission");
     axi_write(REG_CONTROL, 2);
     repeat (5) @(posedge aclk); check_status(0, 0, 1, ERR_ABORTED, "validation_abort");
+    status = dut.cycle_count;
+    repeat (3) begin
+      @(posedge aclk); #1;
+      if (dut.cycle_count != status)
+        $fatal(1, "validation_abort cycle counter did not freeze");
+    end
     tests_passed = tests_passed + 1; $display("TEST %-32s PASS", "validation_abort");
     recover_with_normal("recovery_after_validation_abort");
 
