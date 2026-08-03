@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 
+#include "dma_transfer.h"
 #include "resnet_layer.h"
 
 /* accel_wait_done() / accel_run_layer() return codes.
@@ -49,6 +50,7 @@ typedef struct {
     int busy_ever;                       /* STATUS.BUSY observed 1 at least once this run */
     uint32_t mm2s_dmasr;                 /* raw MM2S DMASR at the last weight/bias/input DMA check */
     uint32_t s2mm_dmasr;                 /* raw S2MM DMASR at the last output DMA check */
+    dma_s2mm_prepare_diag_t s2mm_prepare; /* dma_s2mm_prepare() bring-up diagnostics (always filled) */
 } accel_run_diag_t;
 
 int accel_init(void);

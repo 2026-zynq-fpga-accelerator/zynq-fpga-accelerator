@@ -18,6 +18,9 @@ static uintptr_t s2mm_dst_addr;
 static uint32_t s2mm_byte_count;
 static int s2mm_active;
 
+/* Captured once in dma_init(); see dma_static_diag_t. */
+static int g_cfginit_status = -1;
+
 static int dma_buffer_is_valid(uintptr_t addr, uint32_t byte_count)
 {
     return byte_count != 0U &&
@@ -59,7 +62,8 @@ int dma_init(void)
         return -1;
     }
 
-    if (XAxiDma_CfgInitialize(&dma_instance, config) != XST_SUCCESS) {
+    g_cfginit_status = XAxiDma_CfgInitialize(&dma_instance, config);
+    if (g_cfginit_status != XST_SUCCESS) {
         return -1;
     }
 
@@ -71,6 +75,17 @@ int dma_init(void)
     XAxiDma_IntrDisable(&dma_instance, XAXIDMA_IRQ_ALL_MASK, XAXIDMA_DEVICE_TO_DMA);
 
     return 0;
+}
+
+void dma_get_static_diag(dma_static_diag_t *out)
+{
+    out->cfginit_status = g_cfginit_status;
+    out->reg_base = dma_instance.RegBase;
+    out->has_sg = XAxiDma_HasSg(&dma_instance);
+    out->has_mm2s = dma_instance.HasMm2S;
+    out->has_mm2s_dre = dma_instance.HasMm2SDRE;
+    out->has_s2mm = dma_instance.HasS2Mm;
+    out->has_s2mm_dre = dma_instance.HasS2MmDRE;
 }
 
 int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count)
@@ -91,16 +106,40 @@ int dma_mm2s_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr)
     return dma_wait_channel(XAXIDMA_DMA_TO_DEVICE, timeout_ms, last_dmasr);
 }
 
-int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count)
+int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count, dma_s2mm_prepare_diag_t *diag)
 {
-    if (!dma_buffer_is_valid(dst_addr, byte_count)) {
+    if (diag != NULL) {
+        dma_s2mm_prepare_diag_t zero_diag = {0};
+        *diag = zero_diag;
+        diag->dst_addr = dst_addr;
+        diag->byte_count = byte_count;
+    }
+
+    int valid = dma_buffer_is_valid(dst_addr, byte_count);
+    if (diag != NULL) {
+        diag->buffer_is_valid = valid;
+    }
+    if (!valid) {
         return DMA_INVALID_ARG;
     }
 
     /* Must be armed before CONTROL.START so the accelerator's first output beat isn't dropped (§11.1 step 6). */
     Xil_DCacheInvalidateRange((UINTPTR)dst_addr, byte_count);
 
+    if (diag != NULL) {
+        diag->busy_before = XAxiDma_Busy(&dma_instance, XAXIDMA_DEVICE_TO_DMA);
+        diag->dmacr_before = XAxiDma_ReadReg(dma_instance.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_CR_OFFSET);
+        diag->dmasr_before = XAxiDma_ReadReg(dma_instance.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_SR_OFFSET);
+    }
+
     int status = XAxiDma_SimpleTransfer(&dma_instance, (UINTPTR)dst_addr, byte_count, XAXIDMA_DEVICE_TO_DMA);
+
+    if (diag != NULL) {
+        diag->simple_transfer_status = status;
+        diag->dmacr_after = XAxiDma_ReadReg(dma_instance.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_CR_OFFSET);
+        diag->dmasr_after = XAxiDma_ReadReg(dma_instance.RegBase, XAXIDMA_RX_OFFSET + XAXIDMA_SR_OFFSET);
+    }
+
     if (status != XST_SUCCESS) {
         return DMA_SUBMIT_ERROR;
     }

@@ -38,6 +38,20 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
                 (unsigned)i, accel_failure_stage_name(diag.failure_stage),
                 diag.start_written, diag.busy_ever,
                 (unsigned long)diag.mm2s_dmasr, (unsigned long)diag.s2mm_dmasr);
+            /* 정민님 요청 (2026-08-03), added after ISSUE-001 was pinned down to S2MM_PREPARE
+             * (before accel_start() was ever called): dma_s2mm_prepare()'s own view of the buffer
+             * it was handed and the DMA channel's DMACR/DMASR/Busy state right before and after
+             * submitting, to tell an ACCEL_REG_OUTPUT_BYTES readback-as-0 bug apart from a DMA
+             * channel that refuses the descriptor for its own reasons. */
+            xil_printf(
+                "resnet_run: layer %u s2mm_prepare dst=0x%lx bytes=%lu valid=%d busy_before=%d "
+                "dmacr_before=0x%lx dmasr_before=0x%lx dmacr_after=0x%lx dmasr_after=0x%lx xfer_status=%d\r\n",
+                (unsigned)i,
+                (unsigned long)diag.s2mm_prepare.dst_addr, (unsigned long)diag.s2mm_prepare.byte_count,
+                diag.s2mm_prepare.buffer_is_valid, diag.s2mm_prepare.busy_before,
+                (unsigned long)diag.s2mm_prepare.dmacr_before, (unsigned long)diag.s2mm_prepare.dmasr_before,
+                (unsigned long)diag.s2mm_prepare.dmacr_after, (unsigned long)diag.s2mm_prepare.dmasr_after,
+                diag.s2mm_prepare.simple_transfer_status);
 
             /* ABORT does not reset DMA (§8.3); confirm accelerator idle, then reset both DMA
              * channels before reporting failure, so the next layer never inherits stale state (§10.3, §11.5). */

@@ -9,6 +9,8 @@ typedef uint32_t u32;
 /* Per-channel register block offsets from the AXI DMA base (matches real xaxidma_hw.h). */
 #define XAXIDMA_TX_OFFSET 0x00000000U
 #define XAXIDMA_RX_OFFSET 0x00000030U
+/* DMACR (channel control register) offset within a channel's block. */
+#define XAXIDMA_CR_OFFSET 0x00000000U
 /* DMASR (channel status register) offset within a channel's block. */
 #define XAXIDMA_SR_OFFSET 0x00000004U
 /* DMAIntErr | DMASlvErr | DMADecErr | SGIntErr | SGSlvErr | SGDecErr. */

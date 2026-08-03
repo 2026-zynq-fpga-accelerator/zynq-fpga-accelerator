@@ -31,6 +31,19 @@ int main(void)
         goto out;
     }
 
+    {
+        /* One-time DMA instance facts (정민님 요청, 2026-08-03), logged once here rather than per
+         * layer run since they don't change between runs. */
+        dma_static_diag_t dma_diag;
+        dma_get_static_diag(&dma_diag);
+        xil_printf(
+            "stage1_conv_test: dma_static cfginit_status=%d reg_base=0x%lx has_sg=%d "
+            "has_mm2s=%d has_mm2s_dre=%d has_s2mm=%d has_s2mm_dre=%d\r\n",
+            dma_diag.cfginit_status, (unsigned long)dma_diag.reg_base,
+            dma_diag.has_sg, dma_diag.has_mm2s, dma_diag.has_mm2s_dre,
+            dma_diag.has_s2mm, dma_diag.has_s2mm_dre);
+    }
+
     rc = accel_init();
     if (rc != ACCEL_OK) {
         xil_printf("stage1_conv_test: accel_init failed rc=%d (VERSION mismatch?)\r\n", rc);

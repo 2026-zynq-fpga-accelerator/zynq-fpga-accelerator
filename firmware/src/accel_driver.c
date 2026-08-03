@@ -217,8 +217,11 @@ int accel_run_layer(const resnet_layer_t *layer, accel_run_diag_t *diag)
     if (diag != NULL) {
         diag->failure_stage = ACCEL_STAGE_S2MM_PREPARE;
     }
-    if (dma_s2mm_prepare(layer->output_addr, output_bytes) != DMA_OK) {
-        return ACCEL_FATAL_ERROR;
+    {
+        dma_s2mm_prepare_diag_t *prep_diag = (diag != NULL) ? &diag->s2mm_prepare : NULL;
+        if (dma_s2mm_prepare(layer->output_addr, output_bytes, prep_diag) != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
+        }
     }
 
     if (diag != NULL) {

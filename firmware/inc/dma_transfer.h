@@ -11,7 +11,40 @@
 #define DMA_TIMEOUT      (-4) /* channel still Busy with no error after timeout_ms */
 #define DMA_RESET_ERROR  (-5) /* XAxiDma_Reset() did not complete within timeout_ms */
 
+/* One-time facts about the AXI DMA instance, captured at dma_init() and unchanging afterwards.
+ * Added for bring-up diagnostics (정민님 요청, 2026-08-03) after S2MM_PREPARE started failing
+ * before the accelerator was ever started (START_written=0, BUSY_ever=0) — this rules out (or
+ * confirms) a bad XAxiDma_CfgInitialize()/Config mismatch as the cause, independent of any
+ * specific transfer. Log once right after a successful dma_init(), not per layer run. */
+typedef struct {
+    int cfginit_status;   /* raw XAxiDma_CfgInitialize() return value */
+    uintptr_t reg_base;   /* AXI DMA instance's register base address */
+    int has_sg;
+    int has_mm2s;
+    int has_mm2s_dre;
+    int has_s2mm;
+    int has_s2mm_dre;
+} dma_static_diag_t;
+
+/* Per-call diagnostics for dma_s2mm_prepare(), filled in regardless of outcome (정민님 요청,
+ * 2026-08-03) so a S2MM_PREPARE failure (e.g. ACCEL_REG_OUTPUT_BYTES reading back as 0, or the
+ * S2MM channel not accepting XAxiDma_SimpleTransfer()) can be root-caused from one UART log
+ * instead of needing another board round-trip. */
+typedef struct {
+    uintptr_t dst_addr;
+    uint32_t byte_count;
+    int buffer_is_valid;          /* dma_buffer_is_valid(dst_addr, byte_count) result */
+    int busy_before;              /* XAxiDma_Busy(..., DEVICE_TO_DMA), sampled before submit */
+    uint32_t dmacr_before;
+    uint32_t dmasr_before;
+    uint32_t dmacr_after;
+    uint32_t dmasr_after;
+    int simple_transfer_status;   /* raw XAxiDma_SimpleTransfer() return value */
+} dma_s2mm_prepare_diag_t;
+
 int dma_init(void);
+/* Fills *out with facts captured during dma_init(); only meaningful after dma_init() succeeds. */
+void dma_get_static_diag(dma_static_diag_t *out);
 
 /* Starts an MM2S (DDR -> accelerator) transfer of byte_count bytes from src_addr; non-blocking. */
 int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count);
@@ -20,8 +53,9 @@ int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count);
  * (whatever the outcome — OK, HW error, or timeout), for bring-up diagnostics. */
 int dma_mm2s_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr);
 
-/* Arms the S2MM (accelerator -> DDR) receive buffer; must be called before CONTROL.START (§11.1 step 6). */
-int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count);
+/* Arms the S2MM (accelerator -> DDR) receive buffer; must be called before CONTROL.START (§11.1 step 6).
+ * diag, if non-NULL, is always filled in (even on failure) with the bring-up diagnostics above. */
+int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count, dma_s2mm_prepare_diag_t *diag);
 /* Blocks until the S2MM transfer armed by dma_s2mm_prepare() completes, or timeout_ms elapses.
  * If last_dmasr is non-NULL, it is set to the last raw DMASR value read for this channel
  * (whatever the outcome — OK, HW error, or timeout), for bring-up diagnostics. */
