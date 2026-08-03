@@ -11,3 +11,6 @@ firmware/test/generated/
 # cocotb simulation build artifacts
 verification/cocotb/sim_build/
 verification/cocotb/results.xml
+
+/참고문서
+/rtl

@@ -60,7 +60,7 @@ async def _run_stage1_conv(dut, regs, config, weight, bias, input_bytes):
     await _load_stage1_config(regs, config)
     await regs.start()
 
-    status = await regs.status()
+    status = await regs.wait_admitted()
     assert status & bfm.STATUS_BUSY, f"START not accepted, status=0x{status:x}"
 
     await bfm.axis_send(dut, "s_axis", weight)
@@ -71,7 +71,7 @@ async def _run_stage1_conv(dut, regs, config, weight, bias, input_bytes):
 
     async def _wait_idle():
         while (await regs.status()) & bfm.STATUS_BUSY:
-            await RisingEdge(dut.clk)
+            await RisingEdge(bfm.clk_signal(dut))
 
     await with_timeout(_wait_idle(), 10000, "ns")
     return output
@@ -187,7 +187,7 @@ async def test_start_while_busy_ignored(dut):
 
     async def _wait_idle():
         while (await regs.status()) & bfm.STATUS_BUSY:
-            await RisingEdge(dut.clk)
+            await RisingEdge(bfm.clk_signal(dut))
 
     await with_timeout(_wait_idle(), 10000, "ns")
     status = await regs.status()

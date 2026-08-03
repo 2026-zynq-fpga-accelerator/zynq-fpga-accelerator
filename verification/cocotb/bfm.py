@@ -5,7 +5,12 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import RisingEdge, FallingEdge, ReadOnly
+from cocotb.triggers import RisingEdge, FallingEdge, ReadOnly, SimTimeoutError, with_timeout
+
+# Bus-level watchdog: no single AXI-Lite beat or AXI4-Stream beat should legitimately take
+# this long. Without it, a stuck TREADY/BVALID/RVALID spins the Python polling loop (and the
+# host CPU) forever with zero diagnostic output instead of failing fast.
+BUS_TIMEOUT_NS = 2000
 
 # ---- Register offsets (accel_regs.h / §8.2) ----
 OFF_CONTROL = 0x00
@@ -67,11 +72,18 @@ def pack_output_scale(multiplier_m, shift_n):
     return (multiplier_m & 0xFFFF) | ((shift_n & 0xFFFF) << 16)
 
 
+def clk_signal(dut):
+    """accel_ref_model names its clock port clk; the real RTL (resnet_accel_top) names it aclk."""
+    aclk = getattr(dut, "aclk", None)
+    return aclk if aclk is not None else dut.clk
+
+
 def start_clock(dut, period_ns=10):
-    cocotb.start_soon(Clock(dut.clk, period_ns, units="ns").start())
+    cocotb.start_soon(Clock(clk_signal(dut), period_ns, units="ns").start())
 
 
 async def reset_dut(dut, cycles=5):
+    clk = clk_signal(dut)
     dut.aresetn.value = 0
     dut.s_axi_awaddr.value = 0
     dut.s_axi_awvalid.value = 0
@@ -88,9 +100,9 @@ async def reset_dut(dut, cycles=5):
     dut.s_axis_tvalid.value = 0
     dut.m_axis_tready.value = 0
     for _ in range(cycles):
-        await RisingEdge(dut.clk)
+        await RisingEdge(clk)
     dut.aresetn.value = 1
-    await RisingEdge(dut.clk)
+    await RisingEdge(clk)
 
 
 class AxiLite:
@@ -117,35 +129,51 @@ class AxiLite:
 
     async def write(self, addr, data):
         dut = self.dut
+        clk = clk_signal(dut)
         dut.s_axi_awaddr.value = addr
         dut.s_axi_awvalid.value = 1
         dut.s_axi_wdata.value = data & 0xFFFFFFFF
         dut.s_axi_wstrb.value = 0xF
         dut.s_axi_wvalid.value = 1
-        done = False
-        while not done:
-            await RisingEdge(dut.clk)
-            await ReadOnly()
-            done = dut.s_axi_bvalid.value == 1
-        await FallingEdge(dut.clk)
+
+        async def _poll():
+            done = False
+            while not done:
+                await RisingEdge(clk)
+                await ReadOnly()
+                done = dut.s_axi_bvalid.value == 1
+
+        try:
+            await with_timeout(_poll(), BUS_TIMEOUT_NS, "ns")
+        except SimTimeoutError:
+            raise SimTimeoutError(f"AXI-Lite write(addr=0x{addr:x}) never saw BVALID") from None
+        await FallingEdge(clk)
         dut.s_axi_awvalid.value = 0
         dut.s_axi_wvalid.value = 0
 
     async def read(self, addr):
         dut = self.dut
+        clk = clk_signal(dut)
         dut.s_axi_araddr.value = addr
         dut.s_axi_arvalid.value = 1
-        data = None
-        done = False
-        while not done:
-            await RisingEdge(dut.clk)
-            await ReadOnly()
-            done = dut.s_axi_rvalid.value == 1
-            if done:
-                data = int(dut.s_axi_rdata.value)
-        await FallingEdge(dut.clk)
+        result = {}
+
+        async def _poll():
+            done = False
+            while not done:
+                await RisingEdge(clk)
+                await ReadOnly()
+                done = dut.s_axi_rvalid.value == 1
+                if done:
+                    result["data"] = int(dut.s_axi_rdata.value)
+
+        try:
+            await with_timeout(_poll(), BUS_TIMEOUT_NS, "ns")
+        except SimTimeoutError:
+            raise SimTimeoutError(f"AXI-Lite read(addr=0x{addr:x}) never saw RVALID") from None
+        await FallingEdge(clk)
         dut.s_axi_arvalid.value = 0
-        return data
+        return result["data"]
 
     async def status(self):
         return await self.read(OFF_STATUS)
@@ -164,6 +192,18 @@ class AxiLite:
 
     async def clear_done_and_error(self):
         await self.write(OFF_STATUS, STATUS_DONE | STATUS_ERROR)
+
+    async def wait_admitted(self, timeout_ns=5000):
+        """Mirrors firmware's accel_wait_start_admitted() (§11.1 steps 7-9, §11.2): polls
+        until BUSY=1 (accepted) or ERROR=1 (rejected), rather than checking STATUS once
+        immediately after start() -- admission validation and the ERROR sticky bit both
+        take a variable/nonzero number of cycles to settle after the triggering write."""
+        async def _poll():
+            while True:
+                status = await self.status()
+                if status & (STATUS_BUSY | STATUS_ERROR):
+                    return status
+        return await with_timeout(_poll(), timeout_ns, "ns")
 
 
 async def axis_send(dut, prefix, payload: bytes, assert_final_tlast: bool = True):
@@ -184,6 +224,7 @@ async def axis_send(dut, prefix, payload: bytes, assert_final_tlast: bool = True
     without also triggering a (fatal) premature-TLAST/short-packet error first.
     """
     assert len(payload) % 4 == 0, "v1.0 packets are always 4-byte multiples (§6.2)"
+    clk = clk_signal(dut)
     tdata = getattr(dut, f"{prefix}_tdata")
     tkeep = getattr(dut, f"{prefix}_tkeep")
     tlast = getattr(dut, f"{prefix}_tlast")
@@ -196,11 +237,20 @@ async def axis_send(dut, prefix, payload: bytes, assert_final_tlast: bool = True
         tkeep.value = 0xF
         tlast.value = 1 if (assert_final_tlast and idx == len(beats) - 1) else 0
         tvalid.value = 1
-        accepted = False
-        while not accepted:
-            await ReadOnly()
-            accepted = (tvalid.value == 1) and (tready.value == 1)
-            await RisingEdge(dut.clk)
+
+        async def _poll():
+            accepted = False
+            while not accepted:
+                await ReadOnly()
+                accepted = (tvalid.value == 1) and (tready.value == 1)
+                await RisingEdge(clk)
+
+        try:
+            await with_timeout(_poll(), BUS_TIMEOUT_NS, "ns")
+        except SimTimeoutError:
+            raise SimTimeoutError(
+                f"axis_send({prefix}) beat {idx}/{len(beats)} never saw TREADY"
+            ) from None
     tvalid.value = 0
     tlast.value = 0
 
@@ -213,6 +263,7 @@ async def axis_recv(dut, prefix, nbytes, stall_prob=0.0):
     -> COMPLETE transition drops TVALID at the very edge that beat is transferred, so
     TVALID/TDATA/TLAST must be read via ReadOnly() before that edge, not after.
     """
+    clk = clk_signal(dut)
     tdata = getattr(dut, f"{prefix}_tdata")
     tlast = getattr(dut, f"{prefix}_tlast")
     tvalid = getattr(dut, f"{prefix}_tvalid")
@@ -227,7 +278,7 @@ async def axis_recv(dut, prefix, nbytes, stall_prob=0.0):
         if transfer:
             beat_bytes = int(tdata.value).to_bytes(4, "little")
             is_last = (tlast.value == 1)
-        await RisingEdge(dut.clk)
+        await RisingEdge(clk)
         if transfer:
             data += beat_bytes
             beat_idx = len(data) // 4
