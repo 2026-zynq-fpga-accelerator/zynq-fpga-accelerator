@@ -24,6 +24,11 @@ typedef struct {
     int has_mm2s_dre;    /* captured from XAxiDma_Config at dma_init(); not an XAxiDma instance field */
     int has_s2mm;
     int has_s2mm_dre;    /* captured from XAxiDma_Config at dma_init(); not an XAxiDma instance field */
+    uint32_t mm2s_data_width;   /* TxBdRing.DataWidth, populated by XAxiDma_CfgInitialize() */
+    uint32_t s2mm_data_width;   /* RxBdRing[0].DataWidth, populated by XAxiDma_CfgInitialize();
+                                 * XAxiDma_SimpleTransfer() requires buffers aligned to this value
+                                 * minus one when DRE is absent - if this reads 32 instead of 4,
+                                 * a 4-byte-aligned buffer is not enough. */
 } dma_static_diag_t;
 
 /* Per-call diagnostics for dma_s2mm_prepare(), filled in regardless of outcome (정민님 요청,

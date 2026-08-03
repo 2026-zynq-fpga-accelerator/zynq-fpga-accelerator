@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def format_byte_array(name: str, data: bytes, values_per_line: int = 20) -> str:
-    lines = [f"static const uint8_t {name}[{len(data)}] __attribute__((aligned(4))) = {{"]
+    lines = [f"static const uint8_t {name}[{len(data)}] __attribute__((aligned(32))) = {{"]
     for i in range(0, len(data), values_per_line):
         chunk = data[i : i + values_per_line]
         lines.append("    " + ", ".join(f"0x{b:02X}" for b in chunk) + ",")

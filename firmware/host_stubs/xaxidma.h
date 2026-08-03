@@ -10,10 +10,15 @@
 #define XAXIDMA_DEVICE_TO_DMA 1
 
 typedef struct {
+    int DataWidth;
+} XAxiDma_BdRing;
+typedef struct {
     UINTPTR RegBase;
     int HasSg;
     int HasMm2S;
     int HasS2Mm;
+    XAxiDma_BdRing TxBdRing;
+    XAxiDma_BdRing RxBdRing[16];
 } XAxiDma;
 typedef struct {
     int HasMm2SDRE;

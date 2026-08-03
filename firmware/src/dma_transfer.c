@@ -94,6 +94,8 @@ void dma_get_static_diag(dma_static_diag_t *out)
     out->has_mm2s_dre = g_has_mm2s_dre;
     out->has_s2mm = dma_instance.HasS2Mm;
     out->has_s2mm_dre = g_has_s2mm_dre;
+    out->mm2s_data_width = dma_instance.TxBdRing.DataWidth;
+    out->s2mm_data_width = dma_instance.RxBdRing[0].DataWidth;
 }
 
 int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count)

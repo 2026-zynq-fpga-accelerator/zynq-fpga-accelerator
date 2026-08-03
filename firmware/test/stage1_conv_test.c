@@ -18,7 +18,7 @@
 
 #include "generated/stage1_test_vector.h"
 
-static uint8_t g_output_buffer[STAGE1_OUTPUT_BYTES] __attribute__((aligned(4)));
+static uint8_t g_output_buffer[STAGE1_OUTPUT_BYTES] __attribute__((aligned(32)));
 
 int main(void)
 {
@@ -38,10 +38,12 @@ int main(void)
         dma_get_static_diag(&dma_diag);
         xil_printf(
             "stage1_conv_test: dma_static cfginit_status=%d reg_base=0x%lx has_sg=%d "
-            "has_mm2s=%d has_mm2s_dre=%d has_s2mm=%d has_s2mm_dre=%d\r\n",
+            "has_mm2s=%d has_mm2s_dre=%d has_s2mm=%d has_s2mm_dre=%d "
+            "mm2s_data_width=%lu s2mm_data_width=%lu\r\n",
             dma_diag.cfginit_status, (unsigned long)dma_diag.reg_base,
             dma_diag.has_sg, dma_diag.has_mm2s, dma_diag.has_mm2s_dre,
-            dma_diag.has_s2mm, dma_diag.has_s2mm_dre);
+            dma_diag.has_s2mm, dma_diag.has_s2mm_dre,
+            (unsigned long)dma_diag.mm2s_data_width, (unsigned long)dma_diag.s2mm_data_width);
     }
 
     rc = accel_init();
