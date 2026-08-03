@@ -9,7 +9,8 @@
 int resnet_run(const resnet_layer_t *layers, size_t num_layers)
 {
     for (size_t i = 0; i < num_layers; ++i) {
-        int rc = accel_run_layer(&layers[i]);
+        accel_run_diag_t diag;
+        int rc = accel_run_layer(&layers[i], &diag);
 
         if (rc == ACCEL_DONE_WITH_WARNING) {
             xil_printf(
@@ -28,6 +29,15 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
                 "resnet_run: layer %u failed rc=%d status=0x%lx error_code=%lu debug_state=%lu cycle_count=%lu\r\n",
                 (unsigned)i, rc, (unsigned long)status,
                 (unsigned long)error_code, (unsigned long)debug_state, (unsigned long)cycle_count);
+            /* 정민님 요청 (2026-08-03): the fields above don't say which of accel_run_layer()'s
+             * stages failed, whether CONTROL.START was ever actually written, whether STATUS.BUSY
+             * was ever observed 1 (distinguishes "never admitted" from "admitted then died"), or
+             * what the raw DMASR bits were on either DMA channel. */
+            xil_printf(
+                "resnet_run: layer %u diag failure_stage=%s START_written=%d BUSY_ever=%d mm2s_dmasr=0x%lx s2mm_dmasr=0x%lx\r\n",
+                (unsigned)i, accel_failure_stage_name(diag.failure_stage),
+                diag.start_written, diag.busy_ever,
+                (unsigned long)diag.mm2s_dmasr, (unsigned long)diag.s2mm_dmasr);
 
             /* ABORT does not reset DMA (§8.3); confirm accelerator idle, then reset both DMA
              * channels before reporting failure, so the next layer never inherits stale state (§10.3, §11.5). */

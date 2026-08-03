@@ -113,12 +113,15 @@ void accel_clear_done_and_error(void)
 }
 
 /* Polls until START is admitted (BUSY=1) or rejected (ERROR=1 while BUSY=0) (§11.1 steps 7-9, §11.2). */
-int accel_wait_start_admitted(uint32_t timeout_ms)
+int accel_wait_start_admitted(uint32_t timeout_ms, int *busy_ever)
 {
     XTime start = fw_time_now();
     do {
         uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
         if ((status & STATUS_BUSY_MASK) != 0U) {
+            if (busy_ever != NULL) {
+                *busy_ever = 1;
+            }
             return ACCEL_OK;
         }
         if ((status & STATUS_ERROR_MASK) != 0U) {
@@ -129,7 +132,7 @@ int accel_wait_start_admitted(uint32_t timeout_ms)
 }
 
 /* Polling wait with ABORT + BUSY==0 confirm loop, verbatim per HW_SW_Interface_v1.1 §11.4. */
-int accel_wait_done(uint32_t timeout_ms)
+int accel_wait_done(uint32_t timeout_ms, int *busy_ever)
 {
     XTime start = fw_time_now();
     do {
@@ -144,6 +147,10 @@ int accel_wait_done(uint32_t timeout_ms)
 
             /* DONE never asserted before BUSY dropped -> fatal error (§10.3). */
             return ACCEL_FATAL_ERROR;
+        }
+
+        if (busy_ever != NULL) {
+            *busy_ever = 1;
         }
     } while (!fw_time_expired(start, timeout_ms));
 
@@ -180,8 +187,13 @@ int accel_abort_and_wait_idle(uint32_t timeout_ms)
     return ACCEL_ABORT_TIMEOUT;
 }
 
-int accel_run_layer(const resnet_layer_t *layer)
+int accel_run_layer(const resnet_layer_t *layer, accel_run_diag_t *diag)
 {
+    if (diag != NULL) {
+        accel_run_diag_t zero_diag = {0};
+        *diag = zero_diag;
+    }
+
     if (layer == NULL) {
         return ACCEL_INVALID_ARG;
     }
@@ -193,22 +205,43 @@ int accel_run_layer(const resnet_layer_t *layer)
 
     accel_clear_done_and_error();
 
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_CONFIGURE;
+    }
     int rc = accel_configure(layer);
     if (rc != ACCEL_OK) {
         return rc;
     }
 
     uint32_t output_bytes = accel_reg_read(ACCEL_REG_OUTPUT_BYTES);
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_S2MM_PREPARE;
+    }
     if (dma_s2mm_prepare(layer->output_addr, output_bytes) != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_START;
+    }
     rc = accel_start();
     if (rc != ACCEL_OK) {
         return rc;
     }
+    if (diag != NULL) {
+        diag->start_written = 1;
+    }
 
-    rc = accel_wait_start_admitted(FW_WAIT_TIMEOUT_MS);
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_START_ADMIT;
+    }
+    {
+        int busy_ever = 0;
+        rc = accel_wait_start_admitted(FW_WAIT_TIMEOUT_MS, &busy_ever);
+        if (diag != NULL && busy_ever) {
+            diag->busy_ever = 1;
+        }
+    }
     if (rc != ACCEL_OK) {
         return rc;
     }
@@ -218,40 +251,100 @@ int accel_run_layer(const resnet_layer_t *layer)
     uint32_t input_bytes = accel_reg_read(ACCEL_REG_INPUT_BYTES);
 
     /* Packet order fixed by §7.1: WEIGHT -> BIAS -> INPUT. */
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_WEIGHT_DMA;
+    }
     int dma_rc = dma_mm2s_transfer(layer->weight_addr, weight_bytes);
     if (dma_rc == DMA_OK) {
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
+        uint32_t dmasr = 0;
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+        if (diag != NULL) {
+            diag->mm2s_dmasr = dmasr;
+        }
     }
     if (dma_rc != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_BIAS_DMA;
+    }
     dma_rc = dma_mm2s_transfer(layer->bias_addr, bias_bytes);
     if (dma_rc == DMA_OK) {
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
+        uint32_t dmasr = 0;
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+        if (diag != NULL) {
+            diag->mm2s_dmasr = dmasr;
+        }
     }
     if (dma_rc != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_INPUT_DMA;
+    }
     dma_rc = dma_mm2s_transfer(layer->input_addr, input_bytes);
     if (dma_rc == DMA_OK) {
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS);
+        uint32_t dmasr = 0;
+        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+        if (diag != NULL) {
+            diag->mm2s_dmasr = dmasr;
+        }
     }
     if (dma_rc != DMA_OK) {
         return ACCEL_FATAL_ERROR;
     }
 
-    rc = accel_wait_done(FW_WAIT_TIMEOUT_MS);
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_WAIT_DONE;
+    }
+    {
+        int busy_ever = 0;
+        rc = accel_wait_done(FW_WAIT_TIMEOUT_MS, &busy_ever);
+        if (diag != NULL && busy_ever) {
+            diag->busy_ever = 1;
+        }
+    }
     if (rc != ACCEL_OK && rc != ACCEL_DONE_WITH_WARNING) {
         return rc;
     }
 
     /* Accelerator DONE only means the last beat was handed to the DMA (§11.3 note); S2MM must
      * also confirm completion before the caller reads DDR output (§11.1 step 19-20). */
-    if (dma_s2mm_wait_complete(FW_WAIT_TIMEOUT_MS) != DMA_OK) {
-        return ACCEL_FATAL_ERROR;
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_OUTPUT_S2MM;
+    }
+    {
+        uint32_t dmasr = 0;
+        int s2mm_rc = dma_s2mm_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+        if (diag != NULL) {
+            diag->s2mm_dmasr = dmasr;
+        }
+        if (s2mm_rc != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
+        }
     }
 
+    if (diag != NULL) {
+        diag->failure_stage = ACCEL_STAGE_NONE;
+    }
     return rc;
+}
+
+const char *accel_failure_stage_name(accel_failure_stage_t stage)
+{
+    switch (stage) {
+    case ACCEL_STAGE_NONE:          return "NONE";
+    case ACCEL_STAGE_CONFIGURE:     return "CONFIGURE";
+    case ACCEL_STAGE_S2MM_PREPARE:  return "S2MM_PREPARE";
+    case ACCEL_STAGE_START:         return "START";
+    case ACCEL_STAGE_START_ADMIT:   return "START_ADMIT";
+    case ACCEL_STAGE_WEIGHT_DMA:    return "WEIGHT_DMA";
+    case ACCEL_STAGE_BIAS_DMA:      return "BIAS_DMA";
+    case ACCEL_STAGE_INPUT_DMA:     return "INPUT_DMA";
+    case ACCEL_STAGE_WAIT_DONE:     return "WAIT_DONE";
+    case ACCEL_STAGE_OUTPUT_S2MM:   return "OUTPUT_S2MM";
+    default:                        return "UNKNOWN";
+    }
 }

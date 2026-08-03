@@ -15,13 +15,17 @@ int dma_init(void);
 
 /* Starts an MM2S (DDR -> accelerator) transfer of byte_count bytes from src_addr; non-blocking. */
 int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count);
-/* Blocks until the most recent dma_mm2s_transfer() completes, or byte_count timeout_ms elapses. */
-int dma_mm2s_wait_complete(uint32_t timeout_ms);
+/* Blocks until the most recent dma_mm2s_transfer() completes, or byte_count timeout_ms elapses.
+ * If last_dmasr is non-NULL, it is set to the last raw DMASR value read for this channel
+ * (whatever the outcome — OK, HW error, or timeout), for bring-up diagnostics. */
+int dma_mm2s_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr);
 
 /* Arms the S2MM (accelerator -> DDR) receive buffer; must be called before CONTROL.START (§11.1 step 6). */
 int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count);
-/* Blocks until the S2MM transfer armed by dma_s2mm_prepare() completes, or timeout_ms elapses. */
-int dma_s2mm_wait_complete(uint32_t timeout_ms);
+/* Blocks until the S2MM transfer armed by dma_s2mm_prepare() completes, or timeout_ms elapses.
+ * If last_dmasr is non-NULL, it is set to the last raw DMASR value read for this channel
+ * (whatever the outcome — OK, HW error, or timeout), for bring-up diagnostics. */
+int dma_s2mm_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr);
 
 /* Halts and resets both DMA channels; used during ABORT recovery (§11.5). */
 int dma_halt_reset(void);

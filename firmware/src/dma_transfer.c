@@ -26,8 +26,10 @@ static int dma_buffer_is_valid(uintptr_t addr, uint32_t byte_count)
 }
 
 /* Polls the given channel's DMASR directly: any latched error bit is fatal, otherwise wait for
- * Busy to clear within timeout_ms (§3, §10.3, §11.1). */
-static int dma_wait_channel(int direction, uint32_t timeout_ms)
+ * Busy to clear within timeout_ms (§3, §10.3, §11.1). last_dmasr (if non-NULL) is updated on every
+ * poll, so it always holds the most recent raw DMASR read regardless of outcome (bring-up diag,
+ * 정민님 요청 — the DMA_HW_ERROR/DMA_TIMEOUT enum alone doesn't show which error bits latched). */
+static int dma_wait_channel(int direction, uint32_t timeout_ms, uint32_t *last_dmasr)
 {
     const u32 channel_offset = (direction == XAXIDMA_DMA_TO_DEVICE)
         ? XAXIDMA_TX_OFFSET : XAXIDMA_RX_OFFSET;
@@ -36,6 +38,9 @@ static int dma_wait_channel(int direction, uint32_t timeout_ms)
     do {
         u32 status = XAxiDma_ReadReg(
             dma_instance.RegBase, channel_offset + XAXIDMA_SR_OFFSET);
+        if (last_dmasr != NULL) {
+            *last_dmasr = status;
+        }
         if ((status & XAXIDMA_ERR_ALL_MASK) != 0U) {
             return DMA_HW_ERROR;
         }
@@ -81,9 +86,9 @@ int dma_mm2s_transfer(uintptr_t src_addr, uint32_t byte_count)
     return (status == XST_SUCCESS) ? DMA_OK : DMA_SUBMIT_ERROR;
 }
 
-int dma_mm2s_wait_complete(uint32_t timeout_ms)
+int dma_mm2s_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr)
 {
-    return dma_wait_channel(XAXIDMA_DMA_TO_DEVICE, timeout_ms);
+    return dma_wait_channel(XAXIDMA_DMA_TO_DEVICE, timeout_ms, last_dmasr);
 }
 
 int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count)
@@ -106,9 +111,9 @@ int dma_s2mm_prepare(uintptr_t dst_addr, uint32_t byte_count)
     return DMA_OK;
 }
 
-int dma_s2mm_wait_complete(uint32_t timeout_ms)
+int dma_s2mm_wait_complete(uint32_t timeout_ms, uint32_t *last_dmasr)
 {
-    int rc = dma_wait_channel(XAXIDMA_DEVICE_TO_DMA, timeout_ms);
+    int rc = dma_wait_channel(XAXIDMA_DEVICE_TO_DMA, timeout_ms, last_dmasr);
     if (rc == DMA_OK && s2mm_active) {
         /* CPU may have speculatively refilled a cache line while DMA wrote DDR; invalidate again
          * so the caller's comparison reads the DMA'd data, not a stale line (§11.1 steps 18-20). */
