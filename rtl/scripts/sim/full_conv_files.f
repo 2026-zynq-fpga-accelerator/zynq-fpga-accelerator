@@ -1,0 +1,14 @@
+rtl/common/accel_pkg.sv
+rtl/common/sat_add_int32.sv
+rtl/common/requantizer.sv
+rtl/common/relu_clamp.sv
+rtl/compute/tensor_buffers.sv
+rtl/compute/conv_engine.sv
+rtl/stream/axis_packet_loader.sv
+rtl/stream/axis_output_streamer.sv
+rtl/control/axi_lite_regs.sv
+rtl/control/controller_fsm.sv
+rtl/control/error_ctrl.sv
+rtl/control/cycle_counter.sv
+rtl/top/resnet_accel_top.sv
+tb/tb_full_conv.sv

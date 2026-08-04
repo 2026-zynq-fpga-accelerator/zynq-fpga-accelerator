@@ -1,0 +1,29 @@
+{
+  "format": "HW_SW_Interface_v1.1 OP_CONV",
+  "seed": 20260730,
+  "batch": 1,
+  "input_layout": "NHWC",
+  "weight_layout": "HWIO",
+  "input_height": 32,
+  "input_width": 32,
+  "in_channels": 3,
+  "out_channels": 16,
+  "kernel_size": 3,
+  "stride": 1,
+  "padding": 1,
+  "relu_enable": true,
+  "multiplier": 3,
+  "shift": 2,
+  "input_bytes": 3072,
+  "weight_bytes": 432,
+  "bias_bytes": 64,
+  "output_height": 32,
+  "output_width": 32,
+  "output_bytes": 16384,
+  "bias_binary_endianness": "little",
+  "packet_order": [
+    "weight",
+    "bias",
+    "input"
+  ]
+}
