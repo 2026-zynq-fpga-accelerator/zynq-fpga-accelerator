@@ -113,6 +113,8 @@ require_equal dma_mm2s_stream_width \
   [get_property CONFIG.c_m_axis_mm2s_tdata_width $dma] 32
 require_equal dma_s2mm_stream_width \
   [get_property CONFIG.c_s_axis_s2mm_tdata_width $dma] 32
+require_equal dma_buffer_length_width \
+  [get_property CONFIG.c_sg_length_width $dma] 23
 require_equal ps_gp0_enabled [get_property CONFIG.PCW_USE_M_AXI_GP0 $ps7] 1
 require_equal ps_hp0_enabled [get_property CONFIG.PCW_USE_S_AXI_HP0 $ps7] 1
 require_equal ps_fclk0_mhz \
@@ -254,7 +256,7 @@ foreach {label object properties} [list \
     CONFIG.c_include_mm2s_dre CONFIG.c_include_s2mm_dre
     CONFIG.c_m_axis_mm2s_tdata_width CONFIG.c_s_axis_s2mm_tdata_width
     CONFIG.c_m_axi_mm2s_data_width CONFIG.c_m_axi_s2mm_data_width
-    CONFIG.c_prmry_is_aclk_async} \
+    CONFIG.c_prmry_is_aclk_async CONFIG.c_sg_length_width} \
   CONTROL_SMARTCONNECT $control_ic {CONFIG.NUM_SI CONFIG.NUM_MI CONFIG.NUM_CLKS} \
   MEMORY_SMARTCONNECT $memory_ic {CONFIG.NUM_SI CONFIG.NUM_MI CONFIG.NUM_CLKS} \
   RESET $reset {CONFIG.C_EXT_RESET_HIGH}] {
@@ -266,6 +268,20 @@ foreach {label object properties} [list \
 puts $config_report "DMA_INTERRUPT_PORTS=[get_bd_pins -quiet axi_dma_0/*introut]"
 puts $config_report "DMA_INTERRUPTS_CONNECTED=0"
 close $config_report
+
+set dma_report [open [file join $report_dir axi_dma_configuration.txt] w]
+puts $dma_report "Mode: Simple"
+puts $dma_report "Scatter Gather: Disabled"
+puts $dma_report "MM2S: Enabled"
+puts $dma_report "S2MM: Enabled"
+puts $dma_report "MM2S Stream Width: 32"
+puts $dma_report "S2MM Stream Width: 32"
+puts $dma_report "DRE: Disabled"
+puts $dma_report "Buffer Length Register Width: [get_property CONFIG.c_sg_length_width $dma]"
+puts $dma_report "MaxTransferLen: 8388607 bytes"
+puts $dma_report "Stage-1 Output Length: 16384 bytes"
+puts $dma_report "Stage-1 Output Supported: Yes"
+close $dma_report
 
 set connection_report [open [file join $report_dir interface_connections.txt] w]
 foreach intf_net [lsort -dictionary [get_bd_intf_nets -quiet]] {

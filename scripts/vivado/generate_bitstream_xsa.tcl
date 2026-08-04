@@ -200,6 +200,8 @@ require_equal "processing system VLNV" [get_property VLNV $ps_cell] \
   xilinx.com:ip:processing_system7:5.5
 require_equal "AXI DMA VLNV" [get_property VLNV $dma_cell] \
   xilinx.com:ip:axi_dma:7.1
+require_equal "AXI DMA Buffer Length Register Width" \
+  [get_property CONFIG.c_sg_length_width $dma_cell] 23
 require_equal "accelerator VLNV" [get_property VLNV $accel_cell] \
   jmhwang.local:npu:resnet_accel:1.0
 set fclk_mhz [get_property CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $ps_cell]
