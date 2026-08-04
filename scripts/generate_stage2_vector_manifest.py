@@ -3,11 +3,10 @@
 # the same format generate_stage2_c_header.py's --approved-manifest expects (mirrors
 # firmware/test/stage1_vector_manifest.json's role for stage-1).
 #
-# Unlike stage1_vector_manifest.json -- which recorded an RTL-canonical vector 황정민 had already
+# Unlike stage1_vector_manifest.json -- which recorded an RTL-canonical vector RTL had already
 # confirmed byte-identical to his own regression run -- this script only hashes whatever is
 # currently on disk from scripts/generate_stage2_vectors.py (a local Python golden-model run).
-# It does NOT claim RTL-canonical status or 정민's approval; it produces a draft to send him for
-# confirmation once an RTL-side vector exists to compare against.
+# It does NOT claim RTL-canonical status
 from __future__ import annotations
 
 import argparse
@@ -60,7 +59,7 @@ def main() -> None:
     manifest = {
         "candidate": "Python golden model (local, generate_stage2_vectors.py)",
         "provenance_status": (
-            "DRAFT -- not yet confirmed against an RTL-canonical vector by 황정민. "
+            "DRAFT -- not yet confirmed against an RTL-canonical vector"
             "Send this file to him for confirmation once OP_RESIDUAL_ADD RTL/simulation exists to "
             "compare against, then re-save as the --approved-manifest input to "
             "generate_stage2_c_header.py."

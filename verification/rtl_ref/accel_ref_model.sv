@@ -1,6 +1,6 @@
 // Behavioral reference model of the OP_CONV accelerator, HW_SW_Interface_v1.1_FINAL.md.
 //
-// This is NOT synthesizable RTL and is not 황정민 학생님's design. It is a spec-conformant
+// This is NOT synthesizable RTL. It is a spec-conformant
 // stand-in DUT so the cocotb verification environment (verification/cocotb/) can be built
 // and run before the real RTL lands in this repo. Swap TOPLEVEL in
 // verification/cocotb/Makefile to the real module (matching this port list, or update the

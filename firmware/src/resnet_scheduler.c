@@ -29,7 +29,7 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
                 "resnet_run: layer %u failed rc=%d status=0x%lx error_code=%lu debug_state=%lu cycle_count=%lu\r\n",
                 (unsigned)i, rc, (unsigned long)status,
                 (unsigned long)error_code, (unsigned long)debug_state, (unsigned long)cycle_count);
-            /* 정민님 요청 (2026-08-03): the fields above don't say which of accel_run_layer()'s
+            /* Added 2026-08-03: the fields above don't say which of accel_run_layer()'s
              * stages failed, whether CONTROL.START was ever actually written, whether STATUS.BUSY
              * was ever observed 1 (distinguishes "never admitted" from "admitted then died"), or
              * what the raw DMASR bits were on either DMA channel. */
@@ -38,7 +38,7 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
                 (unsigned)i, accel_failure_stage_name(diag.failure_stage),
                 diag.start_written, diag.busy_ever,
                 (unsigned long)diag.mm2s_dmasr, (unsigned long)diag.s2mm_dmasr);
-            /* 정민님 요청 (2026-08-03), added after ISSUE-001 was pinned down to S2MM_PREPARE
+            /* Added 2026-08-03, after ISSUE-001 was pinned down to S2MM_PREPARE
              * (before accel_start() was ever called): dma_s2mm_prepare()'s own view of the buffer
              * it was handed and the DMA channel's DMACR/DMASR/Busy state right before and after
              * submitting, to tell an ACCEL_REG_OUTPUT_BYTES readback-as-0 bug apart from a DMA

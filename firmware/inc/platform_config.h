@@ -2,14 +2,14 @@
  *
  * Target board: Digilent Zybo Z7-20, part XC7Z020-1CLG400C.
  *
- * PL clock/reset (agreed with 황정민 학생, RTL/testbench already built to match):
+ * PL clock/reset (RTL/testbench already built to match):
  *   - PL fabric clock: PS7 FCLK_CLK0 = 100 MHz
  *   - Reset: PS7 FCLK_RESET0_N (active-low) -> Processor System Reset IP
  *     -> peripheral_aresetn -> accelerator ARESETN (active-low throughout,
  *     no polarity conversion needed)
  *
  * ACCEL_BASE_ADDR / ACCEL_DMA_DEVICE_ID come from the Vivado block design's
- * generated xparameters.h (confirmed by 황정민 학생, 2026-08-01). Note the
+ * generated xparameters.h (2026-08-01). Note the
  * accelerator's IP-level base-address macro is XPAR_RESNET_ACCEL_0_BASEADDR,
  * not XPAR_RESNET_ACCEL_0_S_AXI_CTRL_BASEADDR (that S_AXI_CTRL-suffixed name
  * was never generated for this block design).

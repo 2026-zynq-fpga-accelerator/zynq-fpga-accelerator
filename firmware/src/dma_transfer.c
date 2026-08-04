@@ -36,7 +36,7 @@ static int dma_buffer_is_valid(uintptr_t addr, uint32_t byte_count)
 /* Polls the given channel's DMASR directly: any latched error bit is fatal, otherwise wait for
  * Busy to clear within timeout_ms (§3, §10.3, §11.1). last_dmasr (if non-NULL) is updated on every
  * poll, so it always holds the most recent raw DMASR read regardless of outcome (bring-up diag,
- * 정민님 요청 — the DMA_HW_ERROR/DMA_TIMEOUT enum alone doesn't show which error bits latched). */
+ * the DMA_HW_ERROR/DMA_TIMEOUT enum alone doesn't show which error bits latched). */
 static int dma_wait_channel(int direction, uint32_t timeout_ms, uint32_t *last_dmasr)
 {
     const u32 channel_offset = (direction == XAXIDMA_DMA_TO_DEVICE)

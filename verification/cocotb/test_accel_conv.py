@@ -4,7 +4,7 @@ Run with:
     cd verification/cocotb && make
 
 TOPLEVEL is the behavioral reference model (verification/rtl_ref/accel_ref_model.sv), not
-황정민 학생's RTL -- swap the Makefile's VERILOG_SOURCES/TOPLEVEL once that lands in this
+RTL -- swap the Makefile's VERILOG_SOURCES/TOPLEVEL once that lands in this
 repo and re-run this same file as regression against it.
 """
 import json

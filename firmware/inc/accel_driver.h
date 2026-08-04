@@ -23,7 +23,7 @@
 
 /* Stage accel_run_layer() was attempting when it returned. ACCEL_STAGE_NONE means it returned
  * ACCEL_OK/ACCEL_DONE_WITH_WARNING (or never got past the layer==NULL/BUSY-already-set guard,
- * which fail before any stage is entered). Added for bring-up diagnostics (정민님 요청,
+ * which fail before any stage is entered). Added for bring-up diagnostics (
  * 2026-08-03) — accel_run_layer() previously collapsed 6+ distinct failure points down to a
  * single ACCEL_FATAL_ERROR, which made it impossible to tell from the UART log alone whether
  * e.g. weight DMA never completed vs. the accelerator FSM never asserted DONE. */
@@ -40,7 +40,7 @@ typedef enum {
     ACCEL_STAGE_OUTPUT_S2MM,
 } accel_failure_stage_t;
 
-/* Bring-up diagnostics filled in by accel_run_layer() as it runs (정민님 요청, 2026-08-03), meant
+/* Bring-up diagnostics filled in by accel_run_layer() as it runs (2026-08-03), meant
  * to disambiguate "operation was never admitted at all" (ISSUE-002/004 territory: start_written=1,
  * busy_ever=0) from "admitted and ran, then failed elsewhere" (busy_ever=1). Always fully
  * overwritten by accel_run_layer(); caller does not need to zero it first. */

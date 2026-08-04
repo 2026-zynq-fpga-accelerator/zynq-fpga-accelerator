@@ -1,5 +1,5 @@
 """Throwaway probe (not part of the regression suite): does releasing aresetn, with NO
-operation ever started, leave CYCLE_COUNT reading 1 instead of 0? 황정민 reported reproducing
+operation ever started, leave CYCLE_COUNT reading 1 instead of 0? RTL reported reproducing
 exactly this in his own AXI simulation (2026-08-03). By inspection, controller_fsm.sv's
 busy_o = (state_q != DBG_IDLE) && (state_q != DBG_COMPLETE) does not exclude DBG_RESET
 (accel_pkg.sv: DBG_RESET=0, DBG_IDLE=1, DBG_COMPLETE=7), so on the very edge aresetn_i is
@@ -38,5 +38,5 @@ async def cycle_count_is_one_after_reset_with_no_operation(dut):
     )
     dut._log.info(
         "REPRODUCED: cycle_count=1 with debug_state=IDLE and no operation ever started -- "
-        "confirms the busy_o/DBG_RESET glitch (ISSUE-004) independently of 황정민's own AXI sim"
+        "confirms the busy_o/DBG_RESET glitch (ISSUE-004) independently of RTL's own AXI sim"
     )

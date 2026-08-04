@@ -32,7 +32,7 @@ int main(void)
     }
 
     {
-        /* One-time DMA instance facts (정민님 요청, 2026-08-03), logged once here rather than per
+        /* One-time DMA instance facts (2026-08-03), logged once here rather than per
          * layer run since they don't change between runs. */
         dma_static_diag_t dma_diag;
         dma_get_static_diag(&dma_diag);

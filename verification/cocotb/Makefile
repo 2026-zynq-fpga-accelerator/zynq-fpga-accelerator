@@ -1,4 +1,4 @@
-# cocotb regression against 황정민 학생's real RTL (verification/../rtl/, integration/zybo-bootbin
+# cocotb regression against real RTL (verification/../rtl/, integration/zybo-bootbin
 # branch). Was accel_ref_model.sv (the behavioral reference model, still kept at
 # verification/rtl_ref/ as a golden comparison point); swap back by restoring the single-file
 # VERILOG_SOURCES/TOPLEVEL below if a regression against the golden model is needed again.

@@ -12,7 +12,7 @@
 #define DMA_RESET_ERROR  (-5) /* XAxiDma_Reset() did not complete within timeout_ms */
 
 /* One-time facts about the AXI DMA instance, captured at dma_init() and unchanging afterwards.
- * Added for bring-up diagnostics (정민님 요청, 2026-08-03) after S2MM_PREPARE started failing
+ * Added for bring-up diagnostics (2026-08-03) after S2MM_PREPARE started failing
  * before the accelerator was ever started (START_written=0, BUSY_ever=0) — this rules out (or
  * confirms) a bad XAxiDma_CfgInitialize()/Config mismatch as the cause, independent of any
  * specific transfer. Log once right after a successful dma_init(), not per layer run. */
@@ -31,7 +31,7 @@ typedef struct {
                                  * a 4-byte-aligned buffer is not enough. */
 } dma_static_diag_t;
 
-/* Per-call diagnostics for dma_s2mm_prepare(), filled in regardless of outcome (정민님 요청,
+/* Per-call diagnostics for dma_s2mm_prepare(), filled in regardless of outcome (
  * 2026-08-03) so a S2MM_PREPARE failure (e.g. ACCEL_REG_OUTPUT_BYTES reading back as 0, or the
  * S2MM channel not accepting XAxiDma_SimpleTransfer()) can be root-caused from one UART log
  * instead of needing another board round-trip. */
