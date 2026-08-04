@@ -41,6 +41,7 @@ module axis_output_streamer #(
     m_axis_tlast_o  = (word_index_q == (word_count_q - 32'd1));
     m_axis_tvalid_o = (state_q == OUT_SEND);
     busy_o          = (state_q != OUT_IDLE);
+    done_o          = m_axis_tvalid_o && m_axis_tready_i && m_axis_tlast_o;
   end
 
   always_ff @(posedge clk_i) begin
@@ -48,15 +49,11 @@ module axis_output_streamer #(
       state_q      <= OUT_IDLE;
       word_index_q <= 32'd0;
       word_count_q <= 32'd0;
-      done_o       <= 1'b0;
     end else if (abort_i) begin
       state_q      <= OUT_IDLE;
       word_index_q <= 32'd0;
       word_count_q <= 32'd0;
-      done_o       <= 1'b0;
     end else begin
-      done_o <= 1'b0;
-
       case (state_q)
         OUT_IDLE: begin
           if (start_i) begin
@@ -71,7 +68,6 @@ module axis_output_streamer #(
         OUT_SEND: begin
           if (m_axis_tvalid_o && m_axis_tready_i) begin
             if (word_index_q + 32'd1 == word_count_q) begin
-              done_o  <= 1'b1;
               state_q <= OUT_IDLE;
             end else begin
               word_index_q <= word_index_q + 32'd1;

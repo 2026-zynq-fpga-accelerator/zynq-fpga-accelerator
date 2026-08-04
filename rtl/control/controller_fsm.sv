@@ -164,9 +164,24 @@ module controller_fsm #(
     else
       mul_multiplicand_next = mul_multiplicand_q << 1;
 
-    idle_o        = (state_q == DBG_IDLE) || (state_q == DBG_COMPLETE);
-    busy_o        = (state_q != DBG_IDLE) && (state_q != DBG_COMPLETE);
+    // Admission is part of the externally visible operation lifecycle. Keep
+    // BUSY continuous from an accepted START through validation and the main
+    // datapath states, while excluding the reset-release transition.
+    busy_o        = admission_active_o
+                  || invalid_operation_event_o
+                  || invalid_config_event_o
+                  || internal_error_event_o
+                  || ((state_q != DBG_RESET)
+                   && (state_q != DBG_IDLE)
+                   && (state_q != DBG_COMPLETE));
+    idle_o        = !busy_o
+                  && ((state_q == DBG_IDLE) || (state_q == DBG_COMPLETE));
     debug_state_o = state_q;
+    operation_done_o = (state_q == DBG_SEND_OUTPUT)
+                    && output_done_i
+                    && !abort_pulse_i
+                    && !packet_length_error_i
+                    && !tlast_error_i;
 
     packet_active_o = (state_q == DBG_LOAD_WEIGHT)
                    || (state_q == DBG_LOAD_BIAS)
@@ -194,7 +209,6 @@ module controller_fsm #(
       validator_state_q          <= VAL_IDLE;
       admission_active_o         <= 1'b0;
       operation_accept_o         <= 1'b0;
-      operation_done_o           <= 1'b0;
       cancel_pulse_o             <= 1'b0;
       packet_start_o             <= 1'b0;
       conv_start_o               <= 1'b0;
@@ -248,7 +262,6 @@ module controller_fsm #(
       snap_output_bytes_o        <= 32'd0;
     end else begin
       operation_accept_o        <= 1'b0;
-      operation_done_o          <= 1'b0;
       cancel_pulse_o            <= 1'b0;
       packet_start_o            <= 1'b0;
       conv_start_o              <= 1'b0;
@@ -559,8 +572,7 @@ module controller_fsm #(
 
           DBG_SEND_OUTPUT: begin
             if (output_done_i) begin
-              operation_done_o <= 1'b1;
-              state_q          <= DBG_COMPLETE;
+              state_q <= DBG_COMPLETE;
             end
           end
 

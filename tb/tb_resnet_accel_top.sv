@@ -21,6 +21,7 @@ module tb_resnet_accel_top;
   localparam logic [6:0] REG_BIAS_BYTES   = 7'h2c;
   localparam logic [6:0] REG_SKIP_BYTES   = 7'h30;
   localparam logic [6:0] REG_OUTPUT_BYTES = 7'h34;
+  localparam logic [6:0] REG_CYCLE_COUNT  = 7'h38;
   localparam logic [6:0] REG_ERROR_CODE   = 7'h3c;
 
   logic aclk;
@@ -67,6 +68,7 @@ module tb_resnet_accel_top;
   integer observed_value;
   integer expected_index;
   logic backpressure_applied;
+  logic final_backpressure_applied;
 
   resnet_accel_top #(
     .MAX_WEIGHT_WORDS(64),
@@ -364,9 +366,12 @@ module tb_resnet_accel_top;
   end
 
   initial begin
+    logic [31:0] held_final_data;
+    logic [3:0] held_final_keep;
     m_axis_tready = 1'b0;
     backpressure_applied = 1'b0;
     wait (aresetn === 1'b1);
+    final_backpressure_applied = 1'b0;
     @(negedge aclk);
     m_axis_tready = 1'b1;
     wait (output_byte_count >= 8);
@@ -376,12 +381,31 @@ module tb_resnet_accel_top;
     repeat (4) @(posedge aclk);
     @(negedge aclk);
     m_axis_tready = 1'b1;
+
+    wait (output_byte_count == OUTPUT_BYTES-4);
+    @(negedge aclk);
+    m_axis_tready = 1'b0;
+    wait (m_axis_tvalid && m_axis_tlast);
+    held_final_data = m_axis_tdata;
+    held_final_keep = m_axis_tkeep;
+    repeat (4) begin
+      @(posedge aclk); #1;
+      if (!dut.busy || dut.done || dut.error)
+        $fatal(1, "Final-beat backpressure changed completion status");
+      if (!m_axis_tvalid || !m_axis_tlast || (m_axis_tdata != held_final_data)
+          || (m_axis_tkeep != held_final_keep))
+        $fatal(1, "Final output beat was not stable under backpressure");
+    end
+    @(negedge aclk); m_axis_tready = 1'b1;
+    final_backpressure_applied = 1'b1;
   end
 
   initial begin
     logic [31:0] status;
     logic [31:0] code;
+    logic [31:0] cycles;
     integer validation_wait_cycles;
+    integer admission_cycle_count;
 
     aclk          = 1'b0;
     aresetn       = 1'b0;
@@ -404,7 +428,12 @@ module tb_resnet_accel_top;
     repeat (6) @(posedge aclk);
     @(negedge aclk);
     aresetn = 1'b1;
-    repeat (4) @(posedge aclk);
+    repeat (20) begin
+      @(posedge aclk); #1;
+      if (!dut.idle || dut.busy || (dut.cycle_count != 32'd0))
+        $fatal(1, "Reset-idle contract failed IDLE=%0b BUSY=%0b CYCLE_COUNT=%0d",
+               dut.idle, dut.busy, dut.cycle_count);
+    end
 
     axi_write(REG_STATUS,       32'h0000_000c);
     axi_write(REG_OPERATION,    32'd0);
@@ -421,17 +450,34 @@ module tb_resnet_accel_top;
     axi_write(REG_OUTPUT_BYTES, OUTPUT_BYTES);
 
     axi_write(REG_CONTROL, 32'h0000_0001);
+    axi_read(REG_STATUS, status);
+    axi_read(REG_CYCLE_COUNT, cycles);
+    if (status[3:0] != 4'b0010)
+      $fatal(1, "First observable START status was not BUSY-only: 0x%08x", status);
+    if (cycles == 32'd0)
+      $fatal(1, "Admission counter did not advance after START");
+
     validation_wait_cycles = 0;
-    while (dut.busy !== 1'b1) begin
+    admission_cycle_count = dut.cycle_count;
+    while (dut.admission_active === 1'b1) begin
       @(negedge aclk);
-      if ((dut.busy !== 1'b1) && (dut.debug_state !== 4'd1))
-        $fatal(1, "DEBUG_STATE changed during validation: %0d", dut.debug_state);
-      if (dut.error)
-        $fatal(1, "ERROR asserted while waiting for valid configuration acceptance");
-      validation_wait_cycles = validation_wait_cycles + 1;
-      if (validation_wait_cycles > 256)
-        $fatal(1, "Timed out waiting for BUSY after START");
+      if (dut.admission_active) begin
+        if (!dut.busy || dut.idle)
+          $fatal(1, "BUSY/IDLE contract failed during admission");
+        if (dut.debug_state !== 4'd1)
+          $fatal(1, "DEBUG_STATE changed during validation: %0d", dut.debug_state);
+        if (dut.error)
+          $fatal(1, "ERROR asserted while waiting for valid configuration acceptance");
+        if (dut.cycle_count <= admission_cycle_count)
+          $fatal(1, "CYCLE_COUNT did not increase during admission");
+        admission_cycle_count = dut.cycle_count;
+        validation_wait_cycles = validation_wait_cycles + 1;
+        if (validation_wait_cycles > 256)
+          $fatal(1, "Timed out waiting for validation acceptance");
+      end
     end
+    if (!dut.busy || dut.idle)
+      $fatal(1, "BUSY-low/IDLE-high gap at admission-to-main transition");
     axi_read(REG_STATUS, status);
     if (!status[1])
       $fatal(1, "BUSY did not assert after validation, STATUS=0x%08x", status);
@@ -443,7 +489,9 @@ module tb_resnet_accel_top;
     send_input_packet();
 
     wait (output_byte_count == OUTPUT_BYTES);
-    repeat (8) @(posedge aclk);
+    @(negedge aclk); #1;
+    if (dut.busy || !dut.done || dut.error || (dut.debug_state != 4'd7))
+      $fatal(1, "Final handshake edge did not expose BUSY=0 DONE=1 ERROR=0 COMPLETE");
 
     axi_read(REG_STATUS, status);
     axi_read(REG_ERROR_CODE, code);
@@ -463,6 +511,8 @@ module tb_resnet_accel_top;
 
     axi_write(REG_STATUS, 32'h0000_0004);
     axi_read(REG_STATUS, status);
+    if (!final_backpressure_applied)
+      $fatal(1, "Final-beat backpressure was not applied");
     if (status[2])
       $fatal(1, "DONE W1C clear failed, STATUS=0x%08x", status);
 

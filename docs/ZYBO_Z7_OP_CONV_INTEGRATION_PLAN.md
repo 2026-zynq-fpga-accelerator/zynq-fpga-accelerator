@@ -1,328 +1,258 @@
 # Zybo Z7-20 Single OP_CONV Integration Plan
 
-Status: planning and preflight only. No Vivado project, synthesis, IP packaging,
-Block Design, implementation, bitstream, XSA, or FPGA execution has been
-performed.
+Status: RTL/OOC, Phase 3B-1 wrapper/IP packaging, Phase 3C Block Design, Phase
+3D-1 synthesis/route/timing closure, and Phase 3D-2 bitstream/XSA generation
+are complete. The implemented design passes the 100 MHz timing acceptance
+gate, and the hardware build is ready for Phase 3E.
 
-## 1. Goal
+## 1. Confirmed baseline
 
-Integrate the simulation-verified `resnet_accel_top` with the Zynq-7000 PS and
-AXI DMA on a Zybo Z7-20, then execute the existing deterministic
-32x32x3-to-32x32x16 `OP_CONV` vector on physical hardware.
+- Board: Zybo Z7-20
+- Board part: `digilentinc.com:zybo-z7-20:part0:1.2`
+- FPGA: `xc7z020clg400-1`
+- Vivado/Vitis: 2022.2
+- Clock: one 100 MHz PL domain
+- Core: `resnet_accel_top`
+- Packaged IP: `jmhwang.local:npu:resnet_accel:1.0`
+- BD: `zybo_resnet_system`
 
-The current baseline is **Single OP_CONV integrated RTL with Vivado XSim
-verification**. The repository regression reports 10 PASS and 0 FAIL, and the
-full convolution compares all 16,384 output bytes with zero mismatches. This is
-not FPGA verification.
+This is a single 3x3 `OP_CONV`, not complete ResNet-20 inference. Residual add,
+GAP, FC, CPU fallback, and full-network scheduling remain outside the current
+milestone.
 
-Residual add, projection, GAP, FC, CPU fallback, full ResNet-20 scheduling, and
-end-to-end CIFAR-10 inference are outside the acceptance path for this plan.
+## 2. Verification evidence
 
-## 2. Confirmed Hardware Configuration
+- Official core regression: 10 PASS, 0 FAIL
+- Full vector: 16,384 bytes, mismatch 0, 1,435,391 cycles
+- OOC timing at 100 MHz: WNS +0.691 ns, TNS 0, 0 failing endpoints
+- Wrapper smoke/full vector and packaged-IP integrity: PASS
+- Phase 3C full Tcl recreation: PASS
+- `validate_bd_design`: PASS
+- `generate_target all`: PASS
+- HDL wrapper and compile-order update: PASS
+- Full-design synthesis: complete
+- Implementation through `route_design`: complete, fully routed
+- Baseline 100 MHz setup timing: FAIL (`WNS -0.258 ns`, `TNS -0.715 ns`,
+  5 failing endpoints)
+- Final controlled-strategy timing: PASS (`WNS +0.018 ns`, `TNS 0`,
+  0 failing endpoints)
+- Official PASS-run bitstream: generated
+- Bitstream-included XSA: generated and archive-validated
 
-The following items are agreed integration requirements:
+OOC timing is not full-design implemented timing, and BD validation is not FPGA
+execution.
 
-- Board: Zybo Z7-20.
-- Vivado: 2022.2.
-- PL clock domain: one 100 MHz domain.
-- RTL clock period target: 10 ns.
-- Accelerator top: `resnet_accel_top`.
-- Accelerator interfaces: 32-bit AXI4-Lite, 32-bit AXI4-Stream input, and
-  32-bit AXI4-Stream output.
-- AXI DMA: Simple mode, Scatter-Gather disabled, MM2S and S2MM enabled.
-- DMA DRE: disabled.
-- DMA completion: polling; interrupts disabled.
-- DDR buffer addresses: 4-byte aligned.
-- DMA transfer lengths: multiples of four bytes.
+## 3. Stable interface and packet contract
 
-The exact Vivado board part, FPGA part, and board revision are deliberately not
-recorded as confirmed. They must be read from the physical board and the
-installed Vivado board definition before any project or synthesis command is
-issued. No part string may be inferred from the product name alone.
+- `S_AXI_CTRL`: AXI4-Lite slave, address/data widths 7/32
+- `S_AXIS_INPUT`: AXIS slave, 32-bit TDATA with TKEEP/TLAST/TVALID/TREADY
+- `M_AXIS_OUTPUT`: AXIS master, 32-bit TDATA with TKEEP/TLAST/TVALID/TREADY
+- `aclk`: 100 MHz and associated with all three buses
+- `aresetn`: active-low
 
-## 3. Confirmed DMA and Packet Protocol
+The wrapper and core register/packet protocols are unchanged.
 
-### MM2S input transfers
+Input is three separate DMA MM2S transfers:
 
-| Transfer | Payload | Bytes | Stream termination |
-|---|---:|---:|---|
-| 1 | Weight, HWIO INT8 | 432 | TLAST on final beat |
-| 2 | Bias, INT32 little-endian | 64 | TLAST on final beat |
-| 3 | Input, NHWC INT8 | 3,072 | TLAST on final beat |
+1. Weight: 432 bytes
+2. Bias: 64 bytes
+3. Input: 3,072 bytes
 
-Rules:
+Output is one 16,384-byte S2MM transfer prepared before START. DRE is disabled,
+so addresses and lengths must be at least 4-byte aligned. Firmware must flush
+MM2S sources and invalidate the S2MM destination.
 
-- Transfer order is Weight, Bias, Input.
-- Every beat uses `TKEEP=4'b1111`.
-- A packet is one separate MM2S Simple-mode transfer.
-- No bytes from adjacent packets may be combined into one DMA transfer.
+## 4. Validated Block Design (Phase 3C)
 
-### S2MM output transfer
+Project:
 
-- Start one 16,384-byte S2MM transfer before accelerator START.
-- The accelerator emits one output packet.
-- TLAST must be asserted only on the final output beat.
-- All output beats use `TKEEP=4'b1111`.
+```text
+build/vivado_zybo/resnet_accel_zybo/resnet_accel_zybo.xpr
+```
 
-AXI DMA must be reviewed to ensure Simple-mode MM2S generates TLAST at the
-programmed transfer boundary and that the 32-bit, no-DRE configuration preserves
-the required full-word TKEEP behavior.
-
-## 4. Clock and Reset
-
-Confirmed clock/reset intent:
-
-- PS7 `FCLK_CLK0` is 100 MHz.
-- DMA, accelerator, AXI interconnect/SmartConnect, and related PL IP use the same
-  clock domain.
-- RTL reset is active-low `aresetn`.
-- A Processor System Reset IP provides `peripheral_aresetn` to accelerator
-  AXI4-Lite/AXI4-Stream reset and compatible peripheral resets.
-- `FCLK_RESET0_N` is the PS reset source.
-
-Preflight requirement: verify the Processor System Reset IP external-reset
-polarity configuration. `FCLK_RESET0_N` is active-low; it must not be connected
-to a reset input configured as active-high without the appropriate polarity
-setting or inversion. The released `peripheral_aresetn` must be synchronous to
-the 100 MHz PL clock.
-
-## 5. Vivado Block Design Topology
-
-The agreed logical topology is:
+Control topology:
 
 ```text
 PS7 M_AXI_GP0
-  -> AXI interconnect/SmartConnect
-     -> AXI DMA S_AXI_LITE
-     -> Accelerator S_AXI_LITE
-
-AXI DMA M_AXI_MM2S
-  -> AXI interconnect/SmartConnect
-     -> PS7 S_AXI_HP0
-
-AXI DMA M_AXI_S2MM
-  -> AXI interconnect/SmartConnect
-     -> PS7 S_AXI_HP0
-
-AXI DMA M_AXIS_MM2S
-  -> Accelerator S_AXIS
-
-Accelerator M_AXIS
-  -> AXI DMA S_AXIS_S2MM
+  -> control_smartconnect (1 SI / 2 MI)
+     -> resnet_accel_0/S_AXI_CTRL
+     -> axi_dma_0/S_AXI_LITE
 ```
 
-All paths use the 100 MHz PL clock domain. The GP0 fanout and the two DMA DDR
-masters require a suitable AXI interconnect/SmartConnect structure; the diagram
-must not be interpreted as electrically connecting one AXI master directly to
-multiple slaves or multiple masters directly to HP0.
+DDR topology:
 
-Proposed implementation sequence after preflight:
+```text
+axi_dma_0/M_AXI_MM2S -> memory_smartconnect/S00_AXI
+axi_dma_0/M_AXI_S2MM -> memory_smartconnect/S01_AXI
+memory_smartconnect/M00_AXI -> PS7 S_AXI_HP0
+```
 
-1. Create the PS7 and apply only the verified board/part configuration.
-2. Enable FCLK_CLK0 at 100 MHz, FCLK_RESET0_N, M_AXI_GP0, and S_AXI_HP0.
-3. Add Processor System Reset with verified input polarity.
-4. Add AXI DMA in Simple mode with SG/DRE/interrupt use disabled and both stream
-   channels set to 32 bits.
-5. Add the packaged accelerator.
-6. Add interconnect/SmartConnect and connect clocks/resets.
-7. Connect MM2S and S2MM streams.
-8. Assign and record address ranges.
-9. Run Block Design validation and stop on any error.
+Direct streams:
 
-## 6. Firmware Execution Sequence
+```text
+axi_dma_0/M_AXIS_MM2S -> resnet_accel_0/S_AXIS_INPUT
+resnet_accel_0/M_AXIS_OUTPUT -> axi_dma_0/S_AXIS_S2MM
+```
 
-The agreed first-test sequence is:
+No FIFO, width converter, register slice, clock converter, or CDC was added.
 
-1. Initialize AXI DMA and accelerator driver.
-2. Prepare Weight, Bias, Input, Expected Output, and Output buffers in DDR.
-3. Confirm every buffer address is 4-byte aligned.
-4. Flush Weight, Bias, and Input cache ranges.
-5. Initialize the output buffer and start the 16,384-byte S2MM transfer.
-6. Program accelerator configuration registers.
-7. Clear stale DONE/ERROR status and issue accelerator START.
-8. Start the 432-byte Weight MM2S transfer and poll MM2S completion.
-9. Start the 64-byte Bias MM2S transfer and poll MM2S completion.
-10. Start the 3,072-byte Input MM2S transfer and poll MM2S completion.
-11. Poll S2MM and accelerator completion with finite timeouts.
-12. Invalidate the 16,384-byte output cache range.
-13. Compare all output bytes with `expected_output.bin`.
-14. Report DMA status, accelerator STATUS/ERROR_CODE/DEBUG_STATE/CYCLE_COUNT,
-    mismatch count, and first mismatch coordinates over UART.
+AXI DMA is Simple mode with SG and DRE disabled, MM2S/S2MM enabled, and 32-bit
+stream and memory masters. SmartConnect adapts the 32-bit memory masters to HP0.
+The generated DMA interrupt outputs remain unconnected for polling.
 
-DMA timeout recovery must reset the affected DMA channel and leave enough
-diagnostic state to distinguish a missing TLAST, reset problem, stalled stream,
-or accelerator error.
+## 5. Clock, reset, and board preset
 
-## 7. Test Vector
+The Zybo Z7-20 board preset creates DDR/FIXED_IO and retains UART1 and SD0.
+M_AXI_GP0, S_AXI_HP0, FCLK_CLK0, and FCLK_RESET0_N are enabled.
 
-The first physical test uses the existing seed-20260730 vector under
-`vectors/full_conv_32x32x3x16/`.
+FCLK_CLK0 at 100 MHz is the only PL clock and drives every control, memory,
+stream-related DMA clock, accelerator clock, SmartConnect clock, GP0/HP0 ACLK,
+and reset synchronizer clock.
 
-| Field | Value |
-|---|---|
-| Input | 32x32x3 NHWC signed INT8 |
-| Weight | 3x3x3x16 HWIO signed INT8 |
-| Bias | 16 signed INT32, little-endian |
-| Output | 32x32x16 NHWC signed INT8 |
-| Stride / padding | 1 / 1 |
-| Requantization | M=3, N=2 |
-| ReLU | enabled |
-| Input / Weight / Bias / Output bytes | 3,072 / 432 / 64 / 16,384 |
+```text
+FCLK_RESET0_N -> proc_sys_reset_0/ext_reset_in (active-low)
+proc_sys_reset_0/peripheral_aresetn
+  -> accelerator aresetn
+  -> DMA axi_resetn
+  -> both SmartConnect aresetn pins
+```
 
-Repository inspection confirmed the four binary file sizes. The XSim regression
-reports all 16,384 output bytes matched and cycle count 927,486.
+No inverter is present. `interconnect_aresetn` is unused.
 
-The vector must not be regenerated before the first board comparison. Firmware
-and hardware must consume the same staged binary files used by the verified
-baseline.
+## 6. Address map
 
-## 8. Role Assignment
+```text
+AXI DMA control:      0x40400000 - 0x4040FFFF
+Accelerator control:  0x43C00000 - 0x43C0FFFF
+DMA MM2S DDR/Low-OCM: 0x00000000 - 0x3FFFFFFF
+DMA S2MM DDR/Low-OCM: 0x00000000 - 0x3FFFFFFF
+```
 
-### RTL/Vivado
+No address overlap was reported.
 
-- Preserve RTL unless a demonstrated integration defect requires a minimal fix.
-- Confirm the physical board revision, installed board part, and exact FPGA part.
-- Run OOC synthesis, review timing/utilization and RAM/DSP inference.
-- Package the RTL with correctly associated AXI clocks and resets.
-- Build and validate the PS7, DMA, interconnect, reset, and accelerator design.
-- Run synthesis/implementation and generate bitstream/XSA.
-- Deliver the accelerator base address, DMA hardware configuration, address map,
-  clock/reset facts, reports, bitstream, and XSA.
+## 7. Reproduction and reports
 
-### Firmware
+```bash
+source /home/jmhwang/tools/Xilinxe/Vivado/2022.2/settings64.sh
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/create_zybo_system.tcl
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/validate_zybo_system.tcl
+vivado -mode batch -nolog -nojournal \
+  -source scripts/vivado/build_zybo_implementation.tcl
+vivado -mode batch -notrace \
+  -log build/vivado_zybo/reports/generate_bitstream_xsa.log \
+  -journal build/vivado_zybo/reports/generate_bitstream_xsa.jou \
+  -source scripts/vivado/generate_bitstream_xsa.tcl
+```
 
-- Manage aligned DDR buffers and cache maintenance.
-- Initialize and poll AXI DMA Simple-mode transfers.
-- Use the existing accelerator register driver.
-- Implement finite timeouts and DMA reset recovery.
-- Replace `ACCEL_BASE_ADDR` and DMA ID placeholders from the exported hardware.
-- Create the Vitis platform/application from the delivered XSA.
-- Compare all FPGA output bytes with the golden vector.
+Reports are regenerated under `build/vivado_zybo/reports/`:
 
-Reported firmware state, not independently verified in this repository:
+- `board_design_summary.txt`
+- `address_map.txt`
+- `ip_configuration.txt`
+- `interface_connections.txt`
 
-- Accelerator register driver complete.
-- AXI DMA Simple-mode transfer code complete.
-- OP_CONV scheduler complete.
-- DDR buffer management in progress.
-- Base address and DMA ID remain placeholders.
-- No Vitis platform exists yet.
-- Host GCC syntax checks currently use Xilinx BSP header stubs.
+Known warnings are the local/installed board counterpart, four board-preset DDR
+DQS delay warnings, control SmartConnect low-area WRAP guidance, and generated
+SmartConnect internal AXI metadata payload adaptation. External 32-bit AXIS
+validation passes and no BD validation error occurred.
 
-### Joint
+## 8. Remaining phases
 
-- Review DMA parameters, widths, packet boundaries, and address map.
-- Program the physical Zybo Z7-20 and review UART diagnostics.
-- Diagnose mismatches, timeouts, reset issues, and cache coherency jointly.
+### Phase 3D-1 - Synthesis, implementation, and reports
 
-## 9. Deliverables
+The clean Tcl flow completed synthesis, `opt_design`, `place_design`,
+`phys_opt_design`, and `route_design`. Synthesis and implementation reported
+zero errors; the design has no black boxes, DRC errors, unrouted nets,
+no-clock registers, or unconstrained internal endpoints.
 
-### Preflight and synthesis
+Timing at the single `clk_fpga_0` 100 MHz clock:
 
-- Recorded board revision, Vivado board part, and exact FPGA part with source.
-- Frozen baseline regression log.
-- OOC synthesis checkpoint.
-- Hierarchical utilization, timing summary, methodology, and RAM/DSP inference
-  reports.
+```text
+Setup: WNS -0.258 ns, TNS -0.715 ns, 5 failing endpoints  -> FAIL
+Hold:  WHS +0.050 ns, THS  0.000 ns, 0 failing endpoints -> PASS
+Pulse width: 0 failing endpoints                         -> PASS
+```
 
-### Vivado integration
+The worst setup path lies wholly inside `resnet_accel_0`, from weight BRAM
+`weight_mem_reg_15/CLKBWRCLK` to convolution register
+`mac_product_q_reg[12]/D`. The path is 9.947 ns of data delay across eight
+logic levels, split almost equally between logic (5.009 ns) and routing
+(4.938 ns). It is not a DMA, SmartConnect, PS7, or CDC path.
 
-- Reproducible project/Block Design Tcl.
-- Packaged accelerator IP metadata.
-- Validated Block Design and exported address map.
-- Synthesis and implementation reports.
-- Bitstream and XSA.
+Post-route resources are 6,087 Slice LUTs (5,521 logic, 566 memory), 7,620
+registers, 26 RAMB36/FIFO, one RAMB18, three DSP48E1, and one BUFGCTRL; no
+MMCM or PLL is used. Accelerator structure remains exactly 24 RAMB36E1, one
+RAMB18E1, three DSP48E1, and zero LUTRAM/SRL.
 
-### Firmware/hardware test
+DRC has zero errors and nine warning/advisory findings: accelerator DSP
+pipelining guidance (six), generated SmartConnect nets without routable loads
+(one), and AXI DMA BRAM write-first advisories (two). Methodology has zero
+violations. The one-clock CDC report says all paths are safely timed. The
+accelerator internal `aresetn_0` is the highest-fanout reset-related net at
+1,366 loads and still has `+2.180 ns` worst slack; no reset deassertion failure
+is reported.
 
-- Final accelerator base address and DMA hardware parameters.
-- Vitis platform/application.
-- UART log containing transfer status, accelerator status, cycle count, and
-  mismatch count.
-- A recorded 16,384-byte comparison result.
+The baseline timing failure was a mandatory stop condition. The separately
+approved controlled strategy comparison then reused `synth_1` and tested only
+three candidates including baseline. `Performance_Explore` improved WNS to
+`-0.115 ns`. `Performance_ExplorePostRoutePhysOpt`, with Explore directives for
+opt/place/pre-route phys-opt/route and post-route phys-opt, produced:
 
-## 10. Open Items
+```text
+Setup: WNS +0.018 ns, TNS 0.000 ns, 0 failing endpoints
+Hold:  WHS +0.051 ns, THS 0.000 ns, 0 failing endpoints
+Pulse width / DRC errors / unrouted nets: 0 / 0 / 0
+No-clock / unconstrained internal endpoints: 0 / 0
+```
 
-### Mandatory preflight checklist
+Accelerator resources remain 24 RAMB36E1, one RAMB18E1, three DSP48E1, and
+zero LUTRAM/SRL. No source RTL, BD, clock configuration, constraint, address,
+or floorplan change was made. Physical optimization automatically replicated
+the PS7 clock BUFG (BUFGCTRL one to two), reported as a non-error
+`PLBUFGOPT-1` warning.
 
-- [ ] Read the physical Zybo Z7-20 board revision.
-- [ ] Confirm the Zybo board file is installed and compatible with Vivado 2022.2.
-- [ ] Record the board part exposed by Vivado.
-- [ ] Independently confirm the exact FPGA part; resolve any board-file conflict.
-- [ ] Confirm top module `resnet_accel_top`.
-- [ ] Confirm the AXI4-Lite port set and 7-bit address input are packageable.
-- [ ] Confirm `s_axis_*` and `m_axis_*` are recognized or can be manually mapped
-      as 32-bit AXI4-Stream interfaces.
-- [ ] Confirm AXI clock/reset association metadata in IP packaging.
-- [ ] Confirm FCLK_CLK0=100 MHz and the 10 ns OOC constraint.
-- [ ] Confirm Processor System Reset input polarity and `peripheral_aresetn`.
-- [ ] Confirm DMA Simple mode, SG disabled, DRE disabled, interrupts unused.
-- [ ] Confirm MM2S/S2MM stream widths are 32 bits.
-- [ ] Confirm GP0 control paths and HP0 DDR paths through interconnect.
-- [ ] Confirm MM2S TLAST generation for each Simple-mode transfer.
-- [ ] Confirm RTL source compile order in `scripts/vivado/synth_ooc.tcl`.
-- [x] Confirm full vector files exist.
-- [x] Confirm binary sizes are Weight 432, Bias 64, Input 3,072, Output 16,384.
-- [x] Confirm regression command is `scripts/sim/run_regression.sh`.
-- [ ] Re-run regression immediately before the first Vivado mutation.
-- [ ] Create a committed or otherwise immutable clean baseline; the repository
-      currently has staged files but no commit.
+### Phase 3D-2 - Bitstream and hardware handoff
 
-### Open but not blocking planning
+The official `write_bitstream` run step completed on the timing-PASS
+`impl_performance_postroute_physopt` run without rerunning opt, place, route,
+or post-route physical optimization. All implementation DCP and completion
+marker sizes, timestamps, and SHA-256 values remained unchanged. Post-step
+timing remained WNS `+0.018 ns`, TNS `0`, and WHS `+0.051 ns`; DRC errors and
+unrouted nets remain zero.
 
-- Exact accelerator AXI-Lite base address.
-- AXI DMA device ID/base address.
-- Final Vitis version.
-- UART baud rate and diagnostic formatting.
-- Whether installed board automation can be used or manual PS7 settings are needed.
+The final bitstream and bitstream-included fixed XSA are:
 
-These become execution inputs during Block Design/XSA/firmware work but do not
-prevent preparing this plan.
+```text
+build/vivado_zybo/artifacts/zybo_resnet_system.bit
+build/vivado_zybo/artifacts/zybo_resnet_system.xsa
+```
 
-### Deferred until single OP_CONV hardware PASS
+The XSA archive contains the official run bitstream, PS7 initialization data,
+BD hardware metadata, and accelerator/DMA instance information. The generated
+sizes, checksums, run-state evidence, and archive validation are recorded in
+`build/vivado_zybo/reports/bitstream_xsa_manifest.txt`.
 
-- Residual add and skip-packet interface.
-- Projection shortcut.
-- GAP/FC fixed-point formats.
-- CPU fallback.
-- Full ResNet-20 exporter, quantization, scheduler, and CIFAR-10 inference.
+### Phase 3E - Firmware and boot image
 
-## 11. Stop Conditions
+The hardware build prerequisite is complete. Create the Vitis platform/BSP,
+replace hardware identifiers from `xparameters.h`, build the firmware ELF and
+FSBL, and generate BOOT.BIN.
+BOOT.BIN generation will not prove physical-board execution.
 
-Stop without guessing or broadening the design if any of the following occurs:
+### Physical-board acceptance
 
-- The exact FPGA part cannot be independently confirmed.
-- The physical board, board file, board part, and FPGA part conflict.
-- Vivado IP packaging does not recognize or correctly map an AXI interface.
-- Clock/reset association or reset polarity cannot be proven.
-- OOC synthesis shows a major timing failure or unacceptable RAM/DSP inference.
-- Existing regression fails before or after an integration change.
-- Block Design validation reports an error.
-- The agreed DMA width, DRE setting, TLAST behavior, or reset topology would need
-  to change.
-- A required change would alter the v1.1 external interface.
+Boot from SD, capture UART, initialize DMA, read accelerator VERSION, execute the
+three MM2S transfers and one S2MM transfer, poll BUSY/ERROR correctly, and compare
+all 16,384 output bytes.
 
-At a stop condition, preserve logs/reports, identify the first failing stage,
-and request a joint decision before modifying RTL or protocol.
+## 9. Stop conditions
 
-## 12. Completion Criteria
+Stop before changing core/package interfaces or DMA/reset topology. Also stop on
+regression failure, IP integrity failure, BD validation error, address conflict,
+external stream-width mismatch, CDC requirement, required interrupt connection,
+or any need for an unplanned IP.
 
-The single OP_CONV hardware milestone is complete only when all items below are
-true:
-
-- Exact board revision, board part, and FPGA part are recorded without conflict.
-- Baseline regression still reports 10 PASS, 0 FAIL.
-- OOC and full synthesis complete with reviewed utilization, inference, and
-  timing reports.
-- Block Design validates and implementation completes without unresolved
-  critical warnings.
-- Bitstream and XSA are generated from the reviewed design.
-- Firmware uses the exported accelerator address and DMA hardware information.
-- The physical Zybo is programmed and DMA/accelerator polling completes without
-  timeout.
-- All 16,384 output bytes match `expected_output.bin`.
-- Accelerator reports DONE, ERROR_CODE=ERR_NONE, and IDLE after completion.
-- UART log and build artifacts are retained for handoff.
-
-Only after these criteria pass may the project be described as “single OP_CONV
-FPGA verified.” ResNet-20 FPGA execution remains a separate milestone.
+The next separately approved step may be Phase 3E Vitis platform and firmware
+work.
