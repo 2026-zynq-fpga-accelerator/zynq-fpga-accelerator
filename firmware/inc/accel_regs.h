@@ -38,7 +38,7 @@
 typedef enum {
     ACCEL_OPERATION_CONV             = 0,
     ACCEL_OPERATION_POOL             = 1, /* reserved */
-    ACCEL_OPERATION_RESIDUAL_ADD     = 2, /* reserved */
+    ACCEL_OPERATION_RESIDUAL_ADD     = 2, /* required, v1.2 -- Basic Residual Block final add + ReLU */
     ACCEL_OPERATION_GLOBAL_AVG_POOL  = 3, /* reserved */
     ACCEL_OPERATION_FC               = 4, /* reserved */
 } accel_operation_t;
@@ -88,7 +88,7 @@ typedef enum {
     ACCEL_FSM_COMPUTE     = 5,
     ACCEL_FSM_SEND_OUTPUT = 6,
     ACCEL_FSM_COMPLETE    = 7,
-    ACCEL_FSM_LOAD_SKIP   = 8, /* reserved, v1.2+ residual extension */
+    ACCEL_FSM_LOAD_SKIP   = 8, /* required, v1.2 -- SKIP tensor receive, OP_RESIDUAL_ADD only */
 } accel_fsm_state_t;
 
 /* ---- ERROR_CODE (0x3C) — §10.1 ---- */
