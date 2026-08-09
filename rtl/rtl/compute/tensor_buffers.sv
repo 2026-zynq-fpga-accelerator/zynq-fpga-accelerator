@@ -17,11 +17,20 @@ module tensor_buffers #(
   input  logic                                      input_we_i,
   input  logic [$clog2(MAX_INPUT_WORDS)-1:0]        input_waddr_i,
   input  logic [31:0]                               input_wdata_i,
+  input  logic                                      skip_we_i,
+  input  logic [$clog2(MAX_INPUT_WORDS)-1:0]        skip_waddr_i,
+  input  logic [31:0]                               skip_wdata_i,
 
   input  logic                                      input_rd_en_i,
   input  logic [$clog2(MAX_INPUT_WORDS)-1:0]        input_rd_word_addr_i,
   input  logic [1:0]                                input_rd_byte_sel_i,
   output logic signed [7:0]                         input_rd_data_o,
+  input  logic                                      main_word_rd_en_i,
+  input  logic [$clog2(MAX_INPUT_WORDS)-1:0]        main_word_rd_addr_i,
+  output logic [31:0]                               main_word_rd_data_o,
+  input  logic                                      skip_rd_en_i,
+  input  logic [$clog2(MAX_INPUT_WORDS)-1:0]        skip_rd_addr_i,
+  output logic [31:0]                               skip_rd_data_o,
 
   input  logic                                      weight_rd_en_i,
   input  logic [$clog2(MAX_WEIGHT_WORDS)-1:0]       weight_rd_word_addr_i,
@@ -36,6 +45,9 @@ module tensor_buffers #(
   input  logic [$clog2(MAX_OUTPUT_WORDS)-1:0]       output_waddr_i,
   input  logic [1:0]                                output_wbyte_sel_i,
   input  logic signed [7:0]                         output_wdata_i,
+  input  logic                                      output_word_we_i,
+  input  logic [$clog2(MAX_OUTPUT_WORDS)-1:0]       output_word_waddr_i,
+  input  logic [31:0]                               output_word_wdata_i,
 
   input  logic                                      output_rd_en_i,
   input  logic [$clog2(MAX_OUTPUT_WORDS)-1:0]       output_rd_addr_i,
@@ -46,6 +58,8 @@ module tensor_buffers #(
   logic [31:0] bias_mem   [0:MAX_BIAS_WORDS-1];
   (* ram_style = "block" *)
   logic [31:0] input_mem  [0:MAX_INPUT_WORDS-1];
+  (* ram_style = "block" *)
+  logic [31:0] skip_mem   [0:MAX_INPUT_WORDS-1];
   logic [31:0] output_mem [0:MAX_OUTPUT_WORDS-1];
 
   logic [31:0] input_rd_word_q;
@@ -63,10 +77,19 @@ module tensor_buffers #(
     if (input_we_i)
       input_mem[input_waddr_i] <= input_wdata_i;
 
+    if (skip_we_i)
+      skip_mem[skip_waddr_i] <= skip_wdata_i;
+
     if (input_rd_en_i) begin
       input_rd_word_q     <= input_mem[input_rd_word_addr_i];
       input_rd_byte_sel_q <= input_rd_byte_sel_i;
     end
+
+    if (main_word_rd_en_i)
+      main_word_rd_data_o <= input_mem[main_word_rd_addr_i];
+
+    if (skip_rd_en_i)
+      skip_rd_data_o <= skip_mem[skip_rd_addr_i];
 
     if (weight_rd_en_i) begin
       weight_rd_word_q     <= weight_mem[weight_rd_word_addr_i];
@@ -76,7 +99,9 @@ module tensor_buffers #(
     if (bias_rd_en_i)
       bias_rd_data_o <= $signed(bias_mem[bias_rd_addr_i]);
 
-    if (output_we_i) begin
+    if (output_word_we_i) begin
+      output_mem[output_word_waddr_i] <= output_word_wdata_i;
+    end else if (output_we_i) begin
       case (output_wbyte_sel_i)
         2'd0: output_mem[output_waddr_i][7:0]   <= output_wdata_i;
         2'd1: output_mem[output_waddr_i][15:8]  <= output_wdata_i;

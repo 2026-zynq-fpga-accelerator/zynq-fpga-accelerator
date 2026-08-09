@@ -10,6 +10,7 @@ module controller_fsm #(
   input  logic aresetn_i,
   input  logic start_pulse_i,
   input  logic abort_pulse_i,
+  input  logic debug_clear_i,
 
   input  logic [31:0] operation_i,
   input  logic [31:0] input_height_i,
@@ -28,6 +29,7 @@ module controller_fsm #(
   input  logic packet_length_error_i,
   input  logic tlast_error_i,
   input  logic conv_done_i,
+  input  logic residual_done_i,
   input  logic output_done_i,
 
   output logic idle_o,
@@ -43,12 +45,14 @@ module controller_fsm #(
   output logic [1:0] packet_select_o,
   output logic [31:0] expected_packet_bytes_o,
   output logic conv_start_o,
+  output logic residual_start_o,
   output logic output_start_o,
 
   output logic invalid_operation_event_o,
   output logic invalid_config_event_o,
   output logic internal_error_event_o,
 
+  output logic [31:0] snap_operation_o,
   output logic [31:0] snap_input_height_o,
   output logic [31:0] snap_input_width_o,
   output logic [31:0] snap_in_channels_o,
@@ -63,6 +67,7 @@ module controller_fsm #(
   output logic [31:0] snap_weight_bytes_o,
   output logic [31:0] snap_bias_bytes_o,
   output logic [31:0] snap_input_bytes_o,
+  output logic [31:0] snap_skip_bytes_o,
   output logic [31:0] snap_output_bytes_o
 );
   import accel_pkg::*;
@@ -84,11 +89,14 @@ module controller_fsm #(
     VAL_OUTPUT_CHANNELS,
     VAL_COMPARE,
     VAL_ACCEPT,
-    VAL_REJECT
+    VAL_REJECT,
+    VAL_RESIDUAL_COMPARE
   } validator_state_t;
 
   logic [3:0] state_q;
   validator_state_t validator_state_q;
+  logic debug_error_latched_q;
+  logic [3:0] debug_error_state_q;
 
   logic [31:0] pending_operation_q;
   logic [31:0] pending_input_height_q;
@@ -176,7 +184,7 @@ module controller_fsm #(
                    && (state_q != DBG_COMPLETE));
     idle_o        = !busy_o
                   && ((state_q == DBG_IDLE) || (state_q == DBG_COMPLETE));
-    debug_state_o = state_q;
+    debug_state_o = debug_error_latched_q ? debug_error_state_q : state_q;
     operation_done_o = (state_q == DBG_SEND_OUTPUT)
                     && output_done_i
                     && !abort_pulse_i
@@ -185,19 +193,24 @@ module controller_fsm #(
 
     packet_active_o = (state_q == DBG_LOAD_WEIGHT)
                    || (state_q == DBG_LOAD_BIAS)
-                   || (state_q == DBG_LOAD_INPUT);
+                   || (state_q == DBG_LOAD_INPUT)
+                   || (state_q == DBG_LOAD_SKIP);
 
     case (state_q)
       DBG_LOAD_WEIGHT: begin
-        packet_select_o         = 2'd0;
+        packet_select_o         = PACKET_WEIGHT;
         expected_packet_bytes_o = snap_weight_bytes_o;
       end
       DBG_LOAD_BIAS: begin
-        packet_select_o         = 2'd1;
+        packet_select_o         = PACKET_BIAS;
         expected_packet_bytes_o = snap_bias_bytes_o;
       end
+      DBG_LOAD_SKIP: begin
+        packet_select_o         = PACKET_SKIP;
+        expected_packet_bytes_o = snap_skip_bytes_o;
+      end
       default: begin
-        packet_select_o         = 2'd2;
+        packet_select_o         = PACKET_INPUT;
         expected_packet_bytes_o = snap_input_bytes_o;
       end
     endcase
@@ -212,6 +225,7 @@ module controller_fsm #(
       cancel_pulse_o             <= 1'b0;
       packet_start_o             <= 1'b0;
       conv_start_o               <= 1'b0;
+      residual_start_o           <= 1'b0;
       output_start_o             <= 1'b0;
       invalid_operation_event_o  <= 1'b0;
       invalid_config_event_o     <= 1'b0;
@@ -245,6 +259,9 @@ module controller_fsm #(
       mul_multiplicand_q         <= 32'd0;
       mul_multiplier_q           <= 32'd0;
       mul_limit_q                <= 32'd0;
+      debug_error_latched_q      <= 1'b0;
+      debug_error_state_q        <= DBG_IDLE;
+      snap_operation_o           <= 32'd0;
       snap_input_height_o        <= 32'd0;
       snap_input_width_o         <= 32'd0;
       snap_in_channels_o         <= 32'd0;
@@ -259,16 +276,20 @@ module controller_fsm #(
       snap_weight_bytes_o        <= 32'd0;
       snap_bias_bytes_o          <= 32'd0;
       snap_input_bytes_o         <= 32'd0;
+      snap_skip_bytes_o          <= 32'd0;
       snap_output_bytes_o        <= 32'd0;
     end else begin
       operation_accept_o        <= 1'b0;
       cancel_pulse_o            <= 1'b0;
       packet_start_o            <= 1'b0;
       conv_start_o              <= 1'b0;
+      residual_start_o          <= 1'b0;
       output_start_o            <= 1'b0;
       invalid_operation_event_o <= 1'b0;
       invalid_config_event_o    <= 1'b0;
       internal_error_event_o    <= 1'b0;
+      if (debug_clear_i)
+        debug_error_latched_q <= 1'b0;
 
       if (state_q == DBG_RESET) begin
         state_q <= DBG_IDLE;
@@ -279,6 +300,10 @@ module controller_fsm #(
         mul_running_q      <= 1'b0;
         cancel_pulse_o     <= 1'b1;
       end else if (packet_length_error_i || tlast_error_i) begin
+        if ((state_q == DBG_LOAD_INPUT) || (state_q == DBG_LOAD_SKIP)) begin
+          debug_error_latched_q <= 1'b1;
+          debug_error_state_q   <= state_q;
+        end
         state_q            <= DBG_IDLE;
         validator_state_q  <= VAL_IDLE;
         admission_active_o <= 1'b0;
@@ -288,9 +313,39 @@ module controller_fsm #(
         case (validator_state_q)
           VAL_FIELDS: begin
             reject_operation_q <= 1'b0;
-            if (pending_operation_q != OP_CONV) begin
+            if ((pending_operation_q != OP_CONV)
+             && (pending_operation_q != OP_RESIDUAL_ADD)) begin
               reject_operation_q <= 1'b1;
               validator_state_q  <= VAL_REJECT;
+            end else if (pending_operation_q == OP_RESIDUAL_ADD) begin
+              if ((pending_input_height_q == 32'd0)
+               || (pending_input_width_q == 32'd0)
+               || (pending_in_channels_q == 32'd0)
+               || (pending_out_channels_q == 32'd0)
+               || (pending_input_height_q > 32'd16384)
+               || (pending_input_width_q > 32'd16384)
+               || (pending_in_channels_q > 32'd4096)
+               || (pending_out_channels_q > 32'd4096)
+               || (pending_in_channels_q != pending_out_channels_q)
+               || (pending_conv_config_q[23:0] != 24'd0)
+               || (pending_conv_config_q[31:25] != 7'd0)
+               || (pending_output_scale_q != 32'd0)
+               || (pending_weight_bytes_q != 32'd0)
+               || (pending_bias_bytes_q != 32'd0)
+               || (pending_input_bytes_q == 32'd0)
+               || (pending_skip_bytes_q == 32'd0)
+               || (pending_output_bytes_q == 32'd0)) begin
+                validator_state_q <= VAL_REJECT;
+              end else begin
+                validated_input_height_q  <= pending_input_height_q[14:0];
+                validated_input_width_q   <= pending_input_width_q[14:0];
+                validated_in_channels_q   <= pending_in_channels_q[12:0];
+                validated_out_channels_q  <= pending_out_channels_q[6:0];
+                validated_output_height_q <= pending_input_height_q[14:0];
+                validated_output_width_q  <= pending_input_width_q[14:0];
+                mul_running_q              <= 1'b0;
+                validator_state_q          <= VAL_INPUT_AREA;
+              end
             end else if ((pending_input_height_q == 32'd0)
                       || (pending_input_width_q == 32'd0)
                       || (pending_in_channels_q == 32'd0)
@@ -371,7 +426,10 @@ module controller_fsm #(
                 validator_state_q <= VAL_REJECT;
               else begin
                 calculated_input_bytes_q <= mul_accumulator_next[14:0];
-                validator_state_q        <= VAL_WEIGHT_CHANNELS;
+                if (pending_operation_q == OP_RESIDUAL_ADD)
+                  validator_state_q <= VAL_RESIDUAL_COMPARE;
+                else
+                  validator_state_q <= VAL_WEIGHT_CHANNELS;
               end
             end else begin
               mul_accumulator_q  <= mul_accumulator_next;
@@ -473,7 +531,23 @@ module controller_fsm #(
               validator_state_q <= VAL_ACCEPT;
           end
 
+          VAL_RESIDUAL_COMPARE: begin
+            if ((pending_input_bytes_q != {17'd0, calculated_input_bytes_q})
+             || (pending_skip_bytes_q != {17'd0, calculated_input_bytes_q})
+             || (pending_output_bytes_q != {17'd0, calculated_input_bytes_q})
+             || ({17'd0, calculated_input_bytes_q} > INPUT_CAP_BYTES)
+             || ({17'd0, calculated_input_bytes_q} > OUTPUT_CAP_BYTES)
+             || (calculated_input_bytes_q[1:0] != 2'b00))
+              validator_state_q <= VAL_REJECT;
+            else begin
+              calculated_output_bytes_q <= calculated_input_bytes_q;
+              validator_state_q         <= VAL_ACCEPT;
+            end
+          end
+
           VAL_ACCEPT: begin
+            debug_error_latched_q <= 1'b0;
+            snap_operation_o      <= pending_operation_q;
             snap_input_height_o  <= {17'd0, validated_input_height_q};
             snap_input_width_o   <= {17'd0, validated_input_width_q};
             snap_in_channels_o   <= {19'd0, validated_in_channels_q};
@@ -488,10 +562,14 @@ module controller_fsm #(
             snap_weight_bytes_o  <= pending_weight_bytes_q;
             snap_bias_bytes_o    <= pending_bias_bytes_q;
             snap_input_bytes_o   <= pending_input_bytes_q;
+            snap_skip_bytes_o    <= pending_skip_bytes_q;
             snap_output_bytes_o  <= pending_output_bytes_q;
             operation_accept_o   <= 1'b1;
             packet_start_o       <= 1'b1;
-            state_q              <= DBG_LOAD_WEIGHT;
+            if (pending_operation_q == OP_RESIDUAL_ADD)
+              state_q <= DBG_LOAD_INPUT;
+            else
+              state_q <= DBG_LOAD_WEIGHT;
             validator_state_q    <= VAL_IDLE;
             admission_active_o   <= 1'b0;
           end
@@ -558,13 +636,26 @@ module controller_fsm #(
 
           DBG_LOAD_INPUT: begin
             if (packet_done_i) begin
-              conv_start_o <= 1'b1;
-              state_q      <= DBG_COMPUTE;
+              if (snap_operation_o == OP_RESIDUAL_ADD) begin
+                packet_start_o <= 1'b1;
+                state_q        <= DBG_LOAD_SKIP;
+              end else begin
+                conv_start_o <= 1'b1;
+                state_q      <= DBG_COMPUTE;
+              end
+            end
+          end
+
+          DBG_LOAD_SKIP: begin
+            if (packet_done_i) begin
+              residual_start_o <= 1'b1;
+              state_q          <= DBG_COMPUTE;
             end
           end
 
           DBG_COMPUTE: begin
-            if (conv_done_i) begin
+            if (((snap_operation_o == OP_RESIDUAL_ADD) && residual_done_i)
+             || ((snap_operation_o == OP_CONV) && conv_done_i)) begin
               output_start_o <= 1'b1;
               state_q        <= DBG_SEND_OUTPUT;
             end
