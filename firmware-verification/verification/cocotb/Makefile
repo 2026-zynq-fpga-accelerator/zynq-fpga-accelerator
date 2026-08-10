@@ -5,13 +5,14 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
-RTL_DIR = $(shell pwd)/../../rtl
+RTL_DIR = $(shell pwd)/../../../rtl/rtl
 VERILOG_SOURCES = $(RTL_DIR)/common/accel_pkg.sv \
                    $(RTL_DIR)/common/relu_clamp.sv \
                    $(RTL_DIR)/common/requantizer.sv \
                    $(RTL_DIR)/common/sat_add_int32.sv \
                    $(RTL_DIR)/compute/tensor_buffers.sv \
                    $(RTL_DIR)/compute/conv_engine.sv \
+                   $(RTL_DIR)/compute/residual_add_engine.sv \
                    $(RTL_DIR)/control/axi_lite_regs.sv \
                    $(RTL_DIR)/control/error_ctrl.sv \
                    $(RTL_DIR)/control/cycle_counter.sv \

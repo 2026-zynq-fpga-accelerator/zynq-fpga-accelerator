@@ -62,6 +62,10 @@ FSM_LOAD_INPUT = 4
 FSM_COMPUTE = 5
 FSM_SEND_OUTPUT = 6
 FSM_COMPLETE = 7
+FSM_LOAD_SKIP = 8
+
+OP_CONV = 0
+OP_RESIDUAL_ADD = 2
 
 
 def pack_conv_config(kernel, stride, padding, relu_enable):
