@@ -98,7 +98,8 @@ set_property -dict [list \
   CONFIG.c_include_mm2s_dre {0} \
   CONFIG.c_include_s2mm_dre {0} \
   CONFIG.c_m_axis_mm2s_tdata_width {32} \
-  CONFIG.c_s_axis_s2mm_tdata_width {32}] $dma
+  CONFIG.c_s_axis_s2mm_tdata_width {32} \
+  CONFIG.c_sg_length_width {23}] $dma
 
 set reset [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 \
   proc_sys_reset_0]
