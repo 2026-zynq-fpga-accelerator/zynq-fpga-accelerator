@@ -13,4 +13,5 @@ rtl/control/error_ctrl.sv
 rtl/control/cycle_counter.sv
 rtl/top/resnet_accel_top.sv
 tb/tb_op_conv_directed.sv
+tb/tb_op_conv_kernel1_directed.sv
 tb/tb_op_residual_add_directed.sv

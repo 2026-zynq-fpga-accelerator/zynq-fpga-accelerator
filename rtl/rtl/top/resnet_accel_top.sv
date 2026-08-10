@@ -92,6 +92,7 @@ module resnet_accel_top #(
   logic [31:0] snap_out_channels;
   logic [31:0] snap_output_height;
   logic [31:0] snap_output_width;
+  logic [31:0] snap_kernel_size;
   logic [7:0]  snap_stride;
   logic [7:0]  snap_padding;
   logic        snap_relu_enable;
@@ -267,6 +268,7 @@ module resnet_accel_top #(
     .snap_out_channels_o(snap_out_channels),
     .snap_output_height_o(snap_output_height),
     .snap_output_width_o(snap_output_width),
+    .snap_kernel_size_o(snap_kernel_size),
     .snap_stride_o(snap_stride),
     .snap_padding_o(snap_padding),
     .snap_relu_enable_o(snap_relu_enable),
@@ -376,6 +378,7 @@ module resnet_accel_top #(
     .out_channels_i(snap_out_channels),
     .output_height_i(snap_output_height),
     .output_width_i(snap_output_width),
+    .kernel_size_i(snap_kernel_size),
     .stride_i(snap_stride),
     .padding_i(snap_padding),
     .relu_enable_i(snap_relu_enable),

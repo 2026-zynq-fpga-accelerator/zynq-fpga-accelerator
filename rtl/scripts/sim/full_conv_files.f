@@ -14,3 +14,4 @@ rtl/control/cycle_counter.sv
 rtl/top/resnet_accel_top.sv
 tb/tb_full_conv.sv
 tb/tb_stage2_identity_block.sv
+tb/tb_stage2_projection_block.sv

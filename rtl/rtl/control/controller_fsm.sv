@@ -59,6 +59,7 @@ module controller_fsm #(
   output logic [31:0] snap_out_channels_o,
   output logic [31:0] snap_output_height_o,
   output logic [31:0] snap_output_width_o,
+  output logic [31:0] snap_kernel_size_o,
   output logic  [7:0] snap_stride_o,
   output logic  [7:0] snap_padding_o,
   output logic        snap_relu_enable_o,
@@ -139,19 +140,31 @@ module controller_fsm #(
   logic [15:0] output_width_calc_wide;
   logic [14:0] output_height_calc;
   logic [14:0] output_width_calc;
+  logic [15:0] kernel_size_calc;
+  logic [31:0] weight_channel_limit_calc;
 
   always_comb begin
+    // KERNEL_SIZE is validated to {1,3} in VAL_FIELDS below; this general form
+    // (output = floor((padded - kernel)/stride) + 1) covers both without a
+    // kernel-specific formula.
+    kernel_size_calc  = {8'd0, pending_conv_config_q[7:0]};
+    // in_channels*out_channels product cap: bounded so that *kernel_size^2 (the
+    // WEIGHT_BYTES multiplier, see calculated_weight_bytes_q) cannot exceed
+    // WEIGHT_CAP_BYTES. kernel=1 needs no headroom for that multiply.
+    weight_channel_limit_calc = (pending_conv_config_q[7:0] == 8'd1)
+                              ? WEIGHT_CAP_BYTES
+                              : WEIGHT_CHANNEL_LIMIT;
     padded_height_calc = {1'b0, pending_input_height_q[14:0]}
                        + (pending_conv_config_q[16] ? 16'd2 : 16'd0);
     padded_width_calc  = {1'b0, pending_input_width_q[14:0]}
                        + (pending_conv_config_q[16] ? 16'd2 : 16'd0);
 
     if (pending_conv_config_q[15:8] == 8'd2) begin
-      output_height_calc_wide = ((padded_height_calc - 16'd3) >> 1) + 16'd1;
-      output_width_calc_wide  = ((padded_width_calc  - 16'd3) >> 1) + 16'd1;
+      output_height_calc_wide = ((padded_height_calc - kernel_size_calc) >> 1) + 16'd1;
+      output_width_calc_wide  = ((padded_width_calc  - kernel_size_calc) >> 1) + 16'd1;
     end else begin
-      output_height_calc_wide = padded_height_calc - 16'd2;
-      output_width_calc_wide  = padded_width_calc  - 16'd2;
+      output_height_calc_wide = padded_height_calc - kernel_size_calc + 16'd1;
+      output_width_calc_wide  = padded_width_calc  - kernel_size_calc + 16'd1;
     end
     output_height_calc = output_height_calc_wide[14:0];
     output_width_calc  = output_width_calc_wide[14:0];
@@ -268,6 +281,7 @@ module controller_fsm #(
       snap_out_channels_o        <= 32'd0;
       snap_output_height_o       <= 32'd0;
       snap_output_width_o        <= 32'd0;
+      snap_kernel_size_o         <= 32'd0;
       snap_stride_o              <= 8'd0;
       snap_padding_o             <= 8'd0;
       snap_relu_enable_o         <= 1'b0;
@@ -356,9 +370,10 @@ module controller_fsm #(
                       || (pending_out_channels_q > 32'd64)
                       || (pending_input_height_q > INPUT_CAP_BYTES)
                       || (pending_input_width_q > INPUT_CAP_BYTES)
-                      || (pending_in_channels_q > WEIGHT_CHANNEL_LIMIT)
+                      || (pending_in_channels_q > weight_channel_limit_calc)
                       || (pending_out_channels_q > MAX_BIAS_WORDS)
-                      || (pending_conv_config_q[7:0] != 8'd3)
+                      || ((pending_conv_config_q[7:0] != 8'd1)
+                       && (pending_conv_config_q[7:0] != 8'd3))
                       || ((pending_conv_config_q[15:8] != 8'd1)
                        && (pending_conv_config_q[15:8] != 8'd2))
                       || ((pending_conv_config_q[23:16] != 8'd0)
@@ -377,7 +392,7 @@ module controller_fsm #(
           end
 
           VAL_DIMS: begin
-            if ((padded_height_calc < 16'd3) || (padded_width_calc < 16'd3)
+            if ((padded_height_calc < kernel_size_calc) || (padded_width_calc < kernel_size_calc)
              || output_height_calc_wide[15] || output_width_calc_wide[15]) begin
               validator_state_q <= VAL_REJECT;
             end else begin
@@ -444,7 +459,7 @@ module controller_fsm #(
               mul_accumulator_q  <= 32'd0;
               mul_multiplicand_q <= {19'd0, validated_in_channels_q};
               mul_multiplier_q   <= {25'd0, validated_out_channels_q};
-              mul_limit_q        <= WEIGHT_CHANNEL_LIMIT;
+              mul_limit_q        <= weight_channel_limit_calc;
               mul_over_limit_q   <= 1'b0;
               mul_running_q      <= 1'b1;
             end else if (mul_multiplier_q <= 32'd1) begin
@@ -452,8 +467,13 @@ module controller_fsm #(
               if (mul_over_limit_next)
                 validator_state_q <= VAL_REJECT;
               else begin
-                calculated_weight_bytes_q <= mul_accumulator_next[15:0]
-                                           + (mul_accumulator_next[15:0] << 3);
+                // WEIGHT_BYTES = in_channels * out_channels * kernel_size^2.
+                // kernel_size in {1,3} -> kernel_size^2 in {1,9}; x+(x<<3)=9x covers
+                // kernel=3, identity covers kernel=1.
+                calculated_weight_bytes_q <= (pending_conv_config_q[7:0] == 8'd1)
+                                           ? mul_accumulator_next[15:0]
+                                           : (mul_accumulator_next[15:0]
+                                              + (mul_accumulator_next[15:0] << 3));
                 calculated_bias_bytes_q   <= {validated_out_channels_q, 2'b00};
                 validator_state_q         <= VAL_OUTPUT_AREA;
               end
@@ -554,6 +574,7 @@ module controller_fsm #(
             snap_out_channels_o  <= {25'd0, validated_out_channels_q};
             snap_output_height_o <= {17'd0, validated_output_height_q};
             snap_output_width_o  <= {17'd0, validated_output_width_q};
+            snap_kernel_size_o   <= {24'd0, pending_conv_config_q[7:0]};
             snap_stride_o        <= pending_conv_config_q[15:8];
             snap_padding_o       <= pending_conv_config_q[23:16];
             snap_relu_enable_o   <= pending_conv_config_q[24];

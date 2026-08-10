@@ -17,6 +17,7 @@ module conv_engine #(
   input  logic [31:0] out_channels_i,
   input  logic [31:0] output_height_i,
   input  logic [31:0] output_width_i,
+  input  logic [31:0] kernel_size_i,
   input  logic  [7:0] stride_i,
   input  logic  [7:0] padding_i,
   input  logic        relu_enable_i,
@@ -203,8 +204,8 @@ module conv_engine #(
     weight_rd_word_addr_o = weight_element_q[$clog2(MAX_WEIGHT_WORDS)+1:2];
     weight_rd_byte_sel_o  = weight_element_q[1:0];
 
-    last_tap = (kernel_h_q == 32'd2)
-            && (kernel_w_q == 32'd2)
+    last_tap = (kernel_h_q == (kernel_size_i - 32'd1))
+            && (kernel_w_q == (kernel_size_i - 32'd1))
             && (in_c_q == (in_channels_i - 32'd1));
 
     bias_rd_en_o   = (state_q == ENG_ACCUMULATE)
@@ -345,11 +346,17 @@ module conv_engine #(
           output_y_step_q <= (stride_i == 8'd2)
                            ? {input_row_stride_calc[14:0], 1'b0}
                            : {1'b0, input_row_stride_calc[14:0]};
-          kernel_row_advance_q <= $signed({2'b00, input_row_stride_calc[14:0]})
-                                - $signed({4'b0000, in_channels_i[12:0]})
-                                - $signed({4'b0000, in_channels_i[12:0]})
-                                - $signed({4'b0000, in_channels_i[12:0]})
-                                + 17'sd1;
+          // Undoes the (kernel_size-1) column advances made while sweeping one kernel
+          // row, then steps to the next input row. kernel_size is {1,3}: for kernel=1
+          // this branch is dead code (last_tap already ends the loop at kernel_h_q==0),
+          // but the general form keeps it correct rather than relying on that.
+          kernel_row_advance_q <= (kernel_size_i == 32'd1)
+                                ? ($signed({2'b00, input_row_stride_calc[14:0]}) + 17'sd1)
+                                : ($signed({2'b00, input_row_stride_calc[14:0]})
+                                  - $signed({4'b0000, in_channels_i[12:0]})
+                                  - $signed({4'b0000, in_channels_i[12:0]})
+                                  - $signed({4'b0000, in_channels_i[12:0]})
+                                  + 17'sd1);
 
           if (padding_i == 8'd1) begin
             input_row_base_q <= -$signed({2'b00, input_row_stride_calc[14:0]})
@@ -411,7 +418,7 @@ module conv_engine #(
                 tap_input_element_q <= tap_input_element_q + 17'sd1;
               end else begin
                 in_c_q <= 32'd0;
-                if (kernel_w_q < 32'd2) begin
+                if (kernel_w_q < (kernel_size_i - 32'd1)) begin
                   kernel_w_q          <= kernel_w_q + 32'd1;
                   tap_input_x_q       <= tap_x_next;
                   tap_input_element_q <= tap_input_element_q + 17'sd1;
