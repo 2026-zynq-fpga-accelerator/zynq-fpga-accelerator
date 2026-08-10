@@ -34,14 +34,41 @@ int accel_configure(const resnet_layer_t *layer)
     if (layer == NULL) {
         return ACCEL_INVALID_ARG;
     }
-    if (layer->op != OP_CONV) {
-        return ACCEL_INVALID_ARG; /* only OP_CONV is implemented; others are RTL-reserved in v1.1 */
+    if (layer->op != OP_CONV && layer->op != OP_RESIDUAL_ADD) {
+        return ACCEL_INVALID_ARG; /* OP_POOL/OP_GLOBAL_AVG_POOL/OP_FC remain RTL-reserved in v1.2 */
     }
 
     uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
     if ((status & STATUS_BUSY_MASK) != 0U) {
         /* Hardware would silently ignore config writes while BUSY anyway (§9.2); fail fast instead. */
         return ACCEL_INVALID_ARG;
+    }
+
+    if (layer->op == OP_RESIDUAL_ADD) {
+        /* HW_SW_Interface_v1.2_DRAFT.md §2.2: MAIN/SKIP/OUTPUT all share one shape, so a single
+         * byte count covers INPUT_BYTES (MAIN), SKIP_BYTES, and OUTPUT_BYTES alike. */
+        if (layer->height == 0U || layer->width == 0U || layer->out_channels == 0U) {
+            return ACCEL_INVALID_ARG;
+        }
+
+        uint32_t bytes = (uint32_t)layer->height * (uint32_t)layer->width * layer->out_channels;
+
+        accel_reg_write(ACCEL_REG_OPERATION, (uint32_t)ACCEL_OPERATION_RESIDUAL_ADD);
+        accel_reg_write(ACCEL_REG_INPUT_HEIGHT, layer->height);
+        accel_reg_write(ACCEL_REG_INPUT_WIDTH, layer->width);
+        accel_reg_write(ACCEL_REG_IN_CHANNELS, layer->out_channels); /* MAIN/SKIP/OUTPUT share one channel count */
+        accel_reg_write(ACCEL_REG_OUT_CHANNELS, layer->out_channels);
+        accel_reg_write(
+            ACCEL_REG_CONV_CONFIG,
+            accel_pack_conv_config(0, 0, 0, layer->relu_enable)); /* only bit24 (Final ReLU) used, §2.2 */
+        accel_reg_write(ACCEL_REG_OUTPUT_SCALE, 0U); /* unused: MAIN/SKIP already share scale, §2.2 */
+        accel_reg_write(ACCEL_REG_INPUT_BYTES, bytes);   /* MAIN tensor byte count */
+        accel_reg_write(ACCEL_REG_WEIGHT_BYTES, 0U);     /* no weight packet */
+        accel_reg_write(ACCEL_REG_BIAS_BYTES, 0U);       /* no bias packet */
+        accel_reg_write(ACCEL_REG_SKIP_BYTES, bytes);    /* SKIP tensor byte count */
+        accel_reg_write(ACCEL_REG_OUTPUT_BYTES, bytes);
+
+        return ACCEL_OK;
     }
 
     int32_t out_h = ((int32_t)layer->height + 2 * (int32_t)layer->padding - (int32_t)layer->kernel)
@@ -252,51 +279,81 @@ int accel_run_layer(const resnet_layer_t *layer, accel_run_diag_t *diag)
     uint32_t weight_bytes = accel_reg_read(ACCEL_REG_WEIGHT_BYTES);
     uint32_t bias_bytes = accel_reg_read(ACCEL_REG_BIAS_BYTES);
     uint32_t input_bytes = accel_reg_read(ACCEL_REG_INPUT_BYTES);
+    uint32_t skip_bytes = accel_reg_read(ACCEL_REG_SKIP_BYTES);
 
-    /* Packet order fixed by §7.1: WEIGHT -> BIAS -> INPUT. */
-    if (diag != NULL) {
-        diag->failure_stage = ACCEL_STAGE_WEIGHT_DMA;
-    }
-    int dma_rc = dma_mm2s_transfer(layer->weight_addr, weight_bytes);
-    if (dma_rc == DMA_OK) {
-        uint32_t dmasr = 0;
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+    /* Packet order fixed by v1.1 §7.1 (OP_CONV: WEIGHT->BIAS->INPUT) and v1.2 §3 (OP_RESIDUAL_ADD:
+     * MAIN->SKIP, no WEIGHT/BIAS). WEIGHT/BIAS are always nonzero for OP_CONV and always 0 for
+     * OP_RESIDUAL_ADD (accel_configure() above); SKIP is the reverse. Each stage below only runs
+     * if its byte count is nonzero: dma_mm2s_transfer()->dma_buffer_is_valid() rejects
+     * byte_count==0 as DMA_INVALID_ARG, which would otherwise be misreported as ACCEL_FATAL_ERROR
+     * for an operation that legitimately has no WEIGHT/BIAS/SKIP packet. */
+    if (weight_bytes != 0U) {
         if (diag != NULL) {
-            diag->mm2s_dmasr = dmasr;
+            diag->failure_stage = ACCEL_STAGE_WEIGHT_DMA;
+        }
+        int dma_rc = dma_mm2s_transfer(layer->weight_addr, weight_bytes);
+        if (dma_rc == DMA_OK) {
+            uint32_t dmasr = 0;
+            dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+            if (diag != NULL) {
+                diag->mm2s_dmasr = dmasr;
+            }
+        }
+        if (dma_rc != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
         }
     }
-    if (dma_rc != DMA_OK) {
-        return ACCEL_FATAL_ERROR;
-    }
 
-    if (diag != NULL) {
-        diag->failure_stage = ACCEL_STAGE_BIAS_DMA;
-    }
-    dma_rc = dma_mm2s_transfer(layer->bias_addr, bias_bytes);
-    if (dma_rc == DMA_OK) {
-        uint32_t dmasr = 0;
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+    if (bias_bytes != 0U) {
         if (diag != NULL) {
-            diag->mm2s_dmasr = dmasr;
+            diag->failure_stage = ACCEL_STAGE_BIAS_DMA;
+        }
+        int dma_rc = dma_mm2s_transfer(layer->bias_addr, bias_bytes);
+        if (dma_rc == DMA_OK) {
+            uint32_t dmasr = 0;
+            dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+            if (diag != NULL) {
+                diag->mm2s_dmasr = dmasr;
+            }
+        }
+        if (dma_rc != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
         }
     }
-    if (dma_rc != DMA_OK) {
-        return ACCEL_FATAL_ERROR;
-    }
 
+    /* INPUT (OP_CONV) / MAIN (OP_RESIDUAL_ADD) always has a packet. */
     if (diag != NULL) {
         diag->failure_stage = ACCEL_STAGE_INPUT_DMA;
     }
-    dma_rc = dma_mm2s_transfer(layer->input_addr, input_bytes);
-    if (dma_rc == DMA_OK) {
-        uint32_t dmasr = 0;
-        dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
-        if (diag != NULL) {
-            diag->mm2s_dmasr = dmasr;
+    {
+        int dma_rc = dma_mm2s_transfer(layer->input_addr, input_bytes);
+        if (dma_rc == DMA_OK) {
+            uint32_t dmasr = 0;
+            dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+            if (diag != NULL) {
+                diag->mm2s_dmasr = dmasr;
+            }
+        }
+        if (dma_rc != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
         }
     }
-    if (dma_rc != DMA_OK) {
-        return ACCEL_FATAL_ERROR;
+
+    if (skip_bytes != 0U) {
+        if (diag != NULL) {
+            diag->failure_stage = ACCEL_STAGE_SKIP_DMA;
+        }
+        int dma_rc = dma_mm2s_transfer(layer->skip_addr, skip_bytes);
+        if (dma_rc == DMA_OK) {
+            uint32_t dmasr = 0;
+            dma_rc = dma_mm2s_wait_complete(FW_WAIT_TIMEOUT_MS, &dmasr);
+            if (diag != NULL) {
+                diag->mm2s_dmasr = dmasr;
+            }
+        }
+        if (dma_rc != DMA_OK) {
+            return ACCEL_FATAL_ERROR;
+        }
     }
 
     if (diag != NULL) {
@@ -346,6 +403,7 @@ const char *accel_failure_stage_name(accel_failure_stage_t stage)
     case ACCEL_STAGE_WEIGHT_DMA:    return "WEIGHT_DMA";
     case ACCEL_STAGE_BIAS_DMA:      return "BIAS_DMA";
     case ACCEL_STAGE_INPUT_DMA:     return "INPUT_DMA";
+    case ACCEL_STAGE_SKIP_DMA:      return "SKIP_DMA";
     case ACCEL_STAGE_WAIT_DONE:     return "WAIT_DONE";
     case ACCEL_STAGE_OUTPUT_S2MM:   return "OUTPUT_S2MM";
     default:                        return "UNKNOWN";
