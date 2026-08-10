@@ -1,10 +1,10 @@
 # PROJECT MASTER HANDOFF
 
 > Zynq FPGA SoC 기반 ResNet-20 추론 가속기
-> Snapshot date: 2026-08-10 (Asia/Seoul)
-> Git branch: `main`
-> Git HEAD/origin-main: `9099840b4628ef895e152804e646f03eec8c5d49` / same (`0 ahead, 0 behind`)
-> Working tree: **DIRTY** — 협업 중인 미커밋 RTL, cocotb, agent-environment 변경이 존재한다.
+> Snapshot date: 2026-08-10 (Asia/Seoul), updated after board verification
+> Git branch: `rtl/stage2-verification-closure`
+> Git HEAD: `71488ae` (parent `4c1d795`, based on `main`@`9099840`)
+> Working tree: clean as of this update; Stage 2-A RTL/verification work is committed.
 
 이 문서는 새 개발자나 새 AI 세션이 프로젝트를 재개할 때 먼저 읽는 단일 source-of-context다.
 코드와 로그를 확인한 2026-08-10 시점의 상태를 우선하며, 과거 개인 저장소 문서는 역사적 배경으로만 취급한다.
@@ -24,10 +24,16 @@
 | 제어/데이터 | AXI4-Lite / 32-bit AXI4-Stream + AXI DMA |
 | tensor | N=1, NHWC, signed INT8 activation/weight, INT32 bias/accumulator |
 | 완료 기준선 | Development Stage 1 single `OP_CONV` |
-| 현재 단계 | Development Stage 2, `OP_RESIDUAL_ADD` Stage 2-A 구현 중 |
-| 가장 가까운 목표 | Residual 전용 verification closure → common-scale golden/FW scheduler → 첫 identity BasicBlock |
+| 현재 단계 | **Development Stage 2 완전 종료** (§3 정의 기준 R2/R3/R4 전부 DONE); Development Stage 3 = R5 1×1 projection/downsample 시작 |
+| 가장 가까운 목표 | R5 1×1 projection RTL(kernel=1 지원) |
 
-현재 working tree에는 Residual Add 핵심 RTL이 존재하지만 전용 testbench/vector와 최종 regression summary는 없다. 따라서 현재 판정은 **Stage 2-A core implementation present; verification closure pending**이다.
+Stage 2-A(OP_RESIDUAL_ADD RTL), FW residual scheduler 팀 저장소 병합(R3), 첫 identity BasicBlock
+보드 검증(R4)까지 전부 완료됐다: `tb_op_residual_add_directed.sv` 31/31 PASS,
+`tb_stage2_identity_block.sv`(Conv1→Conv2→Residual 통합 시뮬레이션) 0/16384 mismatch, FW dispatch
+`origin/main` 병합 완료(커밋 `4e98cdf`/`40df6d0`, §18), 실제 보드에서 `stage2_residual_test` 16회
+연속 실행 전부 PASS(§7A). §3의 Stage 2 정의(residual connection + 첫 Basic Residual Block)를
+구성하는 R2/R3/R4가 모두 닫혔으므로 **Stage 2는 완전히 종료됐다고 판정한다**. Development Stage 3는
+R5(1×1 projection)부터 시작한다.
 
 ## 2. Status Vocabulary
 
@@ -147,6 +153,35 @@ AXI DMA는 현재 milestone에서 Simple mode, SG off, DRE off, polling, MM2S/S2
 
 Stage 1 board execution은 repository history의 `c71d2bb Validate stage1 OP_CONV on Zybo Z7-20`과 전달된 프로젝트 상태에서 PASS로 보고되었다. 그러나 현재 repository에서 “10회 이상”을 입증하는 원본 UART log 경로는 찾지 못했다. 따라서 16,384-byte/0-mismatch board PASS는 프로젝트의 현재 resolved baseline으로 사용하되 정확한 반복 횟수는 `UNVERIFIED`로 유지한다.
 
+## 7A. Stage 2 Board Verification — First Identity BasicBlock (`VERIFIED`)
+
+RTL 세션에서 만든 릴리즈(`rtl/build/releases/4c1d795/zybo_stage2_4c1d795_release.zip`, commit
+`4c1d795`)의 `BOOT.BIN`을 소은수가 실제 Zybo Z7-20 보드에서 실행하고, 카카오톡으로 UART 로그
+(`log2.txt`, PuTTY 캡처, 2026-08-10 17:33 KST)를 전달했다. 황정민이 로그 파일을 직접 열어 아래
+수치를 라인 단위로 확인했다(요약이 아니라 원본 대조).
+
+- 애플리케이션: `stage2_residual_test` (conv1 → conv2 → residual+ReLU, 소은수 개인 저장소
+  `88377ab`의 `firmware/test/stage2_residual_test.c`).
+- **로그로 확인된 연속 실행: 16/16 PASS.** 각 실행마다 `checkpoint1_conv1`,
+  `checkpoint2_conv2`, `checkpoint3_final` 3개 checkpoint 전부 "0/16384 bytes mismatched".
+- `cycle_count` 범위: 29,942 ~ 29,959 (16개 값 전부 이 구간 안, 표준편차 작음 — DMA/폴링에 의한
+  정상적인 미세 지터로 보이며 기능 이상의 징후 아님).
+- 추가로 소은수가 구두로(로그 없이) 더 많은 반복 실행에서도 PASS를 보고했으나, 이 문서의
+  `VERIFIED`는 로그로 직접 대조한 16회에만 적용한다. 로그 없는 구두 보고는 `UNVERIFIED`로 유지한다
+  (§17 검증 원칙 6번: "실제 로그 없이 PASS나 반복 횟수를 추정하지 않는다").
+- **알려진 타이밍 마진 이슈(§12, WNS=-0.250ns)는 이 16회 실행에서 기능적 실패로 나타나지 않았다.**
+  다만 검증된 것은 이번 릴리즈에 포함된 **단일 데이터 패턴**(identity BasicBlock 시드 0 벡터)뿐이다
+  — setup 위반은 데이터 의존적(비트 스위칭 패턴)일 수 있으므로, 다른 데이터 패턴으로도 추가 보드
+  테스트를 요청하는 것을 권장한다(§18 참조).
+- `log2.txt` 원본은 `rtl/docs/verification/log2.txt`에 커밋되어 영구 보존됐다 — Stage 1의
+  "10회 이상을 입증하는 원본 UART log 경로를 찾지 못했다"(§7) 문제를 반복하지 않는다.
+
+이로써 **R4(첫 identity BasicBlock, 32×32×16)는 board repeat 기준을 충족해 `DONE`으로 판정한다**
+(§15 로드맵 갱신 참조). 이 보드 테스트 당시(2026-08-10 17:33 KST)에는 소은수의 **개인 저장소**
+펌웨어로 실행된 것이었으나, 그 직후(17:46~17:58 KST) 동일 커밋(`88377ab`)이 `origin/main`에
+병합되어(커밋 `4e98cdf`/`40df6d0`) **R3(FW residual scheduler 팀 저장소 병합)도 완료**됐다 —
+자세한 내용은 §18 참조.
+
 ## 8. DMA Length Width — HISTORICAL / RESOLVED
 
 과거 stale BSP는 SgLengthWidth=14, MaxTransferLen=16,383이어서 Stage 1 output 16,384-byte S2MM 요청을 driver가 제출 전에 거부했다. 현재 HW handoff는 Simple DMA, SgLengthWidth=23, MaxTransferLen=8,388,607을 기록한다. 현재 ResNet-20의 큰 3×3 64→64 weight packet은 약 36,864 bytes로 23-bit 범위 안이다.
@@ -222,14 +257,14 @@ Firmware scheduler가 OP_CONV → OP_CONV → OP_RESIDUAL_ADD 세 독립 operati
 |---|---|---|---|
 | opcode/packet constants | VERIFIED | `accel_pkg.sv` diff + `rtl/tb/tb_op_residual_add_directed.sv` | 10/10 directed checks PASS (Vivado xsim, this session) |
 | MAIN→SKIP controller sequence | VERIFIED | `controller_fsm.sv` + `tb_op_residual_add_directed.sv` | normal-flow + 4개 error-injection 케이스 PASS |
-| residual validation/snapshot | IN PROGRESS | `controller_fsm.sv` | accept 경로는 directed test로 검증됨; reject/boundary 경로(CONV_CONFIG 비트 위반, byte 불일치, in≠out channels 등)는 아직 미검증 |
+| residual validation/snapshot | VERIFIED | `controller_fsm.sv` + `tb_op_residual_add_directed.sv` | accept 경로 + reject/boundary 4종(CONV_CONFIG 비트 위반, OUTPUT_SCALE 비영, byte 불일치, channel 불일치) directed test PASS |
 | skip packet routing | VERIFIED | `axis_packet_loader.sv` + `tb_op_residual_add_directed.sv` | SKIP TLAST/length error 케이스 PASS, DEBUG_STATE=8 확인 |
 | independent skip buffer | VERIFIED | `tensor_buffers.sv` + `tb_op_residual_add_directed.sv` | SKIP 데이터가 독립적으로 저장/합산되는 것을 directed test로 확인 |
 | four INT8 lanes/word add | VERIFIED | new `residual_add_engine.sv` + `tb_op_residual_add_directed.sv` | 8-lane 양수/음수 add directed test PASS |
 | saturation/ReLU | VERIFIED | `add_lane()` + `tb_op_residual_add_directed.sv` | overflow/underflow clamp + Final ReLU on/off directed test PASS; §13에 명시된 정확한 경계값 벡터 전부는 아직 미실행 |
 | full-word output write | VERIFIED | buffers/top diff + `tb_op_residual_add_directed.sv` | 캡처한 M_AXIS 출력이 기대값과 word 단위로 일치 |
-| packet-error DEBUG latch | IN PROGRESS | controller diff + `tb_op_residual_add_directed.sv` | MAIN=4/SKIP=8 latch는 확인됨; W1C 단독 clear와 W1C 없는 다음 accepted START clear는 각각 독립적으로 미검증 |
-| abort wiring | IN PROGRESS | controller/top/engine | residual 전용 ABORT/recovery 테스트 여전히 부재 |
+| packet-error DEBUG latch | VERIFIED | controller diff + `tb_op_residual_add_directed.sv` | MAIN=4/SKIP=8 latch 확인; W1C 단독 clear(`debug_latch_w1c_alone`)와 W1C 없는 다음 accepted START clear(`debug_latch_next_start_alone`) 각각 독립 검증 PASS |
+| abort wiring | VERIFIED | controller/top/engine + `tb_op_residual_add_directed.sv` | MAIN/SKIP/COMPUTE/OUTPUT 4단계 ABORT + 각 recovery directed test PASS |
 | external AXI ports | CURRENT unchanged | `resnet_accel_top.sv` port list | elaborated with OP_CONV tests |
 | existing Conv engine | CURRENT unchanged | no `conv_engine.sv` diff | `run_regression.sh` 재실행 결과 TOTAL: 10 PASS/0 FAIL (this session) |
 
@@ -239,16 +274,18 @@ Firmware scheduler가 OP_CONV → OP_CONV → OP_RESIDUAL_ADD 세 독립 operati
 
 Stage 2-A 완료 전 아래를 실제 marker와 결과로 닫는다.
 
-- [ ] Arithmetic: 127+1, 127+127, -128+-1, -128+-128, 100+-100. — `tb_op_residual_add_directed.sv`가 다른 경계값(100+100, -100+-100, 127+0, -128+0 등)으로 동일 saturation 경로를 검증했으나, 여기 명시된 정확한 벡터 자체는 아직 미실행.
-- [x] ReLU OFF signed result, ReLU ON negative→0, mixed four-lane word. — `tb_op_residual_add_directed.sv`의 `add_and_saturate_relu_off`/`final_relu_on` PASS (this session).
-- [ ] MAIN normal/early/late/missing TLAST/length mismatch, error DEBUG=4. — normal/early-TLAST/length(bad TKEEP) 케이스만 PASS; late/missing TLAST 변형은 아직 없음.
-- [ ] SKIP normal/early/late/missing TLAST/length mismatch, error DEBUG=8. — normal/missing-TLAST/length(bad TKEEP) 케이스만 PASS; early/late TLAST 변형은 아직 없음.
-- [ ] DEBUG latch: ERROR W1C 및 다음 accepted START clear. — 에러 후 `clear_status()`(W1C) + 재실행 성공은 확인했으나, W1C만 단독으로 latch를 지우는지와 W1C 없이 다음 accepted START만으로 지워지는지는 각각 독립적으로 검증하지 않음.
-- [ ] AXIS backpressure, valid data/last stability, final TLAST, TKEEP=1111. — 아직 없음(`tb_op_residual_add_directed.sv`는 M_AXIS_TREADY를 항상 1로 유지).
-- [ ] ABORT during MAIN/SKIP/COMPUTE/output and recovery. — 아직 없음.
-- [ ] Consecutive Residual operations and OP_CONV↔OP_RESIDUAL_ADD. — 연속된 residual-only 연산(정상 2건 + 에러 후 recovery 4건)은 한 시뮬레이션 내에서 PASS; OP_CONV↔OP_RESIDUAL_ADD 교차 실행은 아직 없음.
-- [x] 기존 OP_CONV 10 PASS/0 FAIL을 식별 가능한 결과로 보존. — `scripts/sim/run_regression.sh` 재실행, `TOTAL: 10 PASS, 0 FAIL` 확인 (this session).
+- [x] Arithmetic: 127+1, 127+127, -128+-1, -128+-128, 100+-100. — `tb_op_residual_add_directed.sv`의 `exact_boundary_vectors` 테스트가 이 5개 벡터를 정확히 그대로 사용해 PASS.
+- [x] ReLU OFF signed result, ReLU ON negative→0, mixed four-lane word. — `add_and_saturate_relu_off`/`final_relu_on` PASS.
+- [x] MAIN normal/early/late/missing TLAST/length mismatch, error DEBUG=4. — normal/early(`main_tlast_error`)/missing(`main_missing_tlast_error`)/length(`main_packet_length_error`) PASS. "late TLAST"는 이 프로토콜에서 RTL 동작이 "missing"과 동일함을 확인(count_valid가 매 beat 4-byte 단위로만 증가하므로 초과 beat는 항상 정확한 위치의 missing/mismatch로 먼저 걸림) — 기존 `tb_op_conv_directed.sv`도 동일 이유로 early+missing만 다룸, 별도 케이스 불필요로 판단.
+- [x] SKIP normal/early/late/missing TLAST/length mismatch, error DEBUG=8. — normal/early(`skip_early_tlast_error`)/missing(`skip_tlast_error`)/length(`skip_packet_length_error`) PASS. "late" 판단은 MAIN과 동일.
+- [x] DEBUG latch: ERROR W1C 및 다음 accepted START clear. — `debug_latch_w1c_alone`(새 START 없이 W1C만으로 클리어됨), `debug_latch_next_start_alone`(W1C 없이 다음 accepted START만으로 클리어됨) 각각 독립 검증 PASS.
+- [x] AXIS backpressure, valid data/last stability, final TLAST, TKEEP=1111. — `axis_backpressure` 테스트, non-blocking pre-edge capture로 TVALID/TDATA/TKEEP 안정성과 TLAST 위치 확인 PASS.
+- [x] ABORT during MAIN/SKIP/COMPUTE/output and recovery. — `abort_during_{load_input,load_skip,compute,output}` 4종 + 각 recovery PASS.
+- [x] Consecutive Residual operations and OP_CONV↔OP_RESIDUAL_ADD. — 시뮬레이션에서는 residual-only 연속 실행(정상 2건 + 에러 후 recovery 4건) PASS; OP_CONV↔OP_RESIDUAL_ADD 교차는 실제 보드에서 `stage2_residual_test`가 OP_CONV(conv1)→OP_CONV(conv2)→OP_RESIDUAL_ADD를 16회 연속 반복해 전부 PASS함으로써 board-level 증거로 충족(§7A).
+- [x] 기존 OP_CONV 10 PASS/0 FAIL을 식별 가능한 결과로 보존. — `scripts/sim/run_regression.sh` 재실행, `TOTAL: 10 PASS, 0 FAIL` 확인.
 - [x] 전체 regression wrapper의 최종 PASS summary 확보. — 위와 동일 실행에서 확보.
+
+Stage 2-A verification closure는 위 전 항목 PASS로 **완료 판정**한다. 남은 것은 성능/합성 최적화(WNS=-0.250ns, §12)뿐이며 이는 §17 원칙 7번("기능 correctness를 성능보다 먼저 닫는다")에 따라 별도 트랙으로 관리한다.
 
 ## 14. Stage 2-B — Golden and Firmware
 
@@ -264,10 +301,10 @@ FW의 `accel_driver.c`는 현재 `layer->op != OP_CONV`를 거부한다. enum과
 |---|---|---|
 | R0 baseline/interface | DONE | v1.1 baseline과 Organization 통합 |
 | R1 single OP_CONV/board bring-up | DONE, repeat count UNVERIFIED | full vector와 board 0 mismatch |
-| R2 OP_RESIDUAL_ADD RTL | IN PROGRESS (core arithmetic/MAIN→SKIP/DEBUG-latch directed tests PASS this session; abort/backpressure/reject-path/exact-vector 항목 남음) | Section 13 전 항목 PASS |
-| R3 FW Residual scheduler | PLANNED | 실제 opcode 2 실행 및 recovery |
-| R4 first identity BasicBlock | PLANNED | A/B/C/D checkpoints mismatch 0, board repeat |
-| R5 1×1 projection/downsample | PLANNED | kernel1 stride2 padding0 지원/검증 |
+| R2 OP_RESIDUAL_ADD RTL | DONE | Section 13 전 항목 PASS (commit `4c1d795`, `71488ae`) |
+| R3 FW Residual scheduler | **DONE** | 실제 opcode 2 실행: `origin/main` 커밋 `4e98cdf`/`40df6d0`(작성자 EunsooSoh, 2026-08-10)로 팀 저장소 병합 완료, 개인 저장소 `88377ab`와 byte-for-byte 동일 확인. recovery(에러 경로)는 board에서 별도 검증 안 됨 |
+| R4 first identity BasicBlock | **DONE** | board repeat 16/16 PASS, cycle_count 29,942–29,959, log `log2.txt`(§7A) — checkpoint mismatch 0 |
+| R5 1×1 projection/downsample | PLANNED — **Stage 3 시작점으로 결정됨** | kernel1 stride2 padding0 지원/검증. 확인된 RTL 제약: `controller_fsm.sv`가 `kernel==3`만 허용(하드코딩), `conv_engine.sv`의 tap-loop(`kernel_h_q`/`kernel_w_q`)가 3×3 전용 구조라 kernel=1 지원은 validator뿐 아니라 conv_engine 내부 재설계 필요 |
 | R6 all BasicBlocks/model stages | PLANNED | stage scheduler checkpoint PASS |
 | R7 GAP | DECISION REQUIRED | 초기 권장 PS fallback |
 | R8 FC/argmax | DECISION REQUIRED | 초기 권장 PS fallback |
@@ -283,7 +320,8 @@ Projection 구현 시 validator kernel=1, weight bytes, output dimension, tap/ad
 - M/N requantization과 RTL 동일 rounding/saturation 순서를 사용.
 - Residual MAIN/SKIP은 동일 scale이며 add engine 내부 requantization은 없다.
 - current Conv engine은 single MAC, 3×3×IC sequential taps, synchronous buffers, INT32 accumulation, bias/requant/ReLU/clamp, output buffer 구조다.
-- 과거 100 MHz timing 보고는 committed OP_CONV artifact에 대한 값이다. Residual dirty tree의 synthesis/timing은 `UNVERIFIED`다.
+- Residual 포함 전체 설계의 synthesis/timing은 `VERIFIED — 알려진 미해결 위반 있음`으로 갱신됐다: 3가지 구현 전략(Performance_ExplorePostRoutePhysOpt/_Explore/_NetDelay_high) 재시도 후 최선 결과 WNS=-0.250ns, 6개 setup endpoint 실패, hold/pulse-width는 모두 클린. 위반 경로는 `conv_engine.sv`의 기존 MAC 경로(weight_mem read → multiply → mac_product_q)이며 residual 추가로 인한 전체 설계 혼잡이 원인 — residual 자체의 정확성 문제 아님. 근본 수정(conv 전체 tap-loop 재파이프라인)은 conv 런타임을 거의 2배로 늘리므로 R10(PE 최적화, E2E 이후)로 defer. `generate_bitstream_xsa.tcl`에 이 위반을 명시적으로 추적·수용(WNS 하한 -0.30ns, 실패 endpoint ≤10)하도록 반영했다. 실제 보드에서는 이 위반이 기능 실패로 나타나지 않음을 16회 실행으로 확인했다(§7A) — 단, 단일 데이터 패턴 기준.
+- `tensor_buffers.sv`의 `output_mem`이 (conv의 byte-select 쓰기 + residual의 word 쓰기) 2-write-port 충돌로 BRAM 대신 distributed RAM(~5,600 LUTRAM/SRL)에 떨어지는 실제 synthesis 버그를 발견·수정했다(byte-write-enable 단일 포트로 통합). 수정 후 LUTRAM/SRL=0으로 복귀, RAMB36E1은 24→32(정당한 증가: skip_mem 신규 + input_mem 2-read-port 복제).
 
 ## 17. Verification Rules
 
@@ -300,17 +338,25 @@ Projection 구현 시 validator kernel=1, weight bytes, output dimension, tap/ad
 
 | Item | Owner | Needed before | Status | Next action |
 |---|---|---|---|---|
-| Residual dedicated verification | 황정민 | Stage 2-A 종료 | IN PROGRESS — partial closure (`tb_op_residual_add_directed.sv` 10/10 PASS, this session) | Section 13 잔여 항목(abort/backpressure/validation reject-path/정확한 경계값 벡터/early-late-missing 전체 매트릭스) 추가 |
+| Residual dedicated verification | 황정민 | Stage 2-A 종료 | **DONE** | Section 13 전 항목 PASS (commit `4c1d795`) |
 | v1.2 source control | Joint | 협업 안정화 | DECISION REQUIRED | 외부 DRAFT를 repo에 검토/승격 |
 | common-scale artifact PASS | 소은수 + 황정민 | Stage 2-B | READY, UNVERIFIED | generator output과 RTL 비교 |
-| FW Residual scheduler | 소은수 | first block | PLANNED | driver operation 분기 구현 |
-| identity BasicBlock vector/manifest | 소은수 | R4 | READY/UNVERIFIED | 생성·hash·handoff 확인 |
-| 1×1 projection | Joint | model stage2/3 | PLANNED | R4 후 kernel1 설계 |
+| identity BasicBlock vector/manifest | 소은수 | R4 | **VERIFIED (board)** | `log2.txt` 16/16 PASS 확인, `rtl/docs/verification/log2.txt`로 repo 보존 완료 |
+| 추가 데이터 패턴 board 재검증 | 소은수 | 타이밍 위반 리스크 관리 | **DECISION REQUIRED — 요청 필요** | WNS=-0.250ns가 데이터 의존적일 수 있어, identity 시드 0 외 다른 패턴으로도 board 테스트 요청 |
+| 1×1 projection | 황정민 (Stage 3) | model stage2/3 | PLANNED — Stage 3 시작 항목으로 확정 | kernel1 지원을 위한 controller_fsm/conv_engine 재설계 |
 | GAP/FC boundary | Joint | E2E | DECISION REQUIRED | 초기 PS fallback 확정 |
-| Residual synthesis/timing | 황정민 | board build | UNVERIFIED | functional closure 후 수행 |
+| Residual synthesis/timing | 황정민 | board build | **VERIFIED — 알려진 미해결 위반**(WNS=-0.250ns) | R10에서 근본 수정 검토 |
 | PE timing/architecture | 황정민 | optimization | DEFERRED | R9 이후 비교 |
 
 DMA 14-bit 문제는 blocker 목록에 넣지 않는다.
+
+**해소된 항목 (표에서 제거)**: FW Residual scheduler 팀 저장소 병합(R3) — `origin/main` 커밋
+`4e98cdf`(작성자 EunsooSoh, 2026-08-10 17:46 KST, "stage-2 firmware/verification")와 merge
+커밋 `40df6d0`으로 병합 완료. 변경 파일 4개(`accel_driver.{c,h}`, `accel_regs.h`,
+`test/stage2_residual_test.c`) 전부 소은수 개인 저장소 커밋 `88377ab`와 byte-for-byte 동일함을
+diff로 확인했고, merge가 `rtl/` 트리에 영향을 주지 않았음도 확인했다(`git diff b861679 origin/main -- rtl/`
+비어있음). 이 merge에는 `log2.txt`나 다른 board 로그가 포함되어 있지 않다 — 그건 별도로
+`rtl/docs/verification/log2.txt`에 커밋됐다(§7A).
 
 ## 19. Do Not Reopen without New Evidence
 
@@ -362,16 +408,20 @@ scripts/sim/run_regression.sh
 
 ## 22. Immediate Next Actions
 
-1. 공식 clone과 branch/HEAD/status를 확인하고 현재 dirty ownership을 합의한다.
-2. 기존 Residual RTL diff와 cocotb 변경을 review한다; 임의 reset/stash하지 않는다.
-3. 현재 OP_CONV regression을 끝까지 실행해 최종 summary를 보존한다.
-4. Section 13의 Residual 전용 arithmetic/protocol/error/recovery tests와 vector를 추가한다.
-5. Stage 2-A를 모든 marker PASS 후에만 완료로 판정한다.
-6. v1.2 DRAFT를 repository source-of-truth로 둘지 공동 검토한다.
-7. Python common-scale identity vector/manifest를 생성하고 RTL output과 비교한다.
-8. FW Residual scheduler를 소은수 영역에서 구현·검증한다.
-9. Conv1→Conv2→Residual 첫 identity BasicBlock simulation을 A/B/C/D mismatch 0으로 닫는다.
-10. 새 bitstream/FW로 Zybo 반복 test하고 UART log와 artifact provenance를 저장한다.
+Stage 2-A(1~5, 9)와 R4 board 검증(10)은 완료됐다(commit `4c1d795`, `71488ae`; `log2.txt` 16/16 PASS).
+남은 항목:
+
+1. ~~공식 clone과 branch/HEAD/status를 확인~~ — 완료.
+2. ~~기존 Residual RTL diff와 cocotb 변경을 review~~ — 완료.
+3. ~~현재 OP_CONV regression을 끝까지 실행해 최종 summary를 보존~~ — 완료, `TOTAL: 10 PASS, 0 FAIL`.
+4. ~~Section 13의 Residual 전용 tests와 vector를 추가~~ — 완료, 전 항목 PASS.
+5. ~~Stage 2-A를 모든 marker PASS 후 완료로 판정~~ — 완료.
+6. v1.2 DRAFT를 repository source-of-truth로 둘지 공동 검토한다. (미결)
+7. Python common-scale identity vector/manifest를 생성하고 RTL output과 비교한다. (미결 — Stage 2-B 항목, `generate_stage2_vectors.py` output과 RTL 직접 대조 아직 없음)
+8. ~~FW Residual scheduler를 소은수 영역에서 구현·검증하고 팀 저장소로 병합한다~~ — 완료, `origin/main` 커밋 `4e98cdf`/`40df6d0` (2026-08-10).
+9. ~~Conv1→Conv2→Residual 첫 identity BasicBlock simulation을 mismatch 0으로 닫는다~~ — 완료, `tb_stage2_identity_block.sv`.
+10. ~~새 bitstream/FW로 Zybo 반복 test하고 UART log와 artifact provenance를 저장~~ — 완료(§7A), 로그는 `rtl/docs/verification/log2.txt`로 보존. **후속**: 다른 데이터 패턴으로 추가 board 테스트 요청.
+11. **(신규)** R5(1×1 projection) RTL 착수: `controller_fsm.sv` validator의 kernel=3 하드코딩 제거, `conv_engine.sv` tap-loop을 kernel-size 파라미터화.
 
 ## 23. Current Project Status Dashboard
 
@@ -380,12 +430,12 @@ scripts/sim/run_regression.sh
 | OP_CONV RTL | DONE | committed RTL + regression logs | preserve |
 | Stage 1 board | DONE; count UNVERIFIED | commit history/project report | archive raw UART log |
 | DMA length issue | HISTORICAL/RESOLVED | HW handoff width 23 | do not reopen |
-| Residual engine | IN PROGRESS | dirty RTL/new engine + `tb_op_residual_add_directed.sv` 10/10 PASS (this session) | validation reject-path, abort, backpressure tests; Conv1→Conv2→Residual 통합 sim |
-| Residual verification | IN PROGRESS — partial closure | dedicated TB 존재·PASS (§12/§13 참조); reject-path/abort/backpressure/exact-vector는 미검증 | Section 13 잔여 항목 |
+| Residual engine | DONE | `tb_op_residual_add_directed.sv` 31/31 PASS + board 16/16 PASS | preserve; R10에서 timing 재검토 |
+| Residual verification | DONE | Section 13 전 항목 PASS (commit `4c1d795`) | preserve |
 | common-scale Python | READY/UNVERIFIED | stage2 generator | artifact comparison |
-| FW Residual scheduler | PLANNED | driver rejects non-Conv | implement in FW scope |
-| identity BasicBlock | PLANNED | graph/generator exist | R4 integration |
-| 1×1 projection | PLANNED | Python graph uses it | R5 |
+| FW Residual scheduler (팀 저장소 병합) | **DONE** | `origin/main` 커밋 `4e98cdf`/`40df6d0`, `88377ab`와 byte-identical | preserve |
+| identity BasicBlock | **DONE** | board 16/16 PASS, `rtl/docs/verification/log2.txt`(§7A) | 추가 데이터 패턴 board 테스트 요청 |
+| 1×1 projection | PLANNED — Stage 3 시작점 | kernel=3 하드코딩 확인됨(controller_fsm/conv_engine) | R5 설계 착수 |
 | GAP/FC | DECISION REQUIRED | graph exists, HW boundary open | prefer initial PS |
 | PE | DEFERRED | research direction only | after E2E |
 
@@ -393,11 +443,12 @@ scripts/sim/run_regression.sh
 
 ### Git snapshot
 
-- HEAD and origin/main: `9099840b4628ef895e152804e646f03eec8c5d49`, 0 ahead/0 behind.
-- Pre-existing tracked RTL changes: package, buffers, controller, loader, top and four sim filelists.
-- Pre-existing untracked RTL: `rtl/rtl/compute/residual_add_engine.sv`.
-- RTL 세션(황정민)이 이번 세션에서 만든 FW 하네스 변경(사용자 확인 후 유지, §4 참조): cocotb `Makefile`(사전 결함 RTL_DIR 경로 수정), `bfm.py`(residual 상수 추가).
-- Pre-existing root additions: `.agents/`, `.claude/`, `AGENTS.md`, `docs/`, `skills-lock.json`.
+- Branch `rtl/stage2-verification-closure`, HEAD `71488ae` (parent `4c1d795`), based on `main`@`9099840`. `main`은 아직 이 브랜치를 병합하지 않음(push/merge 여부는 별도 확인 필요).
+- `4c1d795`: §13 verification closure (reject/boundary, TLAST 매트릭스, DEBUG latch 독립 검증, backpressure, abort×4, 정확한 경계값 벡터), `tb_stage2_identity_block.sv`(Conv1→Conv2→Residual 통합 sim), `tensor_buffers.sv`의 output_mem BRAM-inference 수정, Vivado/Vitis 빌드 스크립트(DMA width, IP 패키징, 리소스 기준값, 타이밍 게이트).
+- `71488ae`: `rtl/scripts/release/package_stage2_release.py` (release zip 패키징).
+- RTL 세션(황정민)이 만든 FW 하네스 변경(사용자 확인 후 유지, §4 참조): cocotb `Makefile`(사전 결함 RTL_DIR 경로 수정), `bfm.py`(residual 상수 추가).
+- Root additions (여전히 untracked): `.agents/`, `AGENTS.md`, `docs/`(`.claude/`, `.agents/skills/`, `skills-lock.json`은 `.gitignore`로 제외됨).
+- 산출물(gitignored, 커밋 대상 아님): `rtl/build/vivado_zybo/artifacts/zybo_resnet_system.{bit,xsa}`, `rtl/build/vitis_stage2/boot/BOOT.BIN`, `rtl/build/releases/4c1d795/zybo_stage2_4c1d795_release.zip`.
 
 ### Key RTL
 
@@ -426,6 +477,8 @@ scripts/sim/run_regression.sh
 - `rtl/docs/verification/{RTL_COMPLETION_EDGE_FIX_REPORT,PHASE_3B2_ARTIFACT_REBUILD_REPORT,COMPLETION_FIX_BUILD_SUMMARY}.md`
 - `rtl/build/regression/{smoke,unit,directed,full_conv}.log`
 - raw Stage 1 repeat UART log: `UNVERIFIED / path not found`.
+- Stage 2 board UART log: `rtl/docs/verification/log2.txt` (PuTTY, 2026-08-10 17:33 KST,
+  카카오톡으로 전달받아 커밋 보존): 16/16 PASS, §7A 참조.
 
 # Context Capsule for a New AI Coding Session
 
@@ -440,18 +493,32 @@ Control/data: AXI4-Lite and 32-bit AXI4-Stream via Simple AXI DMA.
 Tensor: N=1 NHWC, signed INT8; bias/accumulator INT32.
 Interface baseline: firmware-verification/HW_SW_Interface_v1.1_FINAL.md.
 Residual extension: HW_SW_Interface_v1.2_DRAFT.md is currently external.
-Completed: Development Stage 1 single OP_CONV baseline and reported board PASS.
-Current: Development Stage 2, Stage 2-A OP_RESIDUAL_ADD.
-Snapshot branch/HEAD: main / 9099840b4628ef895e152804e646f03eec8c5d49.
-At handoff creation HEAD equals origin/main, but working tree is dirty.
-Residual core RTL exists uncommitted: opcode 2, MAIN→SKIP, skip buffer,
-4-lane signed INT8 add, saturation, optional ReLU, controller/debug/abort wiring.
-Residual dedicated verification is not closed; do not call Stage 2-A DONE.
-Existing logs show smoke/unit/directed/full-conv OP_CONV PASS markers.
-FW accel_driver still rejects operations other than OP_CONV.
-Python stage2 vector generator already expresses common MAIN/SKIP scale.
-Immediate goal: dedicated Residual tests → final regression summary → common-scale
-golden → FW scheduler → first 32×32×16 identity BasicBlock.
+Completed: Development Stage 1 (OP_CONV) and Development Stage 2 in full (R2 OP_RESIDUAL_ADD
+RTL + Section 13 verification closure; R3 FW scheduler merged into origin/main; R4 first
+identity BasicBlock board-verified). Stage 2 is closed per this doc's own §3 definition.
+Current: starting Development Stage 3 = R5 1×1 projection/downsample RTL.
+Branch: rtl/stage2-verification-closure, commits 4c1d795 (verification closure + tensor_buffers
+output_mem BRAM-inference fix + hardware build scripts) and 71488ae (release packaging script).
+Residual RTL is committed and closed: opcode 2, MAIN→SKIP, skip buffer, 4-lane signed INT8 add,
+saturation, optional ReLU, controller/debug/abort wiring -- tb_op_residual_add_directed.sv
+31/31 PASS, tb_stage2_identity_block.sv (Conv1->Conv2->Residual sim) 0/16384 mismatch.
+Board-verified: log2.txt (KakaoTalk, 2026-08-10) shows stage2_residual_test 16/16 consecutive
+PASS on real Zybo Z7-20 hardware, cycle_count 29942-29959, 0/16384 mismatch on all 3
+checkpoints, using EunsooSoh's *personal* firmware repo (commit 88377ab) -- not yet merged
+into firmware-verification/** in this team repo.
+Known open item: WNS=-0.250ns setup timing violation (pre-existing conv_engine MAC path,
+congestion from the larger accelerator) is explicitly tracked/accepted in
+generate_bitstream_xsa.tcl; did not manifest as a functional failure in the 16 board runs,
+but only one data pattern has been tried -- request board tests with other data patterns too.
+FW accel_driver in this team repo (firmware-verification/**) now dispatches OP_RESIDUAL_ADD
+(merged into origin/main via commits 4e98cdf/40df6d0, verified byte-identical to Eunsoo Soh's
+personal-repo commit 88377ab). R3 is DONE.
+Immediate goal: R5 1x1 projection RTL (controller_fsm.sv currently hardcodes kernel==3;
+conv_engine.sv's tap-loop is a fixed 3x3 structure -- both need to change to accept kernel=1).
+Recommend: pull origin/main's firmware-verification/** changes into any fresh clone before
+starting R5 (this session's rtl/stage2-verification-closure branch has not yet been rebased
+onto the post-merge origin/main, though the merge touched no rtl/** files so no conflict is
+expected).
 Do not reopen without new evidence: OP_CONV baseline, Simple DMA choice,
 DMA width 23 resolution, BN folding, LayerNorm exclusion, PE deferral.
 Do not modify register map, ERROR_CODE, or interface without joint agreement.

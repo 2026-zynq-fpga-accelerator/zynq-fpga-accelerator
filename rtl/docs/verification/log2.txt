@@ -1,0 +1,81 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2026.08.10 17:33:12 =~=~=~=~=~=~=~=~=~=~=~=
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29952
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29953
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29947
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29950
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29948
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29952
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29950
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29951
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29948
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29950
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29950
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29950
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29953
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29959
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29955
+stage2_residual_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+stage2_residual_test: checkpoint1_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint2_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: checkpoint3_final PASS - 0/16384 bytes mismatched (first at 0)
+stage2_residual_test: PASS - 0 total mismatched bytes across 3 checkpoints, cycle_count=29942
