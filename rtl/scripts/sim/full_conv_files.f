@@ -4,6 +4,7 @@ rtl/common/requantizer.sv
 rtl/common/relu_clamp.sv
 rtl/compute/tensor_buffers.sv
 rtl/compute/conv_engine.sv
+rtl/compute/residual_add_engine.sv
 rtl/stream/axis_packet_loader.sv
 rtl/stream/axis_output_streamer.sv
 rtl/control/axi_lite_regs.sv

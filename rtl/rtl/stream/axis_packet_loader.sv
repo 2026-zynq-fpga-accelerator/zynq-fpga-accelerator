@@ -31,11 +31,12 @@ module axis_packet_loader #(
   output logic [31:0]                               bias_wdata_o,
   output logic                                      input_we_o,
   output logic [$clog2(MAX_INPUT_WORDS)-1:0]        input_waddr_o,
-  output logic [31:0]                               input_wdata_o
+  output logic [31:0]                               input_wdata_o,
+  output logic                                      skip_we_o,
+  output logic [$clog2(MAX_INPUT_WORDS)-1:0]        skip_waddr_o,
+  output logic [31:0]                               skip_wdata_o
 );
-  localparam logic [1:0] PACKET_WEIGHT = 2'd0;
-  localparam logic [1:0] PACKET_BIAS   = 2'd1;
-  localparam logic [1:0] PACKET_INPUT  = 2'd2;
+  import accel_pkg::*;
 
   logic [31:0] byte_count_q;
   logic [31:0] base_count;
@@ -45,7 +46,7 @@ module axis_packet_loader #(
   logic        expected_last;
 
   always_comb begin
-    s_axis_tready_o = packet_active_i && !packet_start_i;
+    s_axis_tready_o = packet_active_i && !packet_start_i && !packet_done_o;
     transfer        = s_axis_tvalid_i && s_axis_tready_o;
     base_count      = packet_start_i ? 32'd0 : byte_count_q;
     next_count      = {1'b0, base_count} + 33'd4;
@@ -64,6 +65,10 @@ module axis_packet_loader #(
     input_we_o    = transfer && count_valid && (packet_select_i == PACKET_INPUT);
     input_waddr_o = base_count[$clog2(MAX_INPUT_WORDS)+1:2];
     input_wdata_o = s_axis_tdata_i;
+
+    skip_we_o    = transfer && count_valid && (packet_select_i == PACKET_SKIP);
+    skip_waddr_o = base_count[$clog2(MAX_INPUT_WORDS)+1:2];
+    skip_wdata_o = s_axis_tdata_i;
   end
 
   always_ff @(posedge clk_i) begin

@@ -4,6 +4,12 @@ package accel_pkg;
   localparam logic [31:0] INTERFACE_VERSION = 32'h0001_0001;
 
   localparam logic [31:0] OP_CONV = 32'd0;
+  localparam logic [31:0] OP_RESIDUAL_ADD = 32'd2;
+
+  localparam logic [1:0] PACKET_WEIGHT = 2'd0;
+  localparam logic [1:0] PACKET_BIAS   = 2'd1;
+  localparam logic [1:0] PACKET_INPUT  = 2'd2;
+  localparam logic [1:0] PACKET_SKIP   = 2'd3;
 
   localparam logic [31:0] ERR_NONE              = 32'd0;
   localparam logic [31:0] ERR_START_WHILE_BUSY  = 32'd1;

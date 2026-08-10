@@ -79,11 +79,13 @@ module resnet_accel_top #(
   logic [1:0] packet_select;
   logic [31:0] expected_packet_bytes;
   logic conv_start;
+  logic residual_start;
   logic output_start;
   logic invalid_operation_event;
   logic invalid_config_event;
   logic internal_error_event;
 
+  logic [31:0] snap_operation;
   logic [31:0] snap_input_height;
   logic [31:0] snap_input_width;
   logic [31:0] snap_in_channels;
@@ -98,6 +100,7 @@ module resnet_accel_top #(
   logic [31:0] snap_weight_bytes;
   logic [31:0] snap_bias_bytes;
   logic [31:0] snap_input_bytes;
+  logic [31:0] snap_skip_bytes;
   logic [31:0] snap_output_bytes;
 
   logic packet_done;
@@ -113,6 +116,21 @@ module resnet_accel_top #(
   logic input_we;
   logic [$clog2(MAX_INPUT_WORDS)-1:0] input_waddr;
   logic [31:0] input_wdata;
+  logic skip_we;
+  logic [$clog2(MAX_INPUT_WORDS)-1:0] skip_waddr;
+  logic [31:0] skip_wdata;
+
+  logic residual_main_rd_en;
+  logic [$clog2(MAX_INPUT_WORDS)-1:0] residual_main_rd_addr;
+  logic [31:0] residual_main_rd_data;
+  logic residual_skip_rd_en;
+  logic [$clog2(MAX_INPUT_WORDS)-1:0] residual_skip_rd_addr;
+  logic [31:0] residual_skip_rd_data;
+  logic residual_output_we;
+  logic [$clog2(MAX_OUTPUT_WORDS)-1:0] residual_output_waddr;
+  logic [31:0] residual_output_wdata;
+  logic residual_busy;
+  logic residual_done;
 
   logic input_rd_en;
   logic [$clog2(MAX_INPUT_WORDS)-1:0] input_rd_word_addr;
@@ -206,6 +224,7 @@ module resnet_accel_top #(
     .aresetn_i(aresetn),
     .start_pulse_i(start_pulse),
     .abort_pulse_i(abort_pulse),
+    .debug_clear_i(error_clear_pulse),
     .operation_i(operation),
     .input_height_i(input_height),
     .input_width_i(input_width),
@@ -222,6 +241,7 @@ module resnet_accel_top #(
     .packet_length_error_i(packet_length_error),
     .tlast_error_i(tlast_error),
     .conv_done_i(conv_done),
+    .residual_done_i(residual_done),
     .output_done_i(output_stream_done),
     .idle_o(idle),
     .busy_o(busy),
@@ -235,10 +255,12 @@ module resnet_accel_top #(
     .packet_select_o(packet_select),
     .expected_packet_bytes_o(expected_packet_bytes),
     .conv_start_o(conv_start),
+    .residual_start_o(residual_start),
     .output_start_o(output_start),
     .invalid_operation_event_o(invalid_operation_event),
     .invalid_config_event_o(invalid_config_event),
     .internal_error_event_o(internal_error_event),
+    .snap_operation_o(snap_operation),
     .snap_input_height_o(snap_input_height),
     .snap_input_width_o(snap_input_width),
     .snap_in_channels_o(snap_in_channels),
@@ -253,6 +275,7 @@ module resnet_accel_top #(
     .snap_weight_bytes_o(snap_weight_bytes),
     .snap_bias_bytes_o(snap_bias_bytes),
     .snap_input_bytes_o(snap_input_bytes),
+    .snap_skip_bytes_o(snap_skip_bytes),
     .snap_output_bytes_o(snap_output_bytes)
   );
 
@@ -283,7 +306,10 @@ module resnet_accel_top #(
     .bias_wdata_o(bias_wdata),
     .input_we_o(input_we),
     .input_waddr_o(input_waddr),
-    .input_wdata_o(input_wdata)
+    .input_wdata_o(input_wdata),
+    .skip_we_o(skip_we),
+    .skip_waddr_o(skip_waddr),
+    .skip_wdata_o(skip_wdata)
   );
 
   tensor_buffers #(
@@ -302,10 +328,19 @@ module resnet_accel_top #(
     .input_we_i(input_we),
     .input_waddr_i(input_waddr),
     .input_wdata_i(input_wdata),
+    .skip_we_i(skip_we),
+    .skip_waddr_i(skip_waddr),
+    .skip_wdata_i(skip_wdata),
     .input_rd_en_i(input_rd_en),
     .input_rd_word_addr_i(input_rd_word_addr),
     .input_rd_byte_sel_i(input_rd_byte_sel),
     .input_rd_data_o(input_rd_data),
+    .main_word_rd_en_i(residual_main_rd_en),
+    .main_word_rd_addr_i(residual_main_rd_addr),
+    .main_word_rd_data_o(residual_main_rd_data),
+    .skip_rd_en_i(residual_skip_rd_en),
+    .skip_rd_addr_i(residual_skip_rd_addr),
+    .skip_rd_data_o(residual_skip_rd_data),
     .weight_rd_en_i(weight_rd_en),
     .weight_rd_word_addr_i(weight_rd_word_addr),
     .weight_rd_byte_sel_i(weight_rd_byte_sel),
@@ -317,6 +352,9 @@ module resnet_accel_top #(
     .output_waddr_i(output_waddr),
     .output_wbyte_sel_i(output_wbyte_sel),
     .output_wdata_i(output_wdata),
+    .output_word_we_i(residual_output_we),
+    .output_word_waddr_i(residual_output_waddr),
+    .output_word_wdata_i(residual_output_wdata),
     .output_rd_en_i(output_rd_en),
     .output_rd_addr_i(output_rd_addr),
     .output_rd_data_o(output_rd_data)
@@ -361,6 +399,28 @@ module resnet_accel_top #(
     .output_waddr_o(output_waddr),
     .output_wbyte_sel_o(output_wbyte_sel),
     .output_wdata_o(output_wdata)
+  );
+
+  residual_add_engine #(
+    .MAX_TENSOR_WORDS(MAX_INPUT_WORDS)
+  ) u_residual_add_engine (
+    .clk_i(aclk),
+    .aresetn_i(aresetn),
+    .start_i(residual_start),
+    .abort_i(engine_abort),
+    .tensor_bytes_i(snap_input_bytes),
+    .relu_enable_i(snap_relu_enable),
+    .busy_o(residual_busy),
+    .done_o(residual_done),
+    .main_rd_en_o(residual_main_rd_en),
+    .main_rd_addr_o(residual_main_rd_addr),
+    .main_rd_data_i(residual_main_rd_data),
+    .skip_rd_en_o(residual_skip_rd_en),
+    .skip_rd_addr_o(residual_skip_rd_addr),
+    .skip_rd_data_i(residual_skip_rd_data),
+    .output_we_o(residual_output_we),
+    .output_waddr_o(residual_output_waddr),
+    .output_wdata_o(residual_output_wdata)
   );
 
   axis_output_streamer #(
