@@ -35,9 +35,11 @@ run_stage smoke vivado -mode batch -nolog -nojournal -source scripts/sim/run_xsi
 run_stage unit vivado -mode batch -nolog -nojournal -source scripts/sim/run_unit_tests.tcl || stage_fail=1
 run_stage directed vivado -mode batch -nolog -nojournal -source scripts/sim/run_directed_xsim.tcl || stage_fail=1
 run_stage kernel1 vivado -mode batch -nolog -nojournal -source scripts/sim/run_kernel1_xsim.tcl || stage_fail=1
+run_stage gap vivado -mode batch -nolog -nojournal -source scripts/sim/run_gap_xsim.tcl || stage_fail=1
 run_stage full_conv vivado -mode batch -nolog -nojournal -source scripts/sim/run_full_conv_xsim.tcl || stage_fail=1
 run_stage stage2_identity vivado -mode batch -nolog -nojournal -source scripts/sim/run_stage2_identity_xsim.tcl || stage_fail=1
 run_stage stage2_projection vivado -mode batch -nolog -nojournal -source scripts/sim/run_stage2_projection_xsim.tcl || stage_fail=1
+run_stage gap_fc_chain vivado -mode batch -nolog -nojournal -source scripts/sim/run_gap_fc_chain_xsim.tcl || stage_fail=1
 run_stage residual_add vivado -mode batch -nolog -nojournal -source scripts/sim/run_residual_add_xsim.tcl || stage_fail=1
 
 if (( stage_fail != 0 )); then
@@ -90,13 +92,18 @@ report_test consecutive_operation has_all "${LOG_DIR}/directed.log" \
   "consecutive_operation_1 PASS" "consecutive_operation_2 PASS"
 report_test kernel1_conv has_all "${LOG_DIR}/kernel1.log" \
   "kernel1_positive_negative_basic PASS" "kernel1_saturation_extremes PASS" \
-  "kernel1_stride2_downsample PASS" "kernel1_projection_16to32_stride2 PASS"
+  "kernel1_stride2_downsample PASS" "kernel1_projection_16to32_stride2 PASS" \
+  "fc_h1w1_kernel1_64to12 PASS"
+report_test gap has_all "${LOG_DIR}/gap.log" \
+  "DIRECTED PASS: 5 integration/error checks"
 report_test full_conv has_all "${LOG_DIR}/full_conv.log" \
   "FULL CONV PASS: 16384 output bytes, mismatch=0"
 report_test stage2_identity has_all "${LOG_DIR}/stage2_identity.log" \
   "STAGE2 IDENTITY BLOCK PASS: conv1=0/16384 conv2=0/16384 residual=0/16384 mismatches"
 report_test stage2_projection has_all "${LOG_DIR}/stage2_projection.log" \
   "STAGE3 PROJECTION BLOCK PASS: conv1=0/8192 conv2=0/8192 shortcut=0/8192 residual=0/8192 mismatches"
+report_test gap_fc_chain has_all "${LOG_DIR}/gap_fc_chain.log" \
+  "GAP FC CHAIN PASS: gap=0/64 fc=0/12 mismatches"
 report_test residual_add has_all "${LOG_DIR}/residual_add.log" \
   "DIRECTED PASS: 31 integration/error checks"
 

@@ -5,6 +5,7 @@ package accel_pkg;
 
   localparam logic [31:0] OP_CONV = 32'd0;
   localparam logic [31:0] OP_RESIDUAL_ADD = 32'd2;
+  localparam logic [31:0] OP_GLOBAL_AVG_POOL = 32'd3;
 
   localparam logic [1:0] PACKET_WEIGHT = 2'd0;
   localparam logic [1:0] PACKET_BIAS   = 2'd1;

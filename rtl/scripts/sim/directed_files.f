@@ -4,6 +4,7 @@ rtl/common/requantizer.sv
 rtl/common/relu_clamp.sv
 rtl/compute/tensor_buffers.sv
 rtl/compute/conv_engine.sv
+rtl/compute/gap_engine.sv
 rtl/compute/residual_add_engine.sv
 rtl/stream/axis_packet_loader.sv
 rtl/stream/axis_output_streamer.sv
@@ -15,3 +16,4 @@ rtl/top/resnet_accel_top.sv
 tb/tb_op_conv_directed.sv
 tb/tb_op_conv_kernel1_directed.sv
 tb/tb_op_residual_add_directed.sv
+tb/tb_op_gap_directed.sv

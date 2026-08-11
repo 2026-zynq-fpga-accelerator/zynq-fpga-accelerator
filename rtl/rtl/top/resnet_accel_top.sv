@@ -80,6 +80,7 @@ module resnet_accel_top #(
   logic [31:0] expected_packet_bytes;
   logic conv_start;
   logic residual_start;
+  logic gap_start;
   logic output_start;
   logic invalid_operation_event;
   logic invalid_config_event;
@@ -155,10 +156,44 @@ module resnet_accel_top #(
 
   logic conv_busy;
   logic conv_done;
+  logic conv_overflow_event;
   logic accumulator_overflow_event;
   logic output_stream_busy;
   logic output_stream_done;
   logic engine_abort;
+
+  logic gap_busy;
+  logic gap_done;
+  logic gap_overflow_event;
+  logic gap_input_rd_en;
+  logic [$clog2(MAX_INPUT_WORDS)-1:0] gap_input_rd_word_addr;
+  logic [1:0] gap_input_rd_byte_sel;
+  logic gap_output_we;
+  logic [$clog2(MAX_OUTPUT_WORDS)-1:0] gap_output_waddr;
+  logic [1:0] gap_output_wbyte_sel;
+  logic signed [7:0] gap_output_wdata;
+
+  logic conv_input_rd_en;
+  logic [$clog2(MAX_INPUT_WORDS)-1:0] conv_input_rd_word_addr;
+  logic [1:0] conv_input_rd_byte_sel;
+  logic conv_output_we;
+  logic [$clog2(MAX_OUTPUT_WORDS)-1:0] conv_output_waddr;
+  logic [1:0] conv_output_wbyte_sel;
+  logic signed [7:0] conv_output_wdata;
+
+  // GAP and OP_CONV never run concurrently (single-operation-at-a-time controller), so they
+  // share tensor_buffers' one input-read and one byte-granular output-write port through this
+  // mux instead of adding GAP-specific ports to tensor_buffers.sv. gap_busy is a level signal
+  // held for GAP's whole active window, and the non-selected engine is always idle (all its
+  // request signals deasserted) whenever it is not selected, so the mux is safe in all states.
+  assign input_rd_en        = gap_busy ? gap_input_rd_en        : conv_input_rd_en;
+  assign input_rd_word_addr = gap_busy ? gap_input_rd_word_addr : conv_input_rd_word_addr;
+  assign input_rd_byte_sel  = gap_busy ? gap_input_rd_byte_sel  : conv_input_rd_byte_sel;
+  assign output_we          = gap_busy ? gap_output_we          : conv_output_we;
+  assign output_waddr       = gap_busy ? gap_output_waddr       : conv_output_waddr;
+  assign output_wbyte_sel   = gap_busy ? gap_output_wbyte_sel   : conv_output_wbyte_sel;
+  assign output_wdata       = gap_busy ? gap_output_wdata       : conv_output_wdata;
+  assign accumulator_overflow_event = conv_overflow_event | gap_overflow_event;
 
   assign command_lock = busy | admission_active;
   assign engine_abort = cancel_pulse | (abort_pulse & busy);
@@ -243,6 +278,7 @@ module resnet_accel_top #(
     .tlast_error_i(tlast_error),
     .conv_done_i(conv_done),
     .residual_done_i(residual_done),
+    .gap_done_i(gap_done),
     .output_done_i(output_stream_done),
     .idle_o(idle),
     .busy_o(busy),
@@ -257,6 +293,7 @@ module resnet_accel_top #(
     .expected_packet_bytes_o(expected_packet_bytes),
     .conv_start_o(conv_start),
     .residual_start_o(residual_start),
+    .gap_start_o(gap_start),
     .output_start_o(output_start),
     .invalid_operation_event_o(invalid_operation_event),
     .invalid_config_event_o(invalid_config_event),
@@ -386,10 +423,10 @@ module resnet_accel_top #(
     .shift_i(snap_shift),
     .busy_o(conv_busy),
     .done_o(conv_done),
-    .overflow_event_o(accumulator_overflow_event),
-    .input_rd_en_o(input_rd_en),
-    .input_rd_word_addr_o(input_rd_word_addr),
-    .input_rd_byte_sel_o(input_rd_byte_sel),
+    .overflow_event_o(conv_overflow_event),
+    .input_rd_en_o(conv_input_rd_en),
+    .input_rd_word_addr_o(conv_input_rd_word_addr),
+    .input_rd_byte_sel_o(conv_input_rd_byte_sel),
     .input_rd_data_i(input_rd_data),
     .weight_rd_en_o(weight_rd_en),
     .weight_rd_word_addr_o(weight_rd_word_addr),
@@ -398,10 +435,36 @@ module resnet_accel_top #(
     .bias_rd_en_o(bias_rd_en),
     .bias_rd_addr_o(bias_rd_addr),
     .bias_rd_data_i(bias_rd_data),
-    .output_we_o(output_we),
-    .output_waddr_o(output_waddr),
-    .output_wbyte_sel_o(output_wbyte_sel),
-    .output_wdata_o(output_wdata)
+    .output_we_o(conv_output_we),
+    .output_waddr_o(conv_output_waddr),
+    .output_wbyte_sel_o(conv_output_wbyte_sel),
+    .output_wdata_o(conv_output_wdata)
+  );
+
+  gap_engine #(
+    .MAX_INPUT_WORDS(MAX_INPUT_WORDS),
+    .MAX_OUTPUT_WORDS(MAX_OUTPUT_WORDS)
+  ) u_gap_engine (
+    .clk_i(aclk),
+    .aresetn_i(aresetn),
+    .start_i(gap_start),
+    .abort_i(engine_abort),
+    .input_height_i(snap_input_height),
+    .input_width_i(snap_input_width),
+    .in_channels_i(snap_in_channels),
+    .multiplier_i(snap_multiplier),
+    .shift_i(snap_shift),
+    .busy_o(gap_busy),
+    .done_o(gap_done),
+    .overflow_event_o(gap_overflow_event),
+    .input_rd_en_o(gap_input_rd_en),
+    .input_rd_word_addr_o(gap_input_rd_word_addr),
+    .input_rd_byte_sel_o(gap_input_rd_byte_sel),
+    .input_rd_data_i(input_rd_data),
+    .output_we_o(gap_output_we),
+    .output_waddr_o(gap_output_waddr),
+    .output_wbyte_sel_o(gap_output_wbyte_sel),
+    .output_wdata_o(gap_output_wdata)
   );
 
   residual_add_engine #(

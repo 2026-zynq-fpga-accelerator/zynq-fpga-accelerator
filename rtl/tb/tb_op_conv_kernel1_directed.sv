@@ -348,6 +348,26 @@ module tb_op_conv_kernel1_directed;
       bias_data[word_index] = $signed(word_index * 3) - 32'sd48;
     run_normal("kernel1_projection_16to32_stride2");
 
+    // FC-shaped: H=W=1 spatial input (HW_SW_Interface_v1.4_DRAFT.md section 3 -- FC reuses
+    // OP_CONV(kernel=1) with no new RTL). This exact H=W=1 combination was never exercised by
+    // the kernel1 tests above (all used H=W>=4). OUT_CHANNELS=12 matches the doc's real usage
+    // (10 classes + 2 zero-padding channels for 4-byte output alignment); channels 10/11 use
+    // zero weight/bias so their output is independently verifiable as exactly 0.
+    set_shape(1, 1, 64, 12, 1, 0, 0, 5, 3);
+    for (word_index = 0; word_index < cfg_input_bytes; word_index = word_index + 1)
+      input_data[word_index] = $signed((word_index % 17) - 8);
+    for (word_index = 0; word_index < cfg_weight_bytes; word_index = word_index + 1)
+      weight_data[word_index] = $signed((word_index % 11) - 5);
+    for (word_index = 0; word_index < 64; word_index = word_index + 1) begin
+      weight_data[word_index * 12 + 10] = 8'sd0;
+      weight_data[word_index * 12 + 11] = 8'sd0;
+    end
+    for (word_index = 0; word_index < 10; word_index = word_index + 1)
+      bias_data[word_index] = $signed(word_index * 7) - 32'sd35;
+    bias_data[10] = 32'sd0;
+    bias_data[11] = 32'sd0;
+    run_normal("fc_h1w1_kernel1_64to12");
+
     $display("DIRECTED PASS: %0d integration/error checks", tests_passed);
     $finish;
   end
