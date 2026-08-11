@@ -115,6 +115,92 @@ def _self_check(
         raise AssertionError("expected_output.bin round-trip mismatch")
 
 
+def export_gap_test_vector(
+    output_dir: str | Path,
+    *,
+    input_hwc: np.ndarray,           # [IN_H, IN_W, IN_CHANNELS] int8
+    expected_output_c: np.ndarray,   # [IN_CHANNELS] int8 (OUT_CHANNELS == IN_CHANNELS, §2.2)
+    multiplier_m: int,
+    shift_n: int,
+) -> Path:
+    """Write a self-contained OP_GLOBAL_AVG_POOL test vector directory (HW_SW_Interface_v1.4 §2).
+
+    No weight/bias/skip packet — GAP is the simplest op in the interface (§2.4).
+    """
+    _require_dtype("input_hwc", input_hwc, np.int8)
+    _require_dtype("expected_output_c", expected_output_c, np.int8)
+
+    in_h, in_w, in_channels = input_hwc.shape
+    if expected_output_c.shape != (in_channels,):
+        raise ValueError(f"expected_output shape {expected_output_c.shape} != ({in_channels},)")
+
+    input_bytes = in_h * in_w * in_channels
+    output_bytes = in_channels
+
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    (out_dir / "input.bin").write_bytes(input_hwc.tobytes(order="C"))
+    (out_dir / "expected_output.bin").write_bytes(expected_output_c.tobytes(order="C"))
+
+    config = {
+        "interface_version": "1.4",
+        "operation": "OP_GLOBAL_AVG_POOL",
+        "activation_layout": "NHWC",
+        "input_dtype": "int8",
+        "output_dtype": "int8",
+        "input_height": in_h,
+        "input_width": in_w,
+        "in_channels": in_channels,
+        "out_channels": in_channels,
+        "multiplier_m": multiplier_m,
+        "shift_n": shift_n,
+        "input_bytes": input_bytes,
+        "weight_bytes": 0,
+        "bias_bytes": 0,
+        "skip_bytes": 0,
+        "output_bytes": output_bytes,
+    }
+    (out_dir / "config.json").write_text(json.dumps(config, indent=2) + "\n")
+
+    _gap_self_check(out_dir, config, input_hwc, expected_output_c)
+
+    return out_dir
+
+
+def _gap_self_check(
+    out_dir: Path,
+    config: dict,
+    input_hwc: np.ndarray,
+    expected_output_c: np.ndarray,
+) -> None:
+    """Reload every binary and confirm it round-trips exactly (§14.3 principle, applied to GAP)."""
+    loaded = load_gap_test_vector(out_dir)
+    if not np.array_equal(loaded["input"], input_hwc):
+        raise AssertionError("input.bin round-trip mismatch")
+    if not np.array_equal(loaded["expected_output"], expected_output_c):
+        raise AssertionError("expected_output.bin round-trip mismatch")
+
+
+def load_gap_test_vector(directory: str | Path) -> dict:
+    """Load an OP_GLOBAL_AVG_POOL test-vector directory back into {config, input, expected_output}."""
+    directory = Path(directory)
+    config = json.loads((directory / "config.json").read_text())
+
+    in_h = config["input_height"]
+    in_w = config["input_width"]
+    in_channels = config["in_channels"]
+
+    input_hwc = np.fromfile(directory / "input.bin", dtype=np.int8).reshape(in_h, in_w, in_channels)
+    expected_output_c = np.fromfile(directory / "expected_output.bin", dtype=np.int8)
+
+    return {
+        "config": config,
+        "input": input_hwc,
+        "expected_output": expected_output_c,
+    }
+
+
 def load_test_vector(directory: str | Path) -> dict:
     """Load a test-vector directory back into {config, input, weight, bias, expected_output} numpy arrays."""
     directory = Path(directory)
