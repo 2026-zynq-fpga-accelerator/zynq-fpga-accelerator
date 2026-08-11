@@ -21,10 +21,12 @@ set checkpoint_backup_dir [file join $repo_root build vivado_zybo checkpoint_bac
 # Historical note (see rtl/docs/PROJECT_MASTER_HANDOFF.md): the Stage 2-A OP_RESIDUAL_ADD
 # build carried a known, tracked setup-timing violation (WNS=-0.250ns, 6 failing endpoints)
 # from a conv_engine MAC path that lost margin at 100 MHz. The Stage 3 kernel=1 parametrization
-# rebuild (this checkpoint) fully closed timing instead: WNS=+0.001ns, TNS=0.000, 0 failing
-# setup endpoints, hold/pulse-width both clean. The tolerant gate is kept (not removed) as a
-# documented safety margin matching the previously accepted floor -- re-tighten only after
-# confirming several builds in a row land here, not right after the first one.
+# rebuild fully closed timing instead (WNS=+0.001ns), and the OP_GLOBAL_AVG_POOL rebuild (this
+# checkpoint) still holds: WNS=+0.004ns, TNS=0.000, 0 failing setup endpoints, hold/pulse-width
+# both clean, despite DSP48E1 growing 3->5 (gap_engine's own requantizer instance). The tolerant
+# gate is kept (not removed) as a documented safety margin matching the previously accepted
+# floor -- re-tighten only after confirming several builds in a row land here, not right after
+# the first one.
 set accept_known_setup_timing_violation 1
 set known_setup_timing_violation_min_wns_ns -0.30
 set known_setup_timing_violation_max_failing_endpoints 10
