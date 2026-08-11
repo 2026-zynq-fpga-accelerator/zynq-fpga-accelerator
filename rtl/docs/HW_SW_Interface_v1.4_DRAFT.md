@@ -276,11 +276,23 @@ DDR 버퍼는 기존 관례(`STAGE2_BASIC_RESIDUAL_BLOCK_PLAN.md`/`STAGE3_RTL_RE
 
 ## 6. 확인 체크리스트
 
-- [ ] Opcode: `OP_GLOBAL_AVG_POOL=3` 활성화, `OP_FC=4`는 영구 예약으로 유지 — **정민님 확인 필요**
-- [ ] GAP register 재사용 매핑 (§2.2) — **정민님 확인 필요**
-- [ ] GAP FSM 분기 (`LOAD_WEIGHT`/`LOAD_BIAS` 스킵, §2.3) — **정민님 확인 필요**
-- [ ] FC를 `OP_CONV(kernel=1)`로 실행한다는 결정 자체 (§3.1) — **정민님 확인 필요** (RTL 영향
-      없다는 것에 동의하는지)
+- [x] Opcode: `OP_GLOBAL_AVG_POOL=3` 활성화, `OP_FC=4`는 영구 예약으로 유지 (2026-08-11, 정민 —
+      `accel_pkg.sv`에 현재 `OP_CONV=0`/`OP_RESIDUAL_ADD=2`만 정의돼 있어 3/4 모두 충돌 없음,
+      `accel_regs.h`의 기존 예약값과도 일치)
+- [x] GAP register 재사용 매핑 (§2.2) (2026-08-11, 정민 — `controller_fsm.sv`의 기존
+      `OP_RESIDUAL_ADD` 전용 검증 분기(`VAL_FIELDS`→`VAL_INPUT_AREA`→`VAL_INPUT_CHANNELS`→전용
+      COMPARE state, DIMS/WEIGHT_CHANNELS/OUTPUT_AREA 우회)와 동일한 패턴으로 GAP 전용 분기를
+      추가하면 표에 나온 필드 전부 기존 레지스터/검증 인프라로 수용 가능. 신규 레지스터 불필요
+      확인)
+- [x] GAP FSM 분기 (`LOAD_WEIGHT`/`LOAD_BIAS` 스킵, §2.3) (2026-08-11, 정민 — `OP_RESIDUAL_ADD`가
+      이미 동일하게 `DBG_LOAD_WEIGHT`/`DBG_LOAD_BIAS`를 건너뛰고 `DBG_LOAD_INPUT`으로 직행하는
+      분기가 있음(`controller_fsm.sv` line 590, 658). GAP도 같은 자리에 세 번째 분기 추가로 구현
+      가능, 새 FSM state 불필요)
+- [x] FC를 `OP_CONV(kernel=1)`로 실행한다는 결정 자체 (§3.1) (2026-08-11, 정민 — RTL 영향 없음에
+      동의. `H=W=1, KERNEL=1, STRIDE=1, PADDING=0` 대입 시 기존 일반화된 출력 크기 공식
+      (`padded - kernel_size + 1` = `1-1+1=1`)과 최소 patch 크기 검사가 정상 통과함을 코드로
+      확인. 다만 이 정확한 조합(H=W=1)은 지난 kernel=1 테스트(H=W=4 기준)에서 직접 검증된 적은
+      없음 — 요청하신 별도 directed test로 커버 예정, §4 참조)
 - [x] FC weight transpose gotcha 확인 (2026-08-10, 소은수 — exporter 구현 시 반영)
 - [x] FC output 4-byte 정렬을 위한 `OUT_CHANNELS=12` zero-padding 결정 (2026-08-10, 소은수)
 - [ ] GAP RTL 구현
