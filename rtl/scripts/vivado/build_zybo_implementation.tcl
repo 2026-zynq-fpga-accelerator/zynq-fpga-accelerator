@@ -177,7 +177,10 @@ set synth_dsp [count_cells $accel_pattern DSP48E1]
 set synth_lutram [count_lutram_cells $accel_pattern]
 puts "POST_SYNTH_ACCEL RAMB36E1=$synth_ramb36 RAMB18E1=$synth_ramb18 DSP48E1=$synth_dsp LUTRAM_OR_SRL=$synth_lutram"
 
-if {$synth_ramb36 != 32 || $synth_ramb18 != 1 || $synth_dsp != 3 ||
+# DSP48E1 3->5: gap_engine.sv instantiates its own requantizer (separate from conv_engine's),
+# adding a second M/N multiply pipeline. BRAM/LUTRAM unaffected -- gap_engine has no memory
+# arrays and shares tensor_buffers' ports with conv_engine via a top-level mux.
+if {$synth_ramb36 != 32 || $synth_ramb18 != 1 || $synth_dsp != 5 ||
     $synth_lutram != 0} {
   build_fail "accelerator post-synthesis memory/DSP inference changed"
 }
@@ -315,7 +318,7 @@ if {$no_clock_register_count != 0} {
 if {$unconstrained_endpoint_count != 0} {
   build_fail "unconstrained internal endpoints found"
 }
-if {$route_ramb36 != 32 || $route_ramb18 != 1 || $route_dsp != 3 ||
+if {$route_ramb36 != 32 || $route_ramb18 != 1 || $route_dsp != 5 ||
     $route_lutram != 0} {
   build_fail "accelerator post-route memory/DSP structure changed"
 }

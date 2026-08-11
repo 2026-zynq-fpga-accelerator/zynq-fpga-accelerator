@@ -301,7 +301,8 @@ if {[llength $unrouted_nets] != 0} {
 if {$no_clock != 0 || $unconstrained != 0} {
   phase3d2_fail "timing coverage failed: no_clock=$no_clock unconstrained=$unconstrained"
 }
-if {$accel_ramb36 != 32 || $accel_ramb18 != 1 || $accel_dsp != 3 ||
+# DSP48E1 3->5: gap_engine.sv's own requantizer instance adds a second M/N multiply pipeline.
+if {$accel_ramb36 != 32 || $accel_ramb18 != 1 || $accel_dsp != 5 ||
     $accel_lutram != 0} {
   phase3d2_fail "accelerator structure mismatch: RAMB36=$accel_ramb36 RAMB18=$accel_ramb18 DSP=$accel_dsp LUTRAM/SRL=$accel_lutram"
 }
