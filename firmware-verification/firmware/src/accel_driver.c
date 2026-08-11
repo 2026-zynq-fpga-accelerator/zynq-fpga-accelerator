@@ -34,8 +34,9 @@ int accel_configure(const resnet_layer_t *layer)
     if (layer == NULL) {
         return ACCEL_INVALID_ARG;
     }
-    if (layer->op != OP_CONV && layer->op != OP_RESIDUAL_ADD) {
-        return ACCEL_INVALID_ARG; /* OP_POOL/OP_GLOBAL_AVG_POOL/OP_FC remain RTL-reserved in v1.2 */
+    if (layer->op != OP_CONV && layer->op != OP_RESIDUAL_ADD
+        && layer->op != OP_GLOBAL_AVG_POOL && layer->op != OP_FC) {
+        return ACCEL_INVALID_ARG; /* OP_POOL remains RTL-reserved, HW_SW_Interface_v1.4 §1/§3.1 */
     }
 
     uint32_t status = accel_reg_read(ACCEL_REG_STATUS);
@@ -71,32 +72,70 @@ int accel_configure(const resnet_layer_t *layer)
         return ACCEL_OK;
     }
 
-    int32_t out_h = ((int32_t)layer->height + 2 * (int32_t)layer->padding - (int32_t)layer->kernel)
-                    / (int32_t)layer->stride + 1;
-    int32_t out_w = ((int32_t)layer->width + 2 * (int32_t)layer->padding - (int32_t)layer->kernel)
-                    / (int32_t)layer->stride + 1;
+    if (layer->op == OP_GLOBAL_AVG_POOL) {
+        /* HW_SW_Interface_v1.4_DRAFT.md §2.2: OUT_CHANNELS always equals IN_CHANNELS (GAP never
+         * changes channel count), no weight/bias/skip packet, CONV_CONFIG entirely unused. */
+        if (layer->height == 0U || layer->width == 0U || layer->in_channels == 0U) {
+            return ACCEL_INVALID_ARG;
+        }
+
+        uint32_t input_bytes = (uint32_t)layer->height * (uint32_t)layer->width * layer->in_channels;
+
+        accel_reg_write(ACCEL_REG_OPERATION, (uint32_t)ACCEL_OPERATION_GLOBAL_AVG_POOL);
+        accel_reg_write(ACCEL_REG_INPUT_HEIGHT, layer->height);
+        accel_reg_write(ACCEL_REG_INPUT_WIDTH, layer->width);
+        accel_reg_write(ACCEL_REG_IN_CHANNELS, layer->in_channels);
+        accel_reg_write(ACCEL_REG_OUT_CHANNELS, layer->in_channels);
+        accel_reg_write(ACCEL_REG_CONV_CONFIG, 0U); /* unused, §2.2 */
+        accel_reg_write(ACCEL_REG_OUTPUT_SCALE, (uint32_t)layer->output_scale); /* mean M/N, §2.5/§2.6 */
+        accel_reg_write(ACCEL_REG_INPUT_BYTES, input_bytes);
+        accel_reg_write(ACCEL_REG_WEIGHT_BYTES, 0U); /* no weight packet */
+        accel_reg_write(ACCEL_REG_BIAS_BYTES, 0U);   /* no bias packet */
+        accel_reg_write(ACCEL_REG_SKIP_BYTES, 0U);   /* no skip packet */
+        accel_reg_write(ACCEL_REG_OUTPUT_BYTES, layer->in_channels);
+
+        return ACCEL_OK;
+    }
+
+    /* OP_CONV and OP_FC share this path -- FC is realized as OP_CONV(kernel=1, H=W=1), not a
+     * distinct hardware operation (HW_SW_Interface_v1.4_DRAFT.md §3.1/§3.4). Callers building an
+     * OP_FC resnet_layer_t don't need to fill in height/width/kernel/stride/padding; they're
+     * forced to the FC-equivalent values here so RTL only ever sees an ordinary OP_CONV. */
+    resnet_layer_t conv_layer = *layer;
+    if (layer->op == OP_FC) {
+        conv_layer.height = 1U;
+        conv_layer.width = 1U;
+        conv_layer.kernel = 1U;
+        conv_layer.stride = 1U;
+        conv_layer.padding = 0U;
+    }
+
+    int32_t out_h = ((int32_t)conv_layer.height + 2 * (int32_t)conv_layer.padding - (int32_t)conv_layer.kernel)
+                    / (int32_t)conv_layer.stride + 1;
+    int32_t out_w = ((int32_t)conv_layer.width + 2 * (int32_t)conv_layer.padding - (int32_t)conv_layer.kernel)
+                    / (int32_t)conv_layer.stride + 1;
     if (out_h <= 0 || out_w <= 0) {
         return ACCEL_INVALID_ARG;
     }
 
-    uint32_t weight_bytes = (uint32_t)layer->kernel * layer->kernel * layer->in_channels * layer->out_channels;
-    uint32_t bias_bytes   = (uint32_t)layer->out_channels * 4U;
-    uint32_t input_bytes  = (uint32_t)layer->height * layer->width * layer->in_channels;
-    uint32_t output_bytes = (uint32_t)out_h * (uint32_t)out_w * layer->out_channels;
+    uint32_t weight_bytes = (uint32_t)conv_layer.kernel * conv_layer.kernel * conv_layer.in_channels * conv_layer.out_channels;
+    uint32_t bias_bytes   = (uint32_t)conv_layer.out_channels * 4U;
+    uint32_t input_bytes  = (uint32_t)conv_layer.height * conv_layer.width * conv_layer.in_channels;
+    uint32_t output_bytes = (uint32_t)out_h * (uint32_t)out_w * conv_layer.out_channels;
 
     accel_reg_write(ACCEL_REG_OPERATION, (uint32_t)ACCEL_OPERATION_CONV);
-    accel_reg_write(ACCEL_REG_INPUT_HEIGHT, layer->height);
-    accel_reg_write(ACCEL_REG_INPUT_WIDTH, layer->width);
-    accel_reg_write(ACCEL_REG_IN_CHANNELS, layer->in_channels);
-    accel_reg_write(ACCEL_REG_OUT_CHANNELS, layer->out_channels);
+    accel_reg_write(ACCEL_REG_INPUT_HEIGHT, conv_layer.height);
+    accel_reg_write(ACCEL_REG_INPUT_WIDTH, conv_layer.width);
+    accel_reg_write(ACCEL_REG_IN_CHANNELS, conv_layer.in_channels);
+    accel_reg_write(ACCEL_REG_OUT_CHANNELS, conv_layer.out_channels);
     accel_reg_write(
         ACCEL_REG_CONV_CONFIG,
-        accel_pack_conv_config(layer->kernel, layer->stride, layer->padding, layer->relu_enable));
-    accel_reg_write(ACCEL_REG_OUTPUT_SCALE, (uint32_t)layer->output_scale);
+        accel_pack_conv_config(conv_layer.kernel, conv_layer.stride, conv_layer.padding, conv_layer.relu_enable));
+    accel_reg_write(ACCEL_REG_OUTPUT_SCALE, (uint32_t)conv_layer.output_scale);
     accel_reg_write(ACCEL_REG_INPUT_BYTES, input_bytes);
     accel_reg_write(ACCEL_REG_WEIGHT_BYTES, weight_bytes);
     accel_reg_write(ACCEL_REG_BIAS_BYTES, bias_bytes);
-    accel_reg_write(ACCEL_REG_SKIP_BYTES, 0U); /* unused until v1.2 residual extension */
+    accel_reg_write(ACCEL_REG_SKIP_BYTES, 0U); /* unused for OP_CONV/OP_FC */
     accel_reg_write(ACCEL_REG_OUTPUT_BYTES, output_bytes);
 
     return ACCEL_OK;

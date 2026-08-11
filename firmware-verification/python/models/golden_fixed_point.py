@@ -23,6 +23,13 @@ class ConvFixedPointResult:
     overflow: bool              # True if any accumulator step saturated (-> ERR_ACC_OVERFLOW, §5.2)
 
 
+@dataclass
+class GapFixedPointResult:
+    output: np.ndarray          # [OUT_CHANNELS] int8, final result (= [1][1][C] flattened)
+    accumulator: np.ndarray     # [OUT_CHANNELS] int32, post-sum pre-requant (HW_SW_Interface_v1.4 §2.5)
+    overflow: bool              # True if any per-channel sum saturated
+
+
 def _pad_input(input_hwc: np.ndarray, padding: int) -> list:
     """Zero-pad [H][W][C] input on H/W; padding is never stored in DDR, only generated logically (§3 rule 9)."""
     if padding == 0:
@@ -105,5 +112,40 @@ def conv2d_fixed_point(
         output=output,
         accumulator=accumulator,
         requantized=requantized,
+        overflow=overflow_seen,
+    )
+
+
+def global_avg_pool_fixed_point(
+    input_hwc: np.ndarray,
+    multiplier_m: int,
+    shift_n: int,
+) -> GapFixedPointResult:
+    """Per-channel spatial average, HW_SW_Interface_v1.4 §2.5.
+
+    Same per-step INT32 saturation and M/N requantization as conv2d_fixed_point (§5.1-§5.4),
+    but summing instead of multiply-accumulating, and never applying ReLU (§2.2 CONV_CONFIG
+    is unused/RELU_ENABLE=0 for OP_GLOBAL_AVG_POOL).
+    """
+    in_h, in_w, in_channels = input_hwc.shape
+
+    output = np.zeros((in_channels,), dtype=np.int8)
+    accumulator = np.zeros((in_channels,), dtype=np.int32)
+    overflow_seen = False
+
+    for c in range(in_channels):
+        acc = 0
+        for h in range(in_h):
+            for w in range(in_w):
+                acc, ov = sat_add_int32(acc, int(input_hwc[h, w, c]))
+                overflow_seen = overflow_seen or ov
+
+        accumulator[c] = acc
+        q = requantize(acc, multiplier_m, shift_n)
+        output[c] = relu_and_saturate_int8(q, False)
+
+    return GapFixedPointResult(
+        output=output,
+        accumulator=accumulator,
         overflow=overflow_seen,
     )
