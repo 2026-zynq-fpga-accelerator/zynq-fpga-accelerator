@@ -96,10 +96,10 @@ int main(void)
     }
 
     xil_printf(
-        "stage1_conv_test: %s - %lu/%lu bytes mismatched (first at %lu), cycle_count=%lu\r\n",
+        "stage1_conv_test: %s - %lu/%lu bytes mismatched (first at %lu)\r\n",
         (mismatch_count == 0) ? "PASS" : "FAIL",
         (unsigned long)mismatch_count, (unsigned long)STAGE1_OUTPUT_BYTES,
-        (unsigned long)first_mismatch_index, (unsigned long)accel_get_cycle_count());
+        (unsigned long)first_mismatch_index);
 
     exit_code = (mismatch_count == 0) ? 0 : -1;
 

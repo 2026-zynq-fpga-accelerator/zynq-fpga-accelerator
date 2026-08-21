@@ -3,14 +3,35 @@
 
 #include "accel_driver.h"
 #include "dma_transfer.h"
+#include "platform_config.h" /* PL_CLOCK_HZ, for hw_cycles -> us */
 #include "platform_time.h"
 #include "xil_printf.h" /* UART status/result output */
 
+/* accel_get_cycle_count() reflects only the most recently completed START->DONE run (confirmed
+ * by verification/cocotb/test_repeat_no_reset.py), so reading it right after each accel_run_layer()
+ * call gives that layer's own hardware compute latency, not a running total. Wall-clock latency
+ * additionally captures DMA transfer and firmware polling overhead around that hardware run
+ * (project doc §8.7 timing-report requirement). */
 int resnet_run(const resnet_layer_t *layers, size_t num_layers)
 {
+    XTime run_start = fw_time_now();
+    uint64_t total_hw_cycles = 0;
+
     for (size_t i = 0; i < num_layers; ++i) {
         accel_run_diag_t diag;
+        XTime layer_start = fw_time_now();
         int rc = accel_run_layer(&layers[i], &diag);
+        XTime layer_end = fw_time_now();
+
+        if (rc == ACCEL_OK || rc == ACCEL_DONE_WITH_WARNING) {
+            uint64_t wall_us = ((uint64_t)(layer_end - layer_start) * 1000000ULL) / COUNTS_PER_SECOND;
+            uint32_t hw_cycles = accel_get_cycle_count();
+            uint64_t hw_us = ((uint64_t)hw_cycles * 1000000ULL) / PL_CLOCK_HZ;
+            total_hw_cycles += hw_cycles;
+            xil_printf(
+                "resnet_run: layer %u latency wall_us=%lu hw_cycles=%lu hw_us=%lu\r\n",
+                (unsigned)i, (unsigned long)wall_us, (unsigned long)hw_cycles, (unsigned long)hw_us);
+        }
 
         if (rc == ACCEL_DONE_WITH_WARNING) {
             xil_printf(
@@ -64,6 +85,15 @@ int resnet_run(const resnet_layer_t *layers, size_t num_layers)
             }
             return rc;
         }
+    }
+
+    {
+        uint64_t total_wall_us = ((uint64_t)(fw_time_now() - run_start) * 1000000ULL) / COUNTS_PER_SECOND;
+        uint64_t total_hw_us = (total_hw_cycles * 1000000ULL) / PL_CLOCK_HZ;
+        xil_printf(
+            "resnet_run: total latency layers=%u wall_us=%lu hw_cycles=%lu hw_us=%lu\r\n",
+            (unsigned)num_layers, (unsigned long)total_wall_us,
+            (unsigned long)total_hw_cycles, (unsigned long)total_hw_us);
     }
 
     return ACCEL_OK;
