@@ -170,9 +170,9 @@ int main(void)
             STAGE2_IDENTITY_CONV2_OUTPUT_BYTES);
 
         xil_printf(
-            "stage2_residual_test: %s - %lu total mismatched bytes across 3 checkpoints, cycle_count=%lu\r\n",
+            "stage2_residual_test: %s - %lu total mismatched bytes across 3 checkpoints\r\n",
             (mismatches == 0 && rc == ACCEL_OK) ? "PASS" : "FAIL",
-            (unsigned long)mismatches, (unsigned long)accel_get_cycle_count());
+            (unsigned long)mismatches);
 
         exit_code = (mismatches == 0 && rc == ACCEL_OK) ? 0 : -1;
     }

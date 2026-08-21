@@ -174,9 +174,9 @@ int main(void)
 
         xil_printf(
             "stage3_gapfc_test: %s - %lu total mismatched bytes across 2 checkpoints, "
-            "class_match=%d, cycle_count=%lu\r\n",
+            "class_match=%d\r\n",
             (mismatches == 0 && rc == ACCEL_OK && class_match) ? "PASS" : "FAIL",
-            (unsigned long)mismatches, class_match, (unsigned long)accel_get_cycle_count());
+            (unsigned long)mismatches, class_match);
 
         exit_code = (mismatches == 0 && rc == ACCEL_OK && class_match) ? 0 : -1;
     }

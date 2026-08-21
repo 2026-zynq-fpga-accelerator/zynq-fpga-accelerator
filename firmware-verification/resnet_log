@@ -1,0 +1,2177 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2026.08.21 21:35:29 =~=~=~=~=~=~=~=~=~=~=~=
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435933 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192662 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192649 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29957 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192657 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192603 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29947 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192645 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29976 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601339 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138960 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454044 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15285 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138961 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15280 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138957 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15280 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424805 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7946 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121615 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121611 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121663 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7943 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10456 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3542 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321864 hw_cycles=124125532 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435946 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192671 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 3 latency wall_us=357 hw_cycles=29949 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192649 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192647 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192634 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29948 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601340 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138965 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454047 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138957 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138956 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15272 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577015 hw_us=35770
+resnet_run: layer 21 latency wall_us=71236 hw_cycles=7121612 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424801 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7943 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121607 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121687 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3540 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125493 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435919 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192661 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192647 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29945 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192658 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192635 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601397 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138945 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454065 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15272 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424798 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7931 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10468 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3605 hw_us=36
+resnet_run: total latency layers=32 wall_us=1321777 hw_cycles=124125621 hw_us=1241256
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435941 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192665 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192603 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29948 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192654 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 6 latency wall_us=357 hw_cycles=29945 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192633 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29941 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601334 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454042 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15268 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138957 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15268 hw_us=152
+resnet_run: layer 17 latency wall_us=71423 hw_cycles=7138980 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15273 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577013 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121665 hw_us=71216
+resnet_run: layer 22 latency wall_us=4269 hw_cycles=424854 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121653 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121685 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7931 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3537 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321778 hw_cycles=124125541 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435915 hw_us=14359
+resnet_run: layer 1 latency wall_us=71986 hw_cycles=7192714 hw_us=71927
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29946 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192650 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192641 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29946 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192644 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192591 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601342 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454051 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71423 hw_cycles=7138966 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138903 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577008 hw_us=35770
+resnet_run: layer 21 latency wall_us=71236 hw_cycles=7121611 hw_us=71216
+resnet_run: layer 22 latency wall_us=4269 hw_cycles=424854 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7934 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10452 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3547 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321864 hw_cycles=124125450 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435953 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192658 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192593 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192653 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192648 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192663 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192636 hw_us=71926
+resnet_run: layer 9 latency wall_us=357 hw_cycles=29943 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601341 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138959 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454035 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138898 hw_us=71388
+resnet_run: layer 18 latency wall_us=71423 hw_cycles=7138974 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15276 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577021 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121663 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424801 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121653 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7940 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121605 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7933 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3545 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321960 hw_cycles=124125428 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435917 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192645 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192590 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29950 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192588 hw_us=71925
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192641 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601337 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138956 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454034 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15275 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15272 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138971 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15277 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577006 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121665 hw_us=71216
+resnet_run: layer 22 latency wall_us=4269 hw_cycles=424858 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7938 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7930 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7931 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3536 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321864 hw_cycles=124125407 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435919 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192669 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192600 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29947 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192602 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29966 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192594 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192593 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601344 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138965 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454044 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138958 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15276 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577018 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424802 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7939 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121647 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121662 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10453 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3545 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321864 hw_cycles=124125366 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435949 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192672 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192595 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29954 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192654 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29963 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192594 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601342 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454038 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138955 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15269 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577013 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424797 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7936 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3544 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125458 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435941 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192665 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192648 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192634 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192658 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192594 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601337 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138903 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454038 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138901 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15272 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138971 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15266 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577011 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424793 hw_us=4247
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121662 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7930 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10452 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3542 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321960 hw_cycles=124125308 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435935 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192660 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29953 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192656 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192641 hw_us=71926
+resnet_run: layer 6 latency wall_us=357 hw_cycles=29946 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192599 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192595 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29946 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601339 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138961 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454067 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15278 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138958 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577014 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424800 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7938 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121688 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7934 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121676 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7939 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10455 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3607 hw_us=36
+resnet_run: total latency layers=32 wall_us=1322046 hw_cycles=124125600 hw_us=1241256
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435975 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192647 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29953 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29947 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192670 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601339 hw_us=36013
+resnet_run: layer 11 latency wall_us=71423 hw_cycles=7138961 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454038 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 17 latency wall_us=71423 hw_cycles=7138955 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138970 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15275 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577006 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424790 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7930 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10456 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3540 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125547 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435933 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192662 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29984 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192637 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192634 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29939 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601336 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454046 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15273 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138900 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138903 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138902 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577010 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121684 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424791 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7937 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10456 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3536 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125362 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435953 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192653 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29940 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192635 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29941 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601341 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138963 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454035 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15273 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138940 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138897 hw_us=71388
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577016 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424794 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7928 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121608 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3541 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125297 hw_us=1241252
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435959 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192664 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192593 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29955 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192664 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601390 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454045 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15279 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15276 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577009 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424800 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121665 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7936 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121608 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7964 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10457 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3535 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321960 hw_cycles=124125529 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435933 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192668 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192594 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29947 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29939 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192644 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192629 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601357 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138955 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454039 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138943 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138957 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15273 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138902 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15268 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577009 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424799 hw_us=4247
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7936 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121609 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121673 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7932 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3539 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321951 hw_cycles=124125358 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435951 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192677 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29955 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192601 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29970 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192630 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601393 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138945 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454036 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15269 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138945 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15279 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138941 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424801 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7936 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7939 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3593 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321960 hw_cycles=124125564 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435963 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192659 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192594 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29950 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192649 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192672 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29945 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192641 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29945 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601336 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138959 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454041 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138898 hw_us=71388
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577018 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424801 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7936 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3545 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125454 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435961 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192663 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192590 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29951 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192654 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192641 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29976 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601344 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454047 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15270 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138899 hw_us=71388
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15270 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577017 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424794 hw_us=4247
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121662 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121649 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10456 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3550 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125464 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435967 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192658 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29950 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29957 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192587 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601341 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454038 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138897 hw_us=71388
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15273 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15268 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577009 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424793 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7931 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121653 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7930 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3542 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125370 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435945 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192677 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29947 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 6 latency wall_us=357 hw_cycles=29938 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192591 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192639 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601396 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454034 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138903 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138900 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577013 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424794 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121649 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121653 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7938 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3540 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125326 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435945 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192665 hw_us=71926
+resnet_run: layer 2 latency wall_us=71985 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29953 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29968 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192634 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29945 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601335 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138956 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454038 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15274 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577013 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424796 hw_us=4247
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7934 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7937 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10451 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3539 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125506 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435945 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192669 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192595 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29953 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192656 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29976 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601340 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138961 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454033 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138958 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138950 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15273 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577017 hw_us=35770
+resnet_run: layer 21 latency wall_us=71236 hw_cycles=7121610 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424796 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121658 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121604 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121605 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7936 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10449 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3538 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125257 hw_us=1241252
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435973 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192673 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192599 hw_us=71925
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192647 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29939 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192593 hw_us=71925
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601344 hw_us=36013
+resnet_run: layer 11 latency wall_us=71421 hw_cycles=7138852 hw_us=71388
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454039 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15294 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138897 hw_us=71388
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138955 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15274 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 18 latency wall_us=71423 hw_cycles=7138969 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15276 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577016 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121662 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424803 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7936 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121606 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7936 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121654 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121607 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7931 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3540 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321786 hw_cycles=124125205 hw_us=1241252
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435933 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192672 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192602 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29953 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192607 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192649 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29968 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192650 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29948 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601343 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138968 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454042 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15278 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138967 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138961 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577013 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121668 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424800 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7946 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7947 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10466 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3574 hw_us=35
+resnet_run: total latency layers=32 wall_us=1322038 hw_cycles=124125623 hw_us=1241256
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435955 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192637 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192637 hw_us=71926
+resnet_run: layer 3 latency wall_us=357 hw_cycles=29944 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192645 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192668 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192638 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601334 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138945 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454036 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15268 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138899 hw_us=71388
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138898 hw_us=71388
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15272 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424794 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7930 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7929 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10458 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3537 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125336 hw_us=1241253
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435929 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192668 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192599 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29950 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192607 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192645 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29952 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192654 hw_us=71926
+resnet_run: layer 9 latency wall_us=357 hw_cycles=29945 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601343 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138958 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454039 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15277 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138901 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15286 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138951 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121665 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424804 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7939 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121652 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7940 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121668 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10457 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3603 hw_us=36
+resnet_run: total latency layers=32 wall_us=1321960 hw_cycles=124125515 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435927 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192665 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29955 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29946 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192665 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 10 latency wall_us=36047 hw_cycles=3601393 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138956 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454043 hw_us=4540
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15279 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138900 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15273 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577014 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121661 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424799 hw_us=4247
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7932 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7940 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121650 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121697 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10459 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3546 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125582 hw_us=1241255
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435959 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192660 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192588 hw_us=71925
+resnet_run: layer 3 latency wall_us=357 hw_cycles=29946 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192649 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192640 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29938 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192663 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192635 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29945 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601333 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138900 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454045 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15285 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138948 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15274 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138963 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15268 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577015 hw_us=35770
+resnet_run: layer 21 latency wall_us=71236 hw_cycles=7121610 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424793 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 26 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121655 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121651 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7935 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10459 hw_us=104
+resnet_run: layer 31 latency wall_us=44 hw_cycles=3597 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125429 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435945 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192662 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192593 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29950 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192651 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29943 hw_us=299
+resnet_run: layer 7 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 8 latency wall_us=71984 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29942 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601340 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138953 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454036 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15271 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138946 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138947 hw_us=71389
+resnet_run: layer 16 latency wall_us=186 hw_cycles=15274 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138965 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15270 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577012 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424798 hw_us=4247
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7932 hw_us=79
+resnet_run: layer 24 latency wall_us=71237 hw_cycles=7121660 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121653 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7938 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 28 latency wall_us=71237 hw_cycles=7121657 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7934 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10454 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3537 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321864 hw_cycles=124125458 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14419 hw_cycles=1435913 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192664 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192600 hw_us=71926
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29951 hw_us=299
+resnet_run: layer 4 latency wall_us=71984 hw_cycles=7192604 hw_us=71926
+resnet_run: layer 5 latency wall_us=71985 hw_cycles=7192646 hw_us=71926
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29946 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192664 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192642 hw_us=71926
+resnet_run: layer 9 latency wall_us=357 hw_cycles=29944 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601342 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138959 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=454042 hw_us=4540
+resnet_run: layer 13 latency wall_us=186 hw_cycles=15282 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138952 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138949 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15275 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138955 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138898 hw_us=71388
+resnet_run: layer 19 latency wall_us=186 hw_cycles=15274 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577020 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121659 hw_us=71216
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424801 hw_us=4248
+resnet_run: layer 23 latency wall_us=100 hw_cycles=7934 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121608 hw_us=71216
+resnet_run: layer 25 latency wall_us=71236 hw_cycles=7121622 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7937 hw_us=79
+resnet_run: layer 27 latency wall_us=71236 hw_cycles=7121612 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121603 hw_us=71216
+resnet_run: layer 29 latency wall_us=100 hw_cycles=7942 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10456 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3552 hw_us=35
+resnet_run: total latency layers=32 wall_us=1322038 hw_cycles=124125248 hw_us=1241252
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
+stage3_backbone_test: dma_static cfginit_status=0 reg_base=0x40400000 has_sg=0 has_mm2s=1 has_mm2s_dre=0 has_s2mm=1 has_s2mm_dre=0 mm2s_data_width=4 s2mm_data_width=4
+resnet_run: layer 0 latency wall_us=14420 hw_cycles=1435971 hw_us=14359
+resnet_run: layer 1 latency wall_us=71985 hw_cycles=7192672 hw_us=71926
+resnet_run: layer 2 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 3 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 4 latency wall_us=71985 hw_cycles=7192652 hw_us=71926
+resnet_run: layer 5 latency wall_us=71984 hw_cycles=7192592 hw_us=71925
+resnet_run: layer 6 latency wall_us=358 hw_cycles=29949 hw_us=299
+resnet_run: layer 7 latency wall_us=71985 hw_cycles=7192660 hw_us=71926
+resnet_run: layer 8 latency wall_us=71985 hw_cycles=7192643 hw_us=71926
+resnet_run: layer 9 latency wall_us=358 hw_cycles=29944 hw_us=299
+resnet_run: layer 10 latency wall_us=36046 hw_cycles=3601346 hw_us=36013
+resnet_run: layer 11 latency wall_us=71422 hw_cycles=7138905 hw_us=71389
+resnet_run: layer 12 latency wall_us=4573 hw_cycles=453990 hw_us=4539
+resnet_run: layer 13 latency wall_us=185 hw_cycles=15272 hw_us=152
+resnet_run: layer 14 latency wall_us=71422 hw_cycles=7138960 hw_us=71389
+resnet_run: layer 15 latency wall_us=71422 hw_cycles=7138954 hw_us=71389
+resnet_run: layer 16 latency wall_us=185 hw_cycles=15271 hw_us=152
+resnet_run: layer 17 latency wall_us=71422 hw_cycles=7138956 hw_us=71389
+resnet_run: layer 18 latency wall_us=71422 hw_cycles=7138965 hw_us=71389
+resnet_run: layer 19 latency wall_us=185 hw_cycles=15274 hw_us=152
+resnet_run: layer 20 latency wall_us=35790 hw_cycles=3577017 hw_us=35770
+resnet_run: layer 21 latency wall_us=71237 hw_cycles=7121718 hw_us=71217
+resnet_run: layer 22 latency wall_us=4268 hw_cycles=424809 hw_us=4248
+resnet_run: layer 23 latency wall_us=99 hw_cycles=7933 hw_us=79
+resnet_run: layer 24 latency wall_us=71236 hw_cycles=7121611 hw_us=71216
+resnet_run: layer 25 latency wall_us=71237 hw_cycles=7121664 hw_us=71216
+resnet_run: layer 26 latency wall_us=100 hw_cycles=7941 hw_us=79
+resnet_run: layer 27 latency wall_us=71237 hw_cycles=7121656 hw_us=71216
+resnet_run: layer 28 latency wall_us=71236 hw_cycles=7121608 hw_us=71216
+resnet_run: layer 29 latency wall_us=99 hw_cycles=7935 hw_us=79
+resnet_run: layer 30 latency wall_us=112 hw_cycles=10467 hw_us=104
+resnet_run: layer 31 latency wall_us=43 hw_cycles=3544 hw_us=35
+resnet_run: total latency layers=32 wall_us=1321873 hw_cycles=124125420 hw_us=1241254
+stage3_backbone_test: stem PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block01_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block02_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv1 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_conv2 PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block03_output PASS - 0/16384 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_shortcut PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block04_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block05_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv1 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_conv2 PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block06_output PASS - 0/8192 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_shortcut PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block07_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block08_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv1 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_conv2 PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: block09_output PASS - 0/4096 bytes mismatched (first at 0)
+stage3_backbone_test: gap PASS - 0/64 bytes mismatched (first at 0)
+stage3_backbone_test: fc PASS - 0/12 bytes mismatched (first at 0)
+stage3_backbone_test: predicted_class=7 expected_predicted_class=7
+stage3_backbone_test: PASS - 0 total mismatched bytes across 30 checkpoints, class_match=1
