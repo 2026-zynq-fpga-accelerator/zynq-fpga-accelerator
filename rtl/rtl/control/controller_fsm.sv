@@ -30,6 +30,7 @@ module controller_fsm #(
   input  logic tlast_error_i,
   input  logic conv_done_i,
   input  logic residual_done_i,
+  input  logic gap_done_i,
   input  logic output_done_i,
 
   output logic idle_o,
@@ -46,6 +47,7 @@ module controller_fsm #(
   output logic [31:0] expected_packet_bytes_o,
   output logic conv_start_o,
   output logic residual_start_o,
+  output logic gap_start_o,
   output logic output_start_o,
 
   output logic invalid_operation_event_o,
@@ -59,6 +61,7 @@ module controller_fsm #(
   output logic [31:0] snap_out_channels_o,
   output logic [31:0] snap_output_height_o,
   output logic [31:0] snap_output_width_o,
+  output logic [31:0] snap_kernel_size_o,
   output logic  [7:0] snap_stride_o,
   output logic  [7:0] snap_padding_o,
   output logic        snap_relu_enable_o,
@@ -90,7 +93,8 @@ module controller_fsm #(
     VAL_COMPARE,
     VAL_ACCEPT,
     VAL_REJECT,
-    VAL_RESIDUAL_COMPARE
+    VAL_RESIDUAL_COMPARE,
+    VAL_GAP_COMPARE
   } validator_state_t;
 
   logic [3:0] state_q;
@@ -139,19 +143,31 @@ module controller_fsm #(
   logic [15:0] output_width_calc_wide;
   logic [14:0] output_height_calc;
   logic [14:0] output_width_calc;
+  logic [15:0] kernel_size_calc;
+  logic [31:0] weight_channel_limit_calc;
 
   always_comb begin
+    // KERNEL_SIZE is validated to {1,3} in VAL_FIELDS below; this general form
+    // (output = floor((padded - kernel)/stride) + 1) covers both without a
+    // kernel-specific formula.
+    kernel_size_calc  = {8'd0, pending_conv_config_q[7:0]};
+    // in_channels*out_channels product cap: bounded so that *kernel_size^2 (the
+    // WEIGHT_BYTES multiplier, see calculated_weight_bytes_q) cannot exceed
+    // WEIGHT_CAP_BYTES. kernel=1 needs no headroom for that multiply.
+    weight_channel_limit_calc = (pending_conv_config_q[7:0] == 8'd1)
+                              ? WEIGHT_CAP_BYTES
+                              : WEIGHT_CHANNEL_LIMIT;
     padded_height_calc = {1'b0, pending_input_height_q[14:0]}
                        + (pending_conv_config_q[16] ? 16'd2 : 16'd0);
     padded_width_calc  = {1'b0, pending_input_width_q[14:0]}
                        + (pending_conv_config_q[16] ? 16'd2 : 16'd0);
 
     if (pending_conv_config_q[15:8] == 8'd2) begin
-      output_height_calc_wide = ((padded_height_calc - 16'd3) >> 1) + 16'd1;
-      output_width_calc_wide  = ((padded_width_calc  - 16'd3) >> 1) + 16'd1;
+      output_height_calc_wide = ((padded_height_calc - kernel_size_calc) >> 1) + 16'd1;
+      output_width_calc_wide  = ((padded_width_calc  - kernel_size_calc) >> 1) + 16'd1;
     end else begin
-      output_height_calc_wide = padded_height_calc - 16'd2;
-      output_width_calc_wide  = padded_width_calc  - 16'd2;
+      output_height_calc_wide = padded_height_calc - kernel_size_calc + 16'd1;
+      output_width_calc_wide  = padded_width_calc  - kernel_size_calc + 16'd1;
     end
     output_height_calc = output_height_calc_wide[14:0];
     output_width_calc  = output_width_calc_wide[14:0];
@@ -226,6 +242,7 @@ module controller_fsm #(
       packet_start_o             <= 1'b0;
       conv_start_o               <= 1'b0;
       residual_start_o           <= 1'b0;
+      gap_start_o                <= 1'b0;
       output_start_o             <= 1'b0;
       invalid_operation_event_o  <= 1'b0;
       invalid_config_event_o     <= 1'b0;
@@ -268,6 +285,7 @@ module controller_fsm #(
       snap_out_channels_o        <= 32'd0;
       snap_output_height_o       <= 32'd0;
       snap_output_width_o        <= 32'd0;
+      snap_kernel_size_o         <= 32'd0;
       snap_stride_o              <= 8'd0;
       snap_padding_o             <= 8'd0;
       snap_relu_enable_o         <= 1'b0;
@@ -284,6 +302,7 @@ module controller_fsm #(
       packet_start_o            <= 1'b0;
       conv_start_o              <= 1'b0;
       residual_start_o          <= 1'b0;
+      gap_start_o               <= 1'b0;
       output_start_o            <= 1'b0;
       invalid_operation_event_o <= 1'b0;
       invalid_config_event_o    <= 1'b0;
@@ -314,9 +333,42 @@ module controller_fsm #(
           VAL_FIELDS: begin
             reject_operation_q <= 1'b0;
             if ((pending_operation_q != OP_CONV)
-             && (pending_operation_q != OP_RESIDUAL_ADD)) begin
+             && (pending_operation_q != OP_RESIDUAL_ADD)
+             && (pending_operation_q != OP_GLOBAL_AVG_POOL)) begin
               reject_operation_q <= 1'b1;
               validator_state_q  <= VAL_REJECT;
+            end else if (pending_operation_q == OP_GLOBAL_AVG_POOL) begin
+              if ((pending_input_height_q == 32'd0)
+               || (pending_input_width_q == 32'd0)
+               || (pending_in_channels_q == 32'd0)
+               || (pending_out_channels_q == 32'd0)
+               || (pending_input_height_q > 32'd16384)
+               || (pending_input_width_q > 32'd16384)
+               || (pending_in_channels_q > 32'd4096)
+               // validated_out_channels_q is 7 bits wide (sized for OP_CONV's MAX_BIAS_WORDS-
+               // bounded use); cap here at that same width to avoid silently truncating below,
+               // unlike OP_RESIDUAL_ADD's 4096 cap which relies on a wider validated_in/out
+               // register pair that GAP does not have for out_channels.
+               || (pending_out_channels_q > 32'd127)
+               || (pending_in_channels_q != pending_out_channels_q)
+               || (pending_conv_config_q != 32'd0)
+               || (pending_output_scale_q[31:16] > 16'd31)
+               || (pending_weight_bytes_q != 32'd0)
+               || (pending_bias_bytes_q != 32'd0)
+               || (pending_skip_bytes_q != 32'd0)
+               || (pending_input_bytes_q == 32'd0)
+               || (pending_output_bytes_q == 32'd0)) begin
+                validator_state_q <= VAL_REJECT;
+              end else begin
+                validated_input_height_q  <= pending_input_height_q[14:0];
+                validated_input_width_q   <= pending_input_width_q[14:0];
+                validated_in_channels_q   <= pending_in_channels_q[12:0];
+                validated_out_channels_q  <= pending_out_channels_q[6:0];
+                validated_output_height_q <= pending_input_height_q[14:0];
+                validated_output_width_q  <= pending_input_width_q[14:0];
+                mul_running_q              <= 1'b0;
+                validator_state_q          <= VAL_INPUT_AREA;
+              end
             end else if (pending_operation_q == OP_RESIDUAL_ADD) begin
               if ((pending_input_height_q == 32'd0)
                || (pending_input_width_q == 32'd0)
@@ -356,9 +408,10 @@ module controller_fsm #(
                       || (pending_out_channels_q > 32'd64)
                       || (pending_input_height_q > INPUT_CAP_BYTES)
                       || (pending_input_width_q > INPUT_CAP_BYTES)
-                      || (pending_in_channels_q > WEIGHT_CHANNEL_LIMIT)
+                      || (pending_in_channels_q > weight_channel_limit_calc)
                       || (pending_out_channels_q > MAX_BIAS_WORDS)
-                      || (pending_conv_config_q[7:0] != 8'd3)
+                      || ((pending_conv_config_q[7:0] != 8'd1)
+                       && (pending_conv_config_q[7:0] != 8'd3))
                       || ((pending_conv_config_q[15:8] != 8'd1)
                        && (pending_conv_config_q[15:8] != 8'd2))
                       || ((pending_conv_config_q[23:16] != 8'd0)
@@ -377,7 +430,7 @@ module controller_fsm #(
           end
 
           VAL_DIMS: begin
-            if ((padded_height_calc < 16'd3) || (padded_width_calc < 16'd3)
+            if ((padded_height_calc < kernel_size_calc) || (padded_width_calc < kernel_size_calc)
              || output_height_calc_wide[15] || output_width_calc_wide[15]) begin
               validator_state_q <= VAL_REJECT;
             end else begin
@@ -428,6 +481,8 @@ module controller_fsm #(
                 calculated_input_bytes_q <= mul_accumulator_next[14:0];
                 if (pending_operation_q == OP_RESIDUAL_ADD)
                   validator_state_q <= VAL_RESIDUAL_COMPARE;
+                else if (pending_operation_q == OP_GLOBAL_AVG_POOL)
+                  validator_state_q <= VAL_GAP_COMPARE;
                 else
                   validator_state_q <= VAL_WEIGHT_CHANNELS;
               end
@@ -444,7 +499,7 @@ module controller_fsm #(
               mul_accumulator_q  <= 32'd0;
               mul_multiplicand_q <= {19'd0, validated_in_channels_q};
               mul_multiplier_q   <= {25'd0, validated_out_channels_q};
-              mul_limit_q        <= WEIGHT_CHANNEL_LIMIT;
+              mul_limit_q        <= weight_channel_limit_calc;
               mul_over_limit_q   <= 1'b0;
               mul_running_q      <= 1'b1;
             end else if (mul_multiplier_q <= 32'd1) begin
@@ -452,8 +507,13 @@ module controller_fsm #(
               if (mul_over_limit_next)
                 validator_state_q <= VAL_REJECT;
               else begin
-                calculated_weight_bytes_q <= mul_accumulator_next[15:0]
-                                           + (mul_accumulator_next[15:0] << 3);
+                // WEIGHT_BYTES = in_channels * out_channels * kernel_size^2.
+                // kernel_size in {1,3} -> kernel_size^2 in {1,9}; x+(x<<3)=9x covers
+                // kernel=3, identity covers kernel=1.
+                calculated_weight_bytes_q <= (pending_conv_config_q[7:0] == 8'd1)
+                                           ? mul_accumulator_next[15:0]
+                                           : (mul_accumulator_next[15:0]
+                                              + (mul_accumulator_next[15:0] << 3));
                 calculated_bias_bytes_q   <= {validated_out_channels_q, 2'b00};
                 validator_state_q         <= VAL_OUTPUT_AREA;
               end
@@ -545,6 +605,21 @@ module controller_fsm #(
             end
           end
 
+          VAL_GAP_COMPARE: begin
+            // GAP output is [1][1][OUT_CHANNELS] -- OUTPUT_BYTES == OUT_CHANNELS, not H*W*C.
+            if ((pending_input_bytes_q != {17'd0, calculated_input_bytes_q})
+             || (pending_output_bytes_q != {25'd0, validated_out_channels_q})
+             || ({17'd0, calculated_input_bytes_q} > INPUT_CAP_BYTES)
+             || ({25'd0, validated_out_channels_q} > OUTPUT_CAP_BYTES)
+             || (calculated_input_bytes_q[1:0] != 2'b00)
+             || (validated_out_channels_q[1:0] != 2'b00))
+              validator_state_q <= VAL_REJECT;
+            else begin
+              calculated_output_bytes_q <= {8'd0, validated_out_channels_q};
+              validator_state_q         <= VAL_ACCEPT;
+            end
+          end
+
           VAL_ACCEPT: begin
             debug_error_latched_q <= 1'b0;
             snap_operation_o      <= pending_operation_q;
@@ -554,6 +629,7 @@ module controller_fsm #(
             snap_out_channels_o  <= {25'd0, validated_out_channels_q};
             snap_output_height_o <= {17'd0, validated_output_height_q};
             snap_output_width_o  <= {17'd0, validated_output_width_q};
+            snap_kernel_size_o   <= {24'd0, pending_conv_config_q[7:0]};
             snap_stride_o        <= pending_conv_config_q[15:8];
             snap_padding_o       <= pending_conv_config_q[23:16];
             snap_relu_enable_o   <= pending_conv_config_q[24];
@@ -566,7 +642,8 @@ module controller_fsm #(
             snap_output_bytes_o  <= pending_output_bytes_q;
             operation_accept_o   <= 1'b1;
             packet_start_o       <= 1'b1;
-            if (pending_operation_q == OP_RESIDUAL_ADD)
+            if ((pending_operation_q == OP_RESIDUAL_ADD)
+             || (pending_operation_q == OP_GLOBAL_AVG_POOL))
               state_q <= DBG_LOAD_INPUT;
             else
               state_q <= DBG_LOAD_WEIGHT;
@@ -639,6 +716,9 @@ module controller_fsm #(
               if (snap_operation_o == OP_RESIDUAL_ADD) begin
                 packet_start_o <= 1'b1;
                 state_q        <= DBG_LOAD_SKIP;
+              end else if (snap_operation_o == OP_GLOBAL_AVG_POOL) begin
+                gap_start_o <= 1'b1;
+                state_q     <= DBG_COMPUTE;
               end else begin
                 conv_start_o <= 1'b1;
                 state_q      <= DBG_COMPUTE;
@@ -655,6 +735,7 @@ module controller_fsm #(
 
           DBG_COMPUTE: begin
             if (((snap_operation_o == OP_RESIDUAL_ADD) && residual_done_i)
+             || ((snap_operation_o == OP_GLOBAL_AVG_POOL) && gap_done_i)
              || ((snap_operation_o == OP_CONV) && conv_done_i)) begin
               output_start_o <= 1'b1;
               state_q        <= DBG_SEND_OUTPUT;

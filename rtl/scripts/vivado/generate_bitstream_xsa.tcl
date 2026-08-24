@@ -18,15 +18,15 @@ set bit_file [file join $artifact_dir zybo_resnet_system.bit]
 set xsa_file [file join $artifact_dir zybo_resnet_system.xsa]
 set checkpoint_backup_dir [file join $repo_root build vivado_zybo checkpoint_backups]
 
-# KNOWN, TRACKED setup-timing violation (see rtl/docs/PROJECT_MASTER_HANDOFF.md and
-# scripts/vivado/build_zybo_implementation.tcl): adding the OP_RESIDUAL_ADD engine grew the
-# accelerator enough that a pre-existing conv_engine MAC path (weight_mem read -> multiply ->
-# mac_product_q) lost its margin at 100 MHz. Best achieved after three implementation-strategy
-# retries: WNS=-0.250ns, 6 failing setup endpoints, hold/pulse-width timing both still clean.
-# Root-cause fix requires re-pipelining conv_engine's per-tap MAC (its innermost, million-tap
-# loop) which would roughly double conv runtime -- deferred to the project's own stated
-# PE-optimization phase (post end-to-end bring-up), not attempted here. Accepted deliberately
-# for Stage 2-A functional bring-up; do not silently raise this further without new evidence.
+# Historical note (see rtl/docs/PROJECT_MASTER_HANDOFF.md): the Stage 2-A OP_RESIDUAL_ADD
+# build carried a known, tracked setup-timing violation (WNS=-0.250ns, 6 failing endpoints)
+# from a conv_engine MAC path that lost margin at 100 MHz. The Stage 3 kernel=1 parametrization
+# rebuild fully closed timing instead (WNS=+0.001ns), and the OP_GLOBAL_AVG_POOL rebuild (this
+# checkpoint) still holds: WNS=+0.004ns, TNS=0.000, 0 failing setup endpoints, hold/pulse-width
+# both clean, despite DSP48E1 growing 3->5 (gap_engine's own requantizer instance). The tolerant
+# gate is kept (not removed) as a documented safety margin matching the previously accepted
+# floor -- re-tighten only after confirming several builds in a row land here, not right after
+# the first one.
 set accept_known_setup_timing_violation 1
 set known_setup_timing_violation_min_wns_ns -0.30
 set known_setup_timing_violation_max_failing_endpoints 10
@@ -303,7 +303,8 @@ if {[llength $unrouted_nets] != 0} {
 if {$no_clock != 0 || $unconstrained != 0} {
   phase3d2_fail "timing coverage failed: no_clock=$no_clock unconstrained=$unconstrained"
 }
-if {$accel_ramb36 != 32 || $accel_ramb18 != 1 || $accel_dsp != 3 ||
+# DSP48E1 3->5: gap_engine.sv's own requantizer instance adds a second M/N multiply pipeline.
+if {$accel_ramb36 != 32 || $accel_ramb18 != 1 || $accel_dsp != 5 ||
     $accel_lutram != 0} {
   phase3d2_fail "accelerator structure mismatch: RAMB36=$accel_ramb36 RAMB18=$accel_ramb18 DSP=$accel_dsp LUTRAM/SRL=$accel_lutram"
 }
